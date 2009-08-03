@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Cream Module
+Name=Melange
+Comment=The best test service available!
+Icon=foobar
+
+X-Cream-ModuleType=Application
+X-Cream-Domain=org.cream.melange
+X-Cream-AppKey=0000000000000000000000000000000000000000
+
+X-Cream-Author=Sebastian Billaudelle
+X-Cream-License=GPLv3
+X-Cream-Homepage=http://cream-project.org
+X-Cream-Mail=stein@cream-project.org
