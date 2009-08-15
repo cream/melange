@@ -10,9 +10,8 @@ class BinaryClock(object):
     def __init__(self, kind='digit'):
         self.kind = kind
 
-    def get_lights(self, number, dividor = 8):
 
-        #assert log(highest, 2)
+    def get_lights(self, number, dividor = 8):
 
         lights = []
         while dividor >= 1:
@@ -29,6 +28,7 @@ class BinaryClock(object):
 
 
     def get_digit_lights(self, digits):
+
         lights = []
         for digit in digits:
             lights.append(self.get_lights(digit))
@@ -37,6 +37,7 @@ class BinaryClock(object):
 
 
     def get_grouped_lights(self, numbers):
+
         lights = []
         for number in numbers:
             lights.append(self.get_lights(number, 32))
@@ -69,22 +70,6 @@ class BinaryClock(object):
         else:
             lights = self.get_grouped_lights((hour, minute, second))
 
-        #self.lights = [[x[y] for x in lights] for y in range(len(lights[0]))]
-        return lights
-
-
-    def __str__(self):
-        lights = ''
-        for x, row in enumerate(self.lights):
-            for y, item in enumerate(row):
-                if item:
-                    lights += '1'
-                else:
-                    lights += '0'
-                if y % 2 != 0:
-                    lights += ' '
-            lights += '\n'
-
         return lights
 
 
@@ -112,7 +97,7 @@ class BinaryClockApplet(cream.contrib.melange.Applet):
             self.dots.append(l)
             for i in xrange(0, 4):
                 img = cream.gui.Image()
-                img.set_attribute('path', 'extensions/BinaryClock/images/dot-inactive.svg')
+                img.set_attribute('path', 'images/dot-inactive.svg')
                 img.set_attribute('width', '12%')
                 img.set_attribute('height', '19.2%')
                 img.set_attribute('x', str(c_x * 12 + (c_x // 2) * 7 + 7) + '%')
@@ -134,11 +119,11 @@ class BinaryClockApplet(cream.contrib.melange.Applet):
         for c_x, l in enumerate(self.clock.clock()):
             for c_y, i in enumerate(l):
                 d = self.dots[c_x][c_y]
-                if i and not d.get_attribute('path') == 'extensions/BinaryClock/images/dot-active.svg':
-                    d.set_attribute('path', 'extensions/BinaryClock/images/dot-active.svg')
+                if i and not d.get_attribute('path') == 'images/dot-active.svg':
+                    d.set_attribute('path', 'images/dot-active.svg')
                     d.render(False)
-                elif not i and d.get_attribute('path') == 'extensions/BinaryClock/images/dot-active.svg':
-                    d.set_attribute('path', 'extensions/BinaryClock/images/dot-inactive.svg')
+                elif not i and d.get_attribute('path') == 'images/dot-active.svg':
+                    d.set_attribute('path', 'images/dot-inactive.svg')
                     d.render(False)
         self.widget.render()
         return True

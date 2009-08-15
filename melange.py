@@ -9,6 +9,7 @@ import math
 import os.path
 
 import cream
+import cream.ipc
 import cream.extensions
 import cream.gui
 import cream.gui.animation
@@ -34,7 +35,21 @@ class Melange(cream.Module):
 
         self.extensions = cream.extensions.ExtensionManager([os.path.join(self._base_path, 'extensions')], api)
 
-        self.extensions.load('Test Widget')
+        #self.extensions.load('Test Widget')
+        #self.extensions.load('Playground Widget')
+        self.extensions.load('Power Applet')
+
+
+    @cream.ipc.method('', 'as')
+    def list_available_applets(self):
+
+        return self.extensions.list()
+
+
+    @cream.ipc.method('s')
+    def load_applet(self, applet):
+
+        self.extensions.load(applet)
 
 
     def add_widget(self, widget):
@@ -193,7 +208,7 @@ class Melange(cream.Module):
 
         if widget.resizing == True:
             widget.zoom += widget.zoom * factor
-            widget.render()
+            widget.render(force_render=True)
             widget.frame.set_size_request(int(widget.size[0]), int(widget.size[1]))
             gobject.timeout_add(50, self.resize, widget, new_x, new_y)
 
