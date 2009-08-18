@@ -3,7 +3,7 @@ import cream.ipc
 import cream.contrib.melange
 from cream.contrib.melange import widgets
 
-OPACITY = '.7'
+OPACITY = '.6'
 
 @cream.extensions.register
 class PowerApplet(cream.contrib.melange.Applet):
@@ -82,7 +82,7 @@ class PowerApplet(cream.contrib.melange.Applet):
             object.render()
             
 
-        curve = cream.gui.animation.Curve(500, cream.gui.animation.CURVE_SINE)
+        curve = cream.gui.animation.Curve(800, cream.gui.animation.CURVE_SINE)
         curve.run(fade_in)
 
 
@@ -94,7 +94,7 @@ class PowerApplet(cream.contrib.melange.Applet):
             object.render()
             
 
-        curve = cream.gui.animation.Curve(500, cream.gui.animation.CURVE_SINE)
+        curve = cream.gui.animation.Curve(800, cream.gui.animation.CURVE_SINE)
         curve.run(fade_out)
 
 
@@ -104,7 +104,7 @@ class PowerApplet(cream.contrib.melange.Applet):
             self.system.suspend()
         elif object == self.hibernate:
             self.system.hibernate()
-        elif object == self.halt:
+        elif object == self.shutdown:
             self.system.shudown()
         elif object == self.reboot:
             self.system.reboot()
