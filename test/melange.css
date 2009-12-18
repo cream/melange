@@ -1,0 +1,28 @@
+body {
+    margin: 0px;
+    padding: 0px;
+    font-size: 12px;
+
+    cursor: default;
+}
+
+.widget {
+    margin: 0px;
+    padding: 10px;
+
+    color: #eee;
+
+    border: 1px solid #777;
+    border-radius: 10px;
+    background: -webkit-gradient(linear, left -10%, left 20%, from(rgba(100, 100, 100, .8)), to(rgba(30, 30, 30, .8)));
+}
+
+.section {
+    margin: 0px;
+    margin-bottom: 5px;
+    padding: 5px;
+
+    border-radius: 5px;
+
+    background: rgba(256, 256, 256, .08);
+}
