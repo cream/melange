@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<meta>
+    <name>Melange</name>
+    <comment>Cream's desktop widget system blah!</comment>
+    <type>module</type>
+    <hash>8e6be802fae3462a2d9bf48c541d69923f24b31ed9fdf2b81c522a71171ffe76</hash>
+    <author>Sebastian Billaudelle</author>
+    <license>GPLv3</license>
+    <homepage>http://cream-project.org</homepage>
+    <mail>stein@cream-project.org</mail>
+</meta>

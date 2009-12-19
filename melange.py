@@ -101,6 +101,8 @@ class Widget:
 
 class Melange(cream.Module):
 
+    __ipc_domain__ = 'org.cream.melange'
+
     def __init__(self):
 
         cream.Module.__init__(self)
