@@ -32,12 +32,27 @@ WIDGETS = [
     ]
     ]
 
+class SkinMetaData(cream.MetaData):
+    def __init__(self, path):
+        cream.MetaData.__init__(self, path)
+
+class WidgetMetaData(cream.MetaData):
+    def __init__(self, path):
+        cream.MetaData.__init__(self, path)
+
 
 class Widget:
 
-    def __init__(self, path):
+    def __init__(self, meta):
 
-        self.path = path
+        self.meta = meta
+
+        skin_dir = os.path.join(os.path.dirname(self.meta['path']), 'skins')
+        skns = WidgetMetaData.scan(skin_dir, type='melange.widget.skin')
+        self.skins = {}
+
+        for s in skns:
+            self.skins[s['name']] = s
 
         self.window = gtk.Window()
         self.window.stick()
@@ -53,7 +68,8 @@ class Widget:
         self.view = webkit.WebView()
         self.view.set_transparent(True)
 
-        self.view.open(self.path)
+        file = os.path.join(os.path.dirname(self.skins['Default']['path']), 'index.html')
+        self.view.open(file)
 
         self.bin = gtk.EventBox()
         self.bin.add(self.view)
@@ -107,16 +123,22 @@ class Melange(cream.Module):
 
         cream.Module.__init__(self)
 
+        wdgs = WidgetMetaData.scan('widgets', type='melange.widget')
+        self.widgets = {}
+
+        for w in wdgs:
+            self.widgets[w['name']] = w
+
         #self.load_widget('file:///home/stein/Tests/dock.html')
-        self.load_widget('file:///home/stein/Labs/Cream/dev/src/modules/melange/test/test.html')
+        self.load_widget('Analog Clock')
 
 
     @cream.ipc.method('s', '')
-    def load_widget(self, path):
+    def load_widget(self, name):
 
         self.messages.debug("Loading widget...")
 
-        w = Widget(path)
+        w = Widget(self.widgets[name])
         w.show()
 
 
