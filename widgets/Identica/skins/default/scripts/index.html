@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Easy Scroll v1.0 - Unobtrusive content scroller</title>
+<meta name="description" content="This script converts long content into short scrollable content">
+<script type="text/javascript" src="easyscroll/easyscroll.js"></script>
+</meta>
+
+<style>
+
+body{
+	margin:0;
+	padding:0;
+	font:80% Arial, Helvetica, sans-serif;	
+	background:#fff;
+	color:#333;
+	line-height:180%;
+	height:100%;	
+	overflow:visible;
+	text-align:center;
+	}
+#container{
+	margin:0 auto;
+	text-align:left;
+	width:800px;
+	padding-top:2em;
+	z-index:10;
+}
+h1{
+	font-size:250%;
+	font-weight:normal;
+	color:#000;
+	margin-top:0;
+}
+h2{
+	font-size:200%;
+	font-weight:normal;
+	color:#000;
+}
+
+
+/* easyscroll */
+
+#easyscroll{
+	background:#eee;
+	margin:1em 0;
+	/* add additional styling */
+	}	
+
+	/* easyscroll navigation buttons */	
+
+	#easyscrollnav, #easyscrollnav li{
+		height:28px;
+		line-height:28px;
+		margin:0;	
+		padding:0;
+		}	
+	#easyscrollnav{
+		margin:1em 0;	
+		}			
+	#easyscrollnav li{
+		list-style:none;
+		float:left;
+		background:#eee;
+		margin-right:10px;		
+		padding:0 10px;
+		color:#333;
+		cursor:pointer;
+		}					
+	#easyscrollnav li.over{
+		color:#999;
+		text-decoration:underline;
+		}							
+
+	/* // easyscroll navigation buttons */	
+
+/* // end easyscroll */
+
+
+</style>
+</head>
+<body>
+
+<div id="container">
+	
+	<h1>Easy Scroll v1.0 - Unobtrusive content scroller</h1>
+
+	<p>This is a demonstration of an unobtrusive content scroller. To apply this script you need to</p>
+	<ul>
+		<li>Create a div (or any other container element)</li>
+		<li>Assign id to that container (default is "myContent")</li>
+		<li>Adjust it's height in javascript config area</li>
+		<li>Put some content inside the container.</li>
+	</ul>
+	You may also want to style it with css to improve it's appearance.<br />
+	The content is fully accessible to users with JavaScript disabled browsers.</p>
+
+	
+	<div id="myContent">
+	
+		<h2>Scroll content with simple JavaScript function</h2>
+	
+		<p>
+		Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Praesent dapibus, purus non tincidunt mattis, 
+		odio ipsum euismod ipsum, eget suscipit dui orci vitae urna. Vivamus et ipsum at mauris interdum dapibus. 
+		Morbi lectus. Quisque id ante commodo nulla eleifend posuere. Donec quis augue sit amet neque mollis ornare. 
+		Nam gravida rhoncus velit. In magna. Nulla semper tristique elit. Aenean euismod. Maecenas nunc sapien, 
+		nonummy vel, nonummy in, ultrices tristique, odio.		</p>
+		<p>
+		Phasellus bibendum. Cras accumsan massa venenatis lectus bibendum elementum. Nulla id justo. 
+		Nunc ante nisl, rhoncus vel, ultrices at, consequat ut, nunc. Vestibulum dolor. Aenean elementum 
+		malesuada elit. Mauris turpis. Morbi vel nulla. Fusce sit amet quam. Etiam vel diam. 
+		Praesent tortor. Nulla nisi arcu, nonummy at, dignissim at, elementum ut, leo. 
+		Nunc odio nibh, cursus vitae, ultricies et, blandit et, leo.</p>
+		
+		<h2>Easy Scroll v1.0</h2>
+		
+		<p>
+		Nulla velit velit, vehicula sit amet, tincidunt non, nonummy semper, massa. Cras accumsan. Nulla 
+		faucibus lorem ut metus. Nulla felis lectus, tristique a, dapibus ut, pharetra a, nunc. Ut egestas. 
+		Sed posuere rhoncus turpis. Vivamus posuere, augue ac viverra blandit, metus dolor malesuada neque, 
+		eget elementum ipsum pede at pede. Vivamus elit metus, vehicula eget, consequat in, sodales nec, 
+		diam. Vestibulum eu mauris. Sed sodales mi eu augue. Mauris sagittis hendrerit ipsum. Pellentesque sodales. 
+		Duis ligula turpis, commodo nec, adipiscing eu, pretium id, eros. Maecenas tellus nisi, dapibus 
+		lobortis, suscipit eget, consequat vitae, eros. Nunc cursus fringilla nisi. Morbi pharetra, 
+		ipsum vel imperdiet elementum, sapien augue adipiscing magna, vitae tempus sapien sapien sit 
+		amet magna. Fusce diam tortor, fermentum non, sollicitudin id, feugiat ac, felis. Maecenas 
+		accumsan velit at risus. Proin in augue ut lacus auctor eleifend. Duis lectus.</p>
+		
+		<h2>Features up and down scroll, reset button and double speed</h2>
+	
+		<p>
+		Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Praesent dapibus, purus non tincidunt mattis, 
+		odio ipsum euismod ipsum, eget suscipit dui orci vitae urna. Vivamus et ipsum at mauris interdum dapibus. 
+		Morbi lectus. Quisque id ante commodo nulla eleifend posuere. Donec quis augue sit amet neque mollis ornare. 
+		Nam gravida rhoncus velit. In magna. Nulla semper tristique elit. Aenean euismod. Maecenas nunc sapien, 
+		nonummy vel, nonummy in, ultrices tristique, odio.		</p>
+		<p>
+		Phasellus bibendum. Cras accumsan massa venenatis lectus bibendum elementum. Nulla id justo. 
+		Nunc ante nisl, rhoncus vel, ultrices at, consequat ut, nunc. Vestibulum dolor. Aenean elementum 
+		malesuada elit. Mauris turpis. Morbi vel nulla. Fusce sit amet quam. Etiam vel diam. 
+		Praesent tortor. Nulla nisi arcu, nonummy at, dignissim at, elementum ut, leo. 
+		Nunc odio nibh, cursus vitae, ultricies et, blandit et, leo.</p>
+		
+		<h2>Totally accessible content scroller</h2>
+		
+		<p>
+		Nulla velit velit, vehicula sit amet, tincidunt non, nonummy semper, massa. Cras accumsan. Nulla 
+		faucibus lorem ut metus. Nulla felis lectus, tristique a, dapibus ut, pharetra a, nunc. Ut egestas. 
+		Sed posuere rhoncus turpis. Vivamus posuere, augue ac viverra blandit, metus dolor malesuada neque, 
+		eget elementum ipsum pede at pede. Vivamus elit metus, vehicula eget, consequat in, sodales nec, 
+		diam. Vestibulum eu mauris. Sed sodales mi eu augue. Mauris sagittis hendrerit ipsum. Pellentesque sodales. 
+		Duis ligula turpis, commodo nec, adipiscing eu, pretium id, eros. Maecenas tellus nisi, dapibus 
+		lobortis, suscipit eget, consequat vitae, eros. Nunc cursus fringilla nisi. Morbi pharetra, 
+		ipsum vel imperdiet elementum, sapien augue adipiscing magna, vitae tempus sapien sapien sit 
+		amet magna. Fusce diam tortor, fermentum non, sollicitudin id, feugiat ac, felis. Maecenas 
+		accumsan velit at risus. Proin in augue ut lacus auctor eleifend. Duis lectus.</p>		
+	
+	</div>
+		
+	<p><em>Roll over buttons for scroll, click and hold for double speed</em></p>
+	
+	<div id="footer">	
+		<p><a href="http://cssglobe.com/post/1495/easy-scroll-accessible-content-scroller" title="read more about content scroller">back to the article</a></p>	
+		<p>Easy Scroll is brought to you by <a href="http://cssglobe.com" title="web standards magazine and css news">Css Globe</a></p>
+	</div>
+
+
+</div>
+</body>
+</html>
+<script src="http://www.google-analytics.com/urchin.js" type="text/javascript">
+</script>
+<script type="text/javascript">
+_uacct = "UA-783567-1";
+urchinTracker();
+</script>
+

@@ -76,6 +76,9 @@ function update() {
         if (ms.length < 2) {
             ms = "0" + ms
             }
+        if (ms.length > 2) {
+            ms = ms.slice(0, 2)
+            }
     
         document.getElementById('main').innerHTML = h + ":" + m + ":" + s;
         document.getElementById('ms').innerHTML = "." + ms;

@@ -92,6 +92,11 @@ class Widget:
         del self
 
 
+    def get_position(self):
+
+        return self.window.get_position()
+
+
     def clicked_cb(self, source, event):
 
         if event.button == 3:
