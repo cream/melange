@@ -1,0 +1,2 @@
+class HttpServer(object):
+    pass
