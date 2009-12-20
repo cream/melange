@@ -48,7 +48,7 @@ class Widget:
         self.meta = meta
 
         skin_dir = os.path.join(os.path.dirname(self.meta['path']), 'skins')
-        skns = WidgetMetaData.scan(skin_dir, type='melange.widget.skin')
+        skns = SkinMetaData.scan(skin_dir, type='melange.widget.skin')
         self.skins = {}
 
         for s in skns:
@@ -127,10 +127,7 @@ class Melange(cream.Module):
         self.widgets = {}
 
         for w in wdgs:
-            self.widgets[w['name']] = w
-
-        #self.load_widget('file:///home/stein/Tests/dock.html')
-        self.load_widget('Analog Clock')
+            self.widgets[w['hash']] = w
 
 
     @cream.ipc.method('s', '')
@@ -142,10 +139,10 @@ class Melange(cream.Module):
         w.show()
 
 
-    @cream.ipc.method('', 'aas')
+    @cream.ipc.method('', 'a{sa{ss}}')
     def list_widgets(self):
 
-        return WIDGETS
+        return self.widgets
 
 
 melange = Melange()
