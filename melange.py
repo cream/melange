@@ -1,40 +1,37 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import gobject
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301, USA.
+
 import gtk
 import cairo
 
-import math
 import os.path
 
 import cream
 import cream.ipc
-import cream.util
-from cream.gui import CompositeBin
 
 import webkit
 
 gtk.gdk.threads_init()
 
-WIDGETS = [
-    [
-        "Clock Widget",
-        "A simple clock for your desktop...",
-        '/home/stein/clock.png',
-        'file:///home/stein/Labs/Cream/dev/src/modules/melange/test/test.html'
-    ],
-    [
-        "Test Widget",
-        "Test widget for Melange...",
-        '/home/stein/clock.png',
-        'file:///home/stein/Labs/Cream/dev/src/modules/melange/test/test2.html'
-    ]
-    ]
-
 class SkinMetaData(cream.MetaData):
     def __init__(self, path):
         cream.MetaData.__init__(self, path)
+
 
 class WidgetMetaData(cream.MetaData):
     def __init__(self, path):
