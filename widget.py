@@ -43,6 +43,8 @@ class Widget(object):
         self.window.set_skip_taskbar_hint(True)
         self.window.set_decorated(False)
         self.window.set_app_paintable(True)
+        self.window.set_resizable(False)
+        self.window.set_default_size(10, 10)
         self.window.connect('expose-event', self.expose_cb)
         self.window.set_colormap(self.window.get_screen().get_rgba_colormap())
 
@@ -71,6 +73,8 @@ class Widget(object):
 
 
     def close(self):
+
+        print self.view.get_allocation()
 
         self.window.destroy()
         del self

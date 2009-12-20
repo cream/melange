@@ -101,4 +101,4 @@ this.addEvent = function(obj,type,fn){
 		obj.addEventListener(type,fn,false);
 	};
 };
-addEvent(window,"load",easyscroll);
+addEvent(window,"load", easyscroll);
