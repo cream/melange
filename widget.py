@@ -29,7 +29,13 @@ class WidgetBase(cream.WithConfiguration): # TODO: Merge into Widget.
         cream.WithConfiguration.__init__(self)
 
     def _load_config(self, base_path=None):
-        return cream.WithConfiguration._load_config(self, self.meta['path'])
+        if os.path.exists(os.path.join(self.meta['path'], 'config.py')):
+            # we have a custom config.py module, so use it:
+            return cream.WithConfiguration._load_config(self, self.meta['path'])
+        else:
+            # we don't have a custom configuration module, so we use the
+            # standard melange configuration:
+            return WidgetConfiguration(basedir=self.meta['path'])
 
 
 
