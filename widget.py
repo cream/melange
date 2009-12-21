@@ -17,18 +17,31 @@ class WidgetMetaData(cream.MetaData):
         cream.MetaData.__init__(self, path)
 
 
-class WidgetConfiguration(cream.config.Configuration):
-    x_position = cream.config.fields.IntegerField(hidden=True)
-    y_position = cream.config.fields.IntegerField(hidden=True)
+class WidgetConfiguration(cream.config.Configuration): # TODO: Move to cream.contrib.melange
+    x_position = cream.config.fields.IntegerField(hidden=True, default=100)
+    y_position = cream.config.fields.IntegerField(hidden=True, default=100)
+
+    logging_level = 'info'
 
 
-class Widget(object):
+class WidgetBase(cream.WithConfiguration): # TODO: Merge into Widget.
+    def __init__(self):
+        cream.WithConfiguration.__init__(self)
+
+    def default_configuration_factory(self):
+        return WidgetConfiguration(basedir=self.meta['path'])
+
+
+
+class Widget(WidgetBase):
 
     def __init__(self, meta):
 
+        WidgetBase.__init__(self)
+
         self.meta = meta
 
-        skin_dir = os.path.join(os.path.dirname(self.meta['path']), 'skins')
+        skin_dir = os.path.join(self.meta['path'], 'skins')
         skns = SkinMetaData.scan(skin_dir, type='melange.widget.skin')
         self.skins = {}
 
@@ -51,7 +64,7 @@ class Widget(object):
         self.view = webkit.WebView()
         self.view.set_transparent(True)
 
-        file = os.path.join(os.path.dirname(self.skins['Default']['path']), 'index.html')
+        file = os.path.join(self.skins['Default']['path'], 'index.html')
         self.view.open(file)
 
         self.bin = gtk.EventBox()
@@ -71,13 +84,18 @@ class Widget(object):
         self.menu.append(gtk.ImageMenuItem(gtk.STOCK_ABOUT))
         self.menu.show_all()
 
+        self.config
+        self.set_position(self.config.x_position, self.config.y_position) # TODO: Move position handling to Melange itself.
+
 
     def close(self):
 
-        print self.view.get_allocation()
-
+        self.finalize()
         self.window.destroy()
-        del self
+
+
+    def __del__(self):
+        raise ItWorks() # never called
 
 
     def clicked_cb(self, source, event):
@@ -101,3 +119,9 @@ class Widget(object):
 
     def get_position(self):
         return self.window.get_position()
+
+    def set_position(self, x, y):
+        return self.window.move(x, y)
+
+    def finalize(self):
+        self.config.x_position, self.config.y_position = self.get_position()
