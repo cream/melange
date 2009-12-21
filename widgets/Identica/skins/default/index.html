@@ -15,7 +15,8 @@
             <img src="images/up.png" />
         </div>
         <div id="myContent" style="background-color: rgba(256, 256, 256, .03);">
-            <div id="identica"></div>
+            <div id="identica">
+            </div>
 
             <script type="text/javascript">
             function foo (data) {
@@ -28,7 +29,7 @@
             
                     box = document.createElement('div')
                     box.innerHTML = '<span style="font-size: .9em; font-style: italic;">' + content + '</span><br /><span style="font-size: .7em; color: #999;">- ' + data[c]['user']['screen_name'] + ' at ' + data[c]['created_at'].split(/\+/)[0] + '</span>';
-            
+
                     if (c != 0) {
                         box.style.paddingTop = "10px";
                     }
