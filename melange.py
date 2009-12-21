@@ -55,5 +55,6 @@ class Melange(cream.Module):
         return self.widgets
 
 
-melange = Melange()
-melange.main()
+if __name__ == '__main__':
+    melange = Melange()
+    melange.main()

@@ -28,8 +28,8 @@ class WidgetBase(cream.WithConfiguration): # TODO: Merge into Widget.
     def __init__(self):
         cream.WithConfiguration.__init__(self)
 
-    def default_configuration_factory(self):
-        return WidgetConfiguration(basedir=self.meta['path'])
+    def _load_config(self, base_path=None):
+        return cream.WithConfiguration._load_config(self, self.meta['path'])
 
 
 
@@ -86,6 +86,7 @@ class Widget(WidgetBase):
 
         self.config
         self.set_position(self.config.x_position, self.config.y_position) # TODO: Move position handling to Melange itself.
+
 
 
     def close(self):
