@@ -1,5 +1,6 @@
 var ms = 0;
 var state = 0;
+var interval;
 
 function two(x) {return ((x>9)?"":"0")+x}
 function three(x) {return ((x>99)?"":"0")+((x>9)?"":"0")+x}
