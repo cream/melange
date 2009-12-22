@@ -16,6 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
 
+import random
+import hashlib
+
 import cream
 import cream.ipc
 
@@ -25,6 +28,13 @@ gtk.gdk.threads_init()
 from widget import WidgetMetaData, Widget
 from httpserver import HttpServer
 
+W = [
+    {
+    'hash': 'a08ffa2ee7b2a11c0d385e653a9b3b9ef833c41f111ffaea4fff31d506c622e1',
+    'x': 600,
+    'y': 100
+    }
+]
 
 class Melange(cream.Module):
 
@@ -34,19 +44,32 @@ class Melange(cream.Module):
 
         cream.Module.__init__(self)
 
+        self.server = HttpServer(self)
+        self.server.run()
+
         wdgs = WidgetMetaData.scan('widgets', type='melange.widget')
         self.widgets = {}
+        self.instances = {}
 
         for w in wdgs:
             self.widgets[w['hash']] = w
 
+        for w in W:
+            self.load_widget(w['hash'], w['x'], w['y'])
 
-    @cream.ipc.method('s', '')
-    def load_widget(self, name):
+
+    @cream.ipc.method('svv', '')
+    def load_widget(self, name, x=None, y=None):
 
         self.messages.debug("Loading widget '%s'..." % name)
 
-        Widget(self.widgets[name]).show()
+        w = Widget(self.widgets[name])
+        self.instances[w.instance] = w
+
+        w.show()
+
+        if x and y:
+            w.set_position(x, y)
 
 
     @cream.ipc.method('', 'a{sa{ss}}')

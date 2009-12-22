@@ -1,5 +1,8 @@
 import os.path
 
+import random
+import hashlib
+
 import gtk
 import cairo
 import webkit
@@ -47,6 +50,8 @@ class Widget(WidgetBase):
 
         self.meta = meta
 
+        self.instance = hashlib.sha256(str(random.getrandbits(100))).hexdigest()
+
         skin_dir = os.path.join(self.meta['path'], 'skins')
         skns = SkinMetaData.scan(skin_dir, type='melange.widget.skin')
         self.skins = {}
@@ -70,8 +75,9 @@ class Widget(WidgetBase):
         self.view = webkit.WebView()
         self.view.set_transparent(True)
 
-        file = os.path.join(self.skins['Default']['path'], 'index.html')
-        self.view.open(file)
+        #file = os.path.join(self.skins['Default']['path'], 'index.html')
+        #self.view.open(file)
+        self.view.open('http://localhost:8080/widgets/{0}/{1}/index.html'.format(self.instance, 'Default'))
 
         self.bin = gtk.EventBox()
         self.bin.add(self.view)
