@@ -33,7 +33,6 @@ class HttpServer(object):
     def common_files(file):
 
         path = os.path.join(MELANGE._base_path, 'data')
-        print path, file
         return send_file(file, path)
 
 
@@ -46,4 +45,4 @@ class HttpServer(object):
 
 
     def run(self):
-        thread.start_new_thread(run, (), dict(host='localhost', port=8080))
+        thread.start_new_thread(run, (), dict(host='localhost', port=8080, quiet=True))
