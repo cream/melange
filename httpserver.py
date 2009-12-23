@@ -2,11 +2,17 @@ import os
 import json
 from bottle import route, send_file, abort, run, request
 import thread
+import json
+
+import cream.ipc
+
+import gtk
 
 import bottle
 bottle.debug(False)
 
 MELANGE = None
+OBJECT_CACHE = {}
 
 class HttpServer(object):
     """
@@ -33,15 +39,23 @@ class HttpServer(object):
     def common_files(file):
 
         path = os.path.join(MELANGE._base_path, 'data')
+        print send_file(file, path)
         return send_file(file, path)
 
 
-    @route('/ipc/:domain/:method', method='POST')
-    def ipc_call(domain, method):
+    @route('/ipc/call', method='POST')
+    def ipc_call():
 
-        parameters = json.loads(request.POST['data'])
-        result = DBUS_CALL(request.POST['domain'], request.POST['method'], parameters)
-        return TO_JSON(result)
+        if OBJECT_CACHE.has_key(':'.join([request.POST['bus'], request.POST['object']])):
+            obj = OBJECT_CACHE[':'.join([request.POST['bus'], request.POST['object']])]
+        else:
+            obj = cream.ipc.get_object(request.POST['bus'], request.POST['object'], 'org.cream.collector')
+            OBJECT_CACHE[':'.join([request.POST['bus'], request.POST['object']])] = obj
+
+        met = getattr(obj, request.POST['method'])
+        ret = met(*json.loads(request.POST['arguments']))
+
+        return json.dumps(ret)
 
 
     def run(self):

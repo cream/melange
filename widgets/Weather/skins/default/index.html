@@ -17,19 +17,36 @@
         <div class="widget" style="min-width: 160px;">
             <div style="width: 70px; float: left; text-align: center;">
                 <img src="images/clear.png" /><br />
-                <span style="font-size: 2em; font-weight: bold; line-height: 1em;">9°C</span>
+                <span id="temperature" style="font-size: 1.8em; font-weight: bold; line-height: 1em;">NaN</span>
             </div>
             <div style="margin-left: 80px;">
                 <span style="font-size: .65em; line-height: 1em;">Wind:</span><br />
-                <span style="font-size: .8em; font-weight: bold; line-height: 1em;">27km/h (SW)</span>
+                <span id="wind" style="font-size: .8em; font-weight: bold; line-height: 1em;">NaN</span><br />
 
                 <span style="font-size: .65em; line-height: 1em;">Humidity:</span><br />
-                <span style="font-size: .8em; font-weight: bold; line-height: 1em;">73%</span><br />
+                <span id="humidity" style="font-size: .8em; font-weight: bold; line-height: 1em;">NaN</span><br />
 
                 <span style="font-size: .65em; line-height: 1em;">Pressure:</span><br />
-                <span style="font-size: .8em; font-weight: bold; line-height: 1em;">976mb</span>
+                <span id="pressure" style="font-size: .8em; font-weight: bold; line-height: 1em;">NaN</span>
             </div>
             <div style="clear: both;"></div>
+
+        <script type="text/javascript" src="/common/scripts/jquery-1.3.2.min.js" />
+        <script type="text/javascript" src="/common/scripts/cream.js" />
+        <script type="text/javascript">
+        function set_data(data) {
+            document.getElementById('temperature').innerHTML = data['temperature'] + "°C";
+            document.getElementById('wind').innerHTML = data['wind_speed'] + "km/h";
+            document.getElementById('humidity').innerHTML = data['humidity'] + "%";
+            document.getElementById('pressure').innerHTML = data['pressure'] + "hPa";
+            }
+
+        function update() {
+            ipc_call('org.cream.collector', '/org/cream/collector/weather', 'get_weather', ['Heidelberg, Germany'], set_data);
+            setTimeout('update();', 60000);
+            }
+        update()
+        </script>
         </div>
     </body>
 

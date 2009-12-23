@@ -30,7 +30,7 @@ from httpserver import HttpServer
 
 W = [
     {
-    'hash': 'a08ffa2ee7b2a11c0d385e653a9b3b9ef833c41f111ffaea4fff31d506c622e1',
+    'hash': '5b712e7105345034d58c8ef955c0b5c20943f0cd71996cb89f2072e47aefc929',
     'x': 600,
     'y': 100
     }
