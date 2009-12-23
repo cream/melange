@@ -77,7 +77,6 @@ class Widget(WidgetBase):
 
         #file = os.path.join(self.skins['Default']['path'], 'index.html')
         #self.view.open(file)
-        self.view.open('http://localhost:8080/widgets/{0}/{1}/index.html'.format(self.instance, 'Default'))
 
         self.bin = gtk.EventBox()
         self.bin.add(self.view)
@@ -98,7 +97,6 @@ class Widget(WidgetBase):
 
         self.config
         self.set_position(self.config.x_position, self.config.y_position) # TODO: Move position handling to Melange itself.
-
 
 
     def close(self):
@@ -128,7 +126,10 @@ class Widget(WidgetBase):
 
 
     def show(self):
+
+        self.view.open('http://localhost:8080/widgets/{0}/{1}/index.html'.format(self.instance, 'Default'))
         self.window.show_all()
+
 
     def get_position(self):
         return self.window.get_position()
