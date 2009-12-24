@@ -58,6 +58,19 @@ class Widget(WidgetBase):
         for s in skns:
             self.skins[s['name']] = s
 
+
+        self.about_dialog = gtk.AboutDialog()
+        self.about_dialog.connect('response', lambda *x: self.about_dialog.hide())
+        self.about_dialog.connect('delete-event', lambda *x: True)
+
+        self.about_dialog.set_name(self.meta['name'])
+        self.about_dialog.set_authors([self.meta['author']])
+        if self.meta.has_key('icon'):
+            icon_path = os.path.join(self.meta['path'], self.meta['icon'])
+            icon_pb = gtk.gdk.pixbuf_new_from_file(icon_path).scale_simple(64, 64, gtk.gdk.INTERP_HYPER)
+            self.about_dialog.set_logo(icon_pb)
+        self.about_dialog.set_comments(self.meta['comment'])
+
         self.window = gtk.Window()
         self.window.stick()
         self.window.set_keep_below(True)
@@ -84,11 +97,12 @@ class Widget(WidgetBase):
         item_remove = gtk.ImageMenuItem(gtk.STOCK_REMOVE)
         item_remove.connect('activate', lambda *x: self.close())
 
+        item_about = gtk.ImageMenuItem(gtk.STOCK_ABOUT)
+        item_about.connect('activate', lambda *x: self.about_dialog.show_all())
+
         self.menu = gtk.Menu()
         self.menu.append(item_remove)
-        self.menu.append(gtk.ImageMenuItem(gtk.STOCK_REFRESH))
-        self.menu.append(gtk.SeparatorMenuItem())
-        self.menu.append(gtk.ImageMenuItem(gtk.STOCK_ABOUT))
+        self.menu.append(item_about)
         self.menu.show_all()
 
         # TODO: Move position handling to Melange itself.
