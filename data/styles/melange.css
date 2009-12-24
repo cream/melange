@@ -56,3 +56,25 @@ a {
     border-color: darkred;
     background-color: red;
 }
+
+.scrolled .container {
+    background-color: rgba(256, 256, 256, .03);
+}
+
+.scrolled .control_up {
+    height: 12px;
+    padding: 1px;
+    text-align: center;
+    background-color: rgba(256, 256, 256, .1);
+    border-top-right-radius: 3px;
+    border-top-left-radius: 3px;
+}
+
+.scrolled .control_down {
+    height: 12px;
+    padding: 1px;
+    text-align: center;
+    background-color: rgba(256, 256, 256, .1);
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+}
