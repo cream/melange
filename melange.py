@@ -49,7 +49,7 @@ class Melange(cream.Module):
 
         wdgs = WidgetMetaData.scan('widgets', type='melange.widget')
         self.widgets = {}
-        self.instances = {}
+        self.widget_instances = {}
 
         for w in wdgs:
             self.widgets[w['hash']] = w
@@ -64,7 +64,7 @@ class Melange(cream.Module):
         self.messages.debug("Loading widget '%s'..." % name)
 
         w = Widget(self.widgets[name])
-        self.instances[w.instance] = w
+        self.widget_instances[w.instance] = w
 
         w.show()
 

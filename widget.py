@@ -9,6 +9,7 @@ import webkit
 
 import cream
 import cream.config
+from cream.util import urljoin_multi
 
 class SkinMetaData(cream.MetaData):
     def __init__(self, path):
@@ -23,8 +24,6 @@ class WidgetMetaData(cream.MetaData):
 class WidgetConfiguration(cream.config.Configuration): # TODO: Move to cream.contrib.melange
     x_position = cream.config.fields.IntegerField(hidden=True, default=100)
     y_position = cream.config.fields.IntegerField(hidden=True, default=100)
-
-    logging_level = 'info'
 
 
 class WidgetBase(cream.WithConfiguration): # TODO: Merge into Widget.
@@ -75,9 +74,6 @@ class Widget(WidgetBase):
         self.view = webkit.WebView()
         self.view.set_transparent(True)
 
-        #file = os.path.join(self.skins['Default']['path'], 'index.html')
-        #self.view.open(file)
-
         self.bin = gtk.EventBox()
         self.bin.add(self.view)
 
@@ -95,8 +91,8 @@ class Widget(WidgetBase):
         self.menu.append(gtk.ImageMenuItem(gtk.STOCK_ABOUT))
         self.menu.show_all()
 
-        self.config
-        self.set_position(self.config.x_position, self.config.y_position) # TODO: Move position handling to Melange itself.
+        # TODO: Move position handling to Melange itself.
+        self.set_position(self.config.x_position, self.config.y_position)
 
 
     def close(self):
@@ -126,8 +122,9 @@ class Widget(WidgetBase):
 
 
     def show(self):
-
-        self.view.open('http://localhost:8080/widgets/{0}/{1}/index.html'.format(self.instance, 'Default'))
+        skin_url = urljoin_multi('http://127.0.0.1:8080', 'widgets', self.instance, 'Default', 'index.html')
+        print skin_url
+        self.view.open(skin_url)
         self.window.show_all()
 
 
