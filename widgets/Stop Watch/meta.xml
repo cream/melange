@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <meta>
     <name>Stop Watch</name>
-    <comment>An analog clock for melange!</comment>
+    <comment>A stop watch for melange!</comment>
     <type>melange.widget</type>
     <icon>stop_watch.svg</icon>
     <hash>a08ffa2ee7b2a11c0d385e653a9b3b9ef833c41f111ffaea4fff31d506c622e1</hash>
