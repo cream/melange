@@ -24,7 +24,7 @@ var cream = {
             if($type(options.data) == 'function') {
                 options.data = options.data();
             }
-            options.arguments = '["' + popkey(options, 'data').join('","') + '"]';
+            options.arguments = '["' + popkey(options, 'params').join('","') + '"]';
 
             this.parent($merge(request_options || {}, {
                 url: cream.constants.API_REQUEST_BASE_URL,

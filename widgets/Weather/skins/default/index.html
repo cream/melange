@@ -37,10 +37,10 @@
             cream.call_periodically({
                     interval: 60000,
                     bus: 'org.cream.collector',
+                    object: '/org/cream/collector/weather',
                     interface: 'org.cream.collector',
                     method: 'get_weather',
-                    object: '/org/cream/collector/weather',
-                    data: ['Heidelberg, Germany'],
+                    params: ['Heidelberg, Germany'],
                     callback: function(json) {
                         $('temperature').set('text', json['temperature']+'°C');
                         $('wind').set('text', json['wind_speed']+'km/h');
