@@ -17,7 +17,8 @@
             </div>
 
             <script type="text/javascript">
-            function foo (data) {
+            var script = null;
+            function set_data(data) {
                 for (var c = 0; c < data.length && c < 10; c++) {
                     var content = data[c]['text'];
                     content = content.replace(/http:\/\/([^ ]+)/g, "<a class=\"thin\" href=\"http://$1\" target=\"_laconica\">http://$1</a>");
@@ -36,12 +37,17 @@
                 }
             }
 
-            var head = document.getElementsByTagName("head")[0];
-            script = document.createElement('script');
-            script.id = 'data';
-            script.type = 'text/javascript';
-            script.src = "https://identi.ca/api/statusnet/groups/timeline/cream.json?callback=foo";
-            head.appendChild(script);
+            function update() {
+                var head = document.getElementsByTagName("head")[0];
+                if(script != null) head.removeChild(script);
+                script = document.createElement('script');
+                script.id = 'data';
+                script.type = 'text/javascript';
+                script.src = "https://identi.ca/api/statusnet/groups/timeline/cream.json?callback=set_data";
+                document.getElementById('identica').innerHTML = "";
+                head.appendChild(script);
+            }
+            update();
             </script>
         </div>
     </div>

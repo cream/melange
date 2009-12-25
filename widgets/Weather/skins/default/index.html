@@ -16,7 +16,7 @@
     <body>
         <div class="widget" style="min-width: 160px;">
             <div style="width: 70px; float: left; text-align: center;">
-                <img src="images/clear.png" /><br />
+                <img id="icon" src="images/clear.png" /><br />
                 <span id="temperature" style="font-size: 1.8em; font-weight: bold; line-height: 1em;">NaN</span>
             </div>
             <div style="margin-left: 80px;">
@@ -35,18 +35,36 @@
         <script type="text/javascript" src="/common/core/core.js"></script>
         <script type="text/javascript" src="/common/core/ipc.js"></script>
         <script type="text/javascript">
+            var icons = {
+                'clear': 'clear.png',
+                'cloudy': 'cloudy.png',
+                'flurries': 'snow.png',
+                'fog': 'fog.png',
+                'hazy': 'fog.png',
+                'mostlycloudy': 'cloudy.png',
+                'mostlysunny': 'clear.png',
+                'partlycloudy': 'cloudy.png',
+                'partlysunny': 'clear.png',
+                'rain': 'rain.png',
+                'sleet': 'sleet.png',
+                'snow': 'snow.png',
+                'sunny': 'clear.png',
+                'tstorms': 'rain.png',
+                'unknown': 'clear.png',
+                }
             cream.call_periodically({
                     interval: 60000,
                     bus: 'org.cream.collector',
                     object: '/org/cream/collector/weather',
                     interface: 'org.cream.collector',
                     method: 'get_weather',
-                    params: ['Heidelberg, Germany'],
-                    callback: function(json) {
-                        $('temperature').set('text', json['temperature']+'°C');
-                        $('wind').set('text', json['wind_speed']+'km/h');
-                        $('humidity').set('text',json['humidity']+'%');
-                        $('pressure').set('text', json['pressure']+'hPa');
+                    params: ['EDFM'],
+                    callback: function(data) {
+                        $('temperature').set('text', data['temperature']+'°C');
+                        $('wind').set('text', data['wind_speed']+'km/h');
+                        $('humidity').set('text',data['humidity']+'%');
+                        $('pressure').set('text', data['pressure']+'hPa');
+                        $('icon').set('src', 'images/' + icons[data['icon']]);
                     }
                 });
         </script>
