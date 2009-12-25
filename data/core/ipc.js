@@ -21,7 +21,12 @@ cream.implement({
             if($type(options.data) == 'function') {
                 options.data = options.data();
             }
-            options.arguments = '["' + popkey(options, 'params').join('","') + '"]';
+
+            if (options['params'].length == 0) {
+                options.arguments = '[]';
+                } else {
+                options.arguments = '["' + popkey(options, 'params').join('","') + '"]';
+                }
 
             this.parent($merge(request_options || {}, {
                 url: cream.constants.API_REQUEST_BASE_URL,

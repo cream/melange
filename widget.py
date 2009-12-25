@@ -136,8 +136,8 @@ class Widget(WidgetBase):
 
 
     def show(self):
+
         skin_url = urljoin_multi('http://127.0.0.1:8080', 'widgets', self.instance, 'Default', 'index.html')
-        print skin_url
         self.view.open(skin_url)
         self.window.show_all()
 
