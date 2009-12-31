@@ -46,7 +46,8 @@ class Widget(gobject.GObject, WidgetBase):
 
         self.meta = meta
 
-        self.instance = hashlib.sha256(str(random.getrandbits(100))).hexdigest()
+        # Cream prefix: make sure hashes start with a letter (for xml)
+        self.instance = 'Cream' + hashlib.sha256(str(random.getrandbits(100))).hexdigest()
 
         skin_dir = os.path.join(self.meta['path'], 'skins')
         skns = SkinMetaData.scan(skin_dir, type='melange.widget.skin')

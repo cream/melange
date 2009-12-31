@@ -42,6 +42,11 @@ class Melange(cream.Module):
         self.widgets = cream.MetaDataDB('widgets', type='melange.widget')
         self.widget_instances = {}
 
+        self.config.active_profile = self.config.profiles[1]
+        # TODO: weg damit
+
+        print self.config.widgets
+
         for k, v in self.config.widgets.iteritems():
             self.load_widget(v['name'], v['x'], v['y'])
 
@@ -70,11 +75,12 @@ class Melange(cream.Module):
         w.connect('position-changed', self.widget_position_changed)
         w.connect('removed', self.widget_removed)
 
-        self.config.widgets[w.instance] = {
+        self.config.widgets = dict(self.config.widgets, **{w.instance : {
             'name': w.meta['name'],
-            'x': x,
-            'y': y
-            }
+            'x': int(x),
+            'y': int(y)
+            }})
+        print self.config.widgets
         self.config.save()
 
         w.show()
