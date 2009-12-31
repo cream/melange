@@ -45,10 +45,12 @@ class Melange(cream.Module):
         self.config.active_profile = self.config.profiles[1]
         # TODO: weg damit
 
-        print self.config.widgets
-
         for k, v in self.config.widgets.iteritems():
             self.load_widget(v['name'], v['x'], v['y'])
+            w = self.config.widgets # TODO: *kotz*:D
+            del w[k]
+            self.config.widgets = w
+            self.config.save()
 
 
     def widget_position_changed(self, widget, x, y):
@@ -60,7 +62,9 @@ class Melange(cream.Module):
 
     def widget_removed(self, widget):
 
-        del self.config.widgets[widget.instance]
+        w = self.config.widgets # TODO: *kotz*:D
+        del w[widget.instance]
+        self.config.widgets = w
         self.config.save()
 
 
@@ -75,12 +79,11 @@ class Melange(cream.Module):
         w.connect('position-changed', self.widget_position_changed)
         w.connect('removed', self.widget_removed)
 
-        self.config.widgets = dict(self.config.widgets, **{w.instance : {
+        self.config.widgets = dict(self.config.widgets, **{w.instance : { # TODO: *omg*
             'name': w.meta['name'],
             'x': int(x),
             'y': int(y)
             }})
-        print self.config.widgets
         self.config.save()
 
         w.show()

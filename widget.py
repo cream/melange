@@ -56,7 +56,6 @@ class Widget(gobject.GObject, WidgetBase):
         for s in skns:
             self.skins[s['name']] = s
 
-
         self.about_dialog = gtk.AboutDialog()
         self.about_dialog.connect('response', lambda *x: self.about_dialog.hide())
         self.about_dialog.connect('delete-event', lambda *x: True)
