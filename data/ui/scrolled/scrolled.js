@@ -13,7 +13,7 @@ window.addEvent('domready', function() {
         var container = document.createElement("div");
         container.id = 'container';
         container.className = 'container';
-        container.style.height = obj.offsetHeight - 28 + "px";
+        container.style.height = obj.offsetHeight - 32 + "px";
         container.style.overflow = 'hidden';
         container.appendChild(content);
 

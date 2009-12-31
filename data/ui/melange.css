@@ -1,25 +1,35 @@
+/* GENERAL */
 body {
-    margin: 0px;
-    padding: 0px;
-    font-size: 12px;
+    margin: 0;
+    padding: 0;
+    font-size: 9pt;;
 
     cursor: default;
+    -webkit-user-select: none;
+
+    font-family: "Sans";
+    font-style: normal;
 }
 
 a {
-    color: #ddd;
+    color: #cfb07f;
     text-decoration: none;
 }
 
-.widget {
-    margin: 0px;
-    padding: 10px;
 
-    color: #eee;
+/* WIDGET */
 
-    border: 1px solid #777;
+div.widget {
+    margin: 0;
+    padding: 12px;
+
+    color: #efefef;
+
     border-radius: 10px;
-    background: -webkit-gradient(linear, left -10%, left 20%, from(rgba(100, 100, 100, .8)), to(rgba(30, 30, 30, .8)));
+
+    background: -webkit-gradient(linear, left -18%, left 20%, from(rgba(100, 100, 100, .75)), to(rgba(0, 0, 0, .75)));
+
+    -webkit-box-shadow: 0px 0px 12px -1px #424242;
 }
 
 .section {
@@ -32,49 +42,143 @@ a {
     background: rgba(256, 256, 256, .08);
 }
 
-.button {
-    cursor: pointer;
-    float: left;
+
+/* BUTTONS */
+
+input[type=button], input[type=submit], input[type=reset], button, .button {
     margin: 0px;
-    padding: 3px;
+    padding: 4px;
     padding-left: 8px;
     padding-right: 8px;
 
-    color: #eee;
+    font-family: "Sans";
+    font-size: 8pt;
 
-    border: 1px solid #555;
-    border-radius: 3px;
+    float: left;
+}
+
+.button {
+    color: #efefef;
+
+    cursor: pointer;
+
+    border: 1px solid #545454;
+    border-radius: 4px;
+
+    -webkit-box-shadow: 0px 0px 6px 0px #252525;
+    text-shadow: 0px 0px 4px #000000;
+
     background: -webkit-gradient(linear, left -10%, left 70%, to(rgba(30, 30, 30, .7)), from(rgba(70, 70, 70, .7)));
 }
 
-.green {
+    .button:hover {
+        background: -webkit-gradient(linear, left -10%, left 70%, to(rgba(35, 35, 35, .72)), from(rgba(75, 75, 75, .72)));
+    }
+
+    .button:active {
+        background: -webkit-gradient(linear, left 0%, left 80%, to(rgba(70, 70, 70, .7)), from(rgba(30, 30, 30, .7)));
+    }
+
+
+/* TEXT INPUTS */
+
+input[type=text], input[type=password], textarea {
+    padding: 4px;
+    padding-left: 5px;
+    padding-right: 5px;
+
+    border-radius: 5px;
+
+    font-family: "Sans";
+}
+
+input.dark_input {
+    color: #f2f2f2;
+
+    border: 1px solid #545454;
+    background: #343434;
+
+    -webkit-box-shadow: 0px 0px 6px 0px #252525, inset 0px -13px 15px -5px #515151;
+    text-shadow: 0px 0px 4px #000000;
+}
+
+    input.dark_input:focus {
+        background: #303030;
+        -webkit-box-shadow: 0px 0px 6px 0px #252525, inset 0px -13px 15px -5px #4a4a4a;
+        outline: 0px;
+    }
+
+input.bright_input {
+    color: #121212;
+
+    border: 1px solid #a7a7a7;
+    background: #f3f3f3;
+
+    -webkit-box-shadow: 0px 0px 6px 0px #252525, inset 0px 9px 13px #bababa;
+    text-shadow: 0px 0px 4px #aaaaaa;
+}
+
+    input.bright_input:focus {
+        background: #ffffff;
+        -webkit-box-shadow: 0px 0px 6px 0px #343434, inset 0px 9px 13px #c8c8c8;
+        outline: 0px;
+    }
+
+
+/* SCROLLED */
+
+.scrolled {
+    border-radius: 5px;
+
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgba(256, 256, 256, .1);
+}
+
+.scrolled .container {
+    background-color: rgba(256, 256, 256, .075);
+
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+.scrolled .control_up {
+    height: 13px;
+    padding: 1px;
+
+    text-align: center;
+
+    background-color: rgba(256, 256, 256, .075);
+
+    border-top-right-radius: 5px;
+    border-top-left-radius: 5px;
+
+    cursor: pointer;
+}
+
+.scrolled .control_down {
+    height: 13px;
+    padding: 1px;
+
+    text-align: center;
+
+    background-color: rgba(256, 256, 256, .075);
+
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+
+    cursor: pointer;
+}
+
+
+/* MISC */
+
+.green, .green:hover, .green:active {
     border-color: darkgreen;
     background-color: green;
 }
 
-.red {
+.red, .red:hover, .red:active {
     border-color: darkred;
     background-color: red;
-}
-
-.scrolled .container {
-    background-color: rgba(256, 256, 256, .03);
-}
-
-.scrolled .control_up {
-    height: 12px;
-    padding: 1px;
-    text-align: center;
-    background-color: rgba(256, 256, 256, .1);
-    border-top-right-radius: 3px;
-    border-top-left-radius: 3px;
-}
-
-.scrolled .control_down {
-    height: 12px;
-    padding: 1px;
-    text-align: center;
-    background-color: rgba(256, 256, 256, .1);
-    border-bottom-right-radius: 3px;
-    border-bottom-left-radius: 3px;
 }
