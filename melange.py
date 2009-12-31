@@ -25,16 +25,8 @@ import cream.ipc
 import gtk.gdk
 gtk.gdk.threads_init()
 
-from widget import WidgetMetaData, Widget
+from widget import Widget
 from httpserver import HttpServer
-
-W = [
-    {
-    'hash': '81c24aa464e36cd5a84e0a648deb24fd6024b2097499299caa9c113fd96ba045',
-    'x': 600,
-    'y': 50
-    }
-]
 
 class Melange(cream.Module):
 
@@ -47,15 +39,14 @@ class Melange(cream.Module):
         self.server = HttpServer(self)
         self.server.run()
 
-        wdgs = WidgetMetaData.scan('widgets', type='melange.widget')
-        self.widgets = {}
+        self.widgets = cream.MetaDataDB('widgets', type='melange.widget')
         self.widget_instances = {}
 
-        for w in wdgs:
-            self.widgets[w['hash']] = w
+        print self.config.widgets
 
-        for w in W:
-            self.load_widget(w['hash'], w['x'], w['y'])
+
+    def _update_widget_position(self):
+        pass
 
 
     @cream.ipc.method('svv', '')
@@ -63,8 +54,15 @@ class Melange(cream.Module):
 
         self.messages.debug("Loading widget '%s'..." % name)
 
-        w = Widget(self.widgets[name])
+        w = Widget(self.widgets.get_by_name(name))
         self.widget_instances[w.instance] = w
+
+        self.config.widgets.append({
+            'name': w.meta['name'],
+            'x': 0,
+            'y': 0
+            })
+        print self.config.widgets
 
         w.show()
 
@@ -75,7 +73,7 @@ class Melange(cream.Module):
     @cream.ipc.method('', 'a{sa{ss}}')
     def list_widgets(self):
 
-        return self.widgets
+        return self.widgets.by_hash
 
 
 if __name__ == '__main__':

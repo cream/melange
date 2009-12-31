@@ -58,7 +58,7 @@
                     object: '/org/cream/collector/weather',
                     interface: 'org.cream.collector',
                     method: 'get_weather',
-                    params: ['EDFM'],
+                    params: ['Hildesheim'],
                     callback: function(data) {
                         $('temperature').set('text', data['temperature']+'°C');
                         $('wind').set('text', data['wind_speed']+'km/h');

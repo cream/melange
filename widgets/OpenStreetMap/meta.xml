@@ -3,6 +3,7 @@
     <name>OpenStreetMap</name>
     <comment>A widget displaying maps from OpenStreetMap.</comment>
     <type>melange.widget</type>
+    <icon>osm.png</icon>
     <hash>887c23817f28f5e343afe8b9aa3fe77df24fa6297afb2f8cfe0ea13a3f0ff79f</hash>
     <parent>d0ea875bc2f6bacced494a5d0bb93f2b8743994d47a052c39b893e6ca63d3f84</parent>
     <author>Sebastian Billaudelle</author>

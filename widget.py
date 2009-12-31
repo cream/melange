@@ -22,23 +22,12 @@ class WidgetMetaData(cream.MetaData):
 
 
 class WidgetConfiguration(cream.config.Configuration): # TODO: Move to cream.contrib.melange
-    x_position = cream.config.fields.IntegerField(hidden=True, default=100)
-    y_position = cream.config.fields.IntegerField(hidden=True, default=100)
+    pass
 
 
 class WidgetBase(cream.WithConfiguration): # TODO: Merge into Widget.
     def __init__(self):
         cream.WithConfiguration.__init__(self)
-
-    def _load_config(self, base_path=None):
-        if os.path.exists(os.path.join(self.meta['path'], 'config.py')):
-            # we have a custom config.py module, so use it:
-            return cream.WithConfiguration._load_config(self, self.meta['path'])
-        else:
-            # we don't have a custom configuration module, so we use the
-            # standard melange configuration:
-            return WidgetConfiguration(basedir=self.meta['path'])
-
 
 
 class Widget(WidgetBase):
@@ -105,9 +94,6 @@ class Widget(WidgetBase):
         self.menu.append(item_about)
         self.menu.show_all()
 
-        # TODO: Move position handling to Melange itself.
-        self.set_position(self.config.x_position, self.config.y_position)
-
 
     def close(self):
 
@@ -149,4 +135,4 @@ class Widget(WidgetBase):
         return self.window.move(x, y)
 
     def finalize(self):
-        self.config.x_position, self.config.y_position = self.get_position()
+        pass
