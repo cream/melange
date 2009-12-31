@@ -3,6 +3,7 @@ import os.path
 import random
 import hashlib
 
+import gobject
 import gtk
 import cairo
 import webkit
@@ -30,10 +31,17 @@ class WidgetBase(cream.WithConfiguration): # TODO: Merge into Widget.
         cream.WithConfiguration.__init__(self)
 
 
-class Widget(WidgetBase):
+class Widget(gobject.GObject, WidgetBase):
+
+    __gtype_name__ = 'Widget'
+    __gsignals__ = {
+        'position-changed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
+        'removed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        }
 
     def __init__(self, meta):
 
+        gobject.GObject.__init__(self)
         WidgetBase.__init__(self)
 
         self.meta = meta
@@ -71,6 +79,7 @@ class Widget(WidgetBase):
         self.window.set_resizable(False)
         self.window.set_default_size(10, 10)
         self.window.connect('expose-event', self.expose_cb)
+        self.window.connect('configure-event', self._update_position)
         self.window.set_colormap(self.window.get_screen().get_rgba_colormap())
 
         self.view = webkit.WebView()
@@ -95,8 +104,13 @@ class Widget(WidgetBase):
         self.menu.show_all()
 
 
+    def _update_position(self, window, event):
+        self.emit('position-changed', event.x, event.y)
+
+
     def close(self):
 
+        self.emit('removed')
         self.finalize()
         self.window.destroy()
 

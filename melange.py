@@ -42,11 +42,21 @@ class Melange(cream.Module):
         self.widgets = cream.MetaDataDB('widgets', type='melange.widget')
         self.widget_instances = {}
 
-        print self.config.widgets
+        for k, v in self.config.widgets.iteritems():
+            self.load_widget(v['name'], v['x'], v['y'])
 
 
-    def _update_widget_position(self):
-        pass
+    def widget_position_changed(self, widget, x, y):
+
+        self.config.widgets[widget.instance]['x'] = x
+        self.config.widgets[widget.instance]['y'] = y
+        self.config.save()
+
+
+    def widget_removed(self, widget):
+
+        del self.config.widgets[widget.instance]
+        self.config.save()
 
 
     @cream.ipc.method('svv', '')
@@ -57,12 +67,15 @@ class Melange(cream.Module):
         w = Widget(self.widgets.get_by_name(name))
         self.widget_instances[w.instance] = w
 
-        self.config.widgets.append({
+        w.connect('position-changed', self.widget_position_changed)
+        w.connect('removed', self.widget_removed)
+
+        self.config.widgets[w.instance] = {
             'name': w.meta['name'],
-            'x': 0,
-            'y': 0
-            })
-        print self.config.widgets
+            'x': x,
+            'y': y
+            }
+        self.config.save()
 
         w.show()
 
