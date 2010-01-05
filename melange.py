@@ -42,15 +42,14 @@ class Melange(cream.Module):
         self.widgets = cream.MetaDataDB('widgets', type='melange.widget')
         self.widget_instances = {}
 
-        self.config.active_profile = self.config.profiles[1]
-        # TODO: weg damit
-
-        for k, v in self.config.widgets.iteritems():
-            self.load_widget(v['name'], v['x'], v['y'])
-            w = self.config.widgets # TODO: *kotz*:D
-            del w[k]
-            self.config.widgets = w
-            self.config.save()
+        widgets_to_load = self.config.widgets.copy()
+        self.config.widgets = {}
+        for instance_hash, widget_data in widgets_to_load.iteritems():
+            self.load_widget(
+                widget_data['name'],
+                widget_data['x'],
+                widget_data['y']
+            )
 
 
     def widget_position_changed(self, widget, x, y):
@@ -62,14 +61,13 @@ class Melange(cream.Module):
 
     def widget_removed(self, widget):
 
-        w = self.config.widgets # TODO: *kotz*:D
-        del w[widget.instance]
-        self.config.widgets = w
+        del self.config.widgets[widget.instance]
         self.config.save()
 
 
     @cream.ipc.method('svv', '')
     def load_widget(self, name, x=None, y=None):
+        x, y = int(x), int(y)
 
         self.messages.debug("Loading widget '%s'..." % name)
 
@@ -79,16 +77,16 @@ class Melange(cream.Module):
         w.connect('position-changed', self.widget_position_changed)
         w.connect('removed', self.widget_removed)
 
-        self.config.widgets = dict(self.config.widgets, **{w.instance : { # TODO: *omg*
+        self.config.widgets[w.instance] = {
             'name': w.meta['name'],
-            'x': int(x),
-            'y': int(y)
-            }})
+            'x': x,
+            'y': y
+        }
         self.config.save()
 
         w.show()
 
-        if x and y:
+        if x is not None and y is not None:
             w.set_position(x, y)
 
 
