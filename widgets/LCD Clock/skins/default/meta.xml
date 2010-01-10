@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<meta>
+    <name>Default</name>
+    <comment>A default theme for the LCD-Clock widget...</comment>
+    <type>melange.widget.skin</type>
+    <hash>92486367114bad7229c096d6171d905386cc76f1e57ff53a79a4cc2b61e6e7a7</hash>
+    <parent>2b803089aa300bc36b2d6b1a4e28abc77790c21e05afa6fe4b3b94545bc4a848</parent>
+    <author>Lukas Martini</author>
+    <license>zlib license</license>
+    <homepage>http://lutoma.de</homepage>
+    <mail>lukas.martini@junge-piraten.de</mail>
+</meta>
