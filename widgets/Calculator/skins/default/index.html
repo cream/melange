@@ -1,0 +1,49 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+    <head>
+        <title>Calculator widget</title>
+        <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+        <link rel="stylesheet" type="text/css" href="/common/ui/melange.css" media="screen" />
+        <script type="text/javascript" src="calculator.js"></script>
+        <style type="text/css">
+        @font-face {  
+            font-family: LCDDotMatrix5x8 ;  
+            src: url(LCDDotMatrix5x8.ttf ) format("truetype");  
+            }
+        </style>
+    </head>
+    
+    <body>
+        <div class="widget" style="width: 125px; height: 170px;">
+            <div style="font-family: LCDDotMatrix5x8; font-size: 25px; text-align: right;" id="lcd">0</div>
+            <div>
+				<div onclick="javascript:addnumber(this.innerHTML);" class="button" style="width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">7</div>
+				<div onclick="javascript:addnumber(this.innerHTML);" class="button" style="width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">8</div>
+				<div onclick="javascript:addnumber(this.innerHTML);" class="button" style="width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">9</div>
+				<div onclick="javascript:command(this.innerHTML);" class="button green" style="float:right; width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">/</div>
+			</div><br /><br />
+			<div>
+				<div onclick="javascript:addnumber(this.innerHTML);" class="button" style="width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">4</div>
+				<div onclick="javascript:addnumber(this.innerHTML);" class="button" style="width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">5</div>
+				<div onclick="javascript:addnumber(this.innerHTML);" class="button" style="width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">6</div>
+				<div onclick="javascript:command(this.innerHTML);" class="button green"  style="float: right; width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">*</div>
+			</div><br /><br />
+			<div>
+				<div onclick="javascript:addnumber(this.innerHTML);" class="button" style="width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">1</div>
+				<div onclick="javascript:addnumber(this.innerHTML);" class="button" style="width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">2</div>
+				<div onclick="javascript:addnumber(this.innerHTML);" class="button" style="width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">3</div>
+				<div onclick="javascript:command(this.innerHTML);" class="button green" style="float: right; width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">-</div>
+			</div><br /><br />
+			<div>
+				<div onclick="javascript:reset();" class="button red" style="width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">C</div>
+				<div onclick="javascript:addnumber(this.innerHTML);" class="button" style="width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">0</div>
+				<div onclick="javascript:addnumber('.');" class="button" style="width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">·</div>
+				<div onclick="javascript:command(this.innerHTML);" class="button green" style="float:right; width: 10px; margin-left: 1px; margin-right: 1px; text-align: center;">+</div>
+			</div><br /><br />
+			<div>
+				<div onclick="javascript:calc();" class="button" style="width: 40px; margin-left: 1px; margin-right: 1px; text-align: center; float:right;">=</div>
+			</div>
+        </div>
+    </body>
+</html>
