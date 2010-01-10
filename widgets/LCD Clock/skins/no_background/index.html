@@ -16,6 +16,8 @@
 				var now = new Date();
 				var minutes = now.getMinutes();
 				var hr = now.getHours();
+				if(minutes < 10){ minutes = '0' + minutes }
+				if(hr < 10){ hr = '0' + hr }
 				document.getElementById('lcd').innerHTML = hr + ':' + minutes
 			}
         </script>
