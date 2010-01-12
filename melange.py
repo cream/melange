@@ -20,6 +20,7 @@ import random
 import hashlib
 
 import cream
+import cream.meta
 import cream.ipc
 
 import gtk.gdk
@@ -39,30 +40,24 @@ class Melange(cream.Module):
         self.server = HttpServer(self)
         self.server.run()
 
-        self.widgets = cream.MetaDataDB('widgets', type='melange.widget')
+        self.widgets = cream.meta.MetaDataDB('widgets', type='melange.widget')
         self.widget_instances = {}
 
-        widgets_to_load = self.config.widgets.copy()
-        self.config.widgets = {}
-        for instance_hash, widget_data in widgets_to_load.iteritems():
-            self.load_widget(
-                widget_data['name'],
-                widget_data['x'],
-                widget_data['y']
-            )
+        for widget in self.config.widgets:
+            self.load_widget(**widget)
+
+    def quit(self):
+        # Okay, we're going to perish right now, quickly save the current
+        # configuration and then let happen what can't be inhibited.
+        self.config.widgets = self.widget_instances.values()
+        cream.Module.quit(self)
 
 
     def widget_position_changed(self, widget, x, y):
-
-        self.config.widgets[widget.instance]['x'] = x
-        self.config.widgets[widget.instance]['y'] = y
-        self.config.save()
-
+        pass
 
     def widget_removed(self, widget):
-
-        del self.config.widgets[widget.instance]
-        self.config.save()
+        del self.widget_instances[widget.instance]
 
 
     @cream.ipc.method('svv', '')
@@ -77,13 +72,6 @@ class Melange(cream.Module):
         w.connect('position-changed', self.widget_position_changed)
         w.connect('removed', self.widget_removed)
 
-        self.config.widgets[w.instance] = {
-            'name': w.meta['name'],
-            'x': x,
-            'y': y
-        }
-        self.config.save()
-
         w.show()
 
         if x is not None and y is not None:
@@ -92,7 +80,6 @@ class Melange(cream.Module):
 
     @cream.ipc.method('', 'a{sa{ss}}')
     def list_widgets(self):
-
         return self.widgets.by_hash
 
 

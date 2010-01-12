@@ -1,37 +1,22 @@
 import os.path
 
-import random
-import hashlib
-
 import gobject
 import gtk
-import cairo
 import webkit
 
 import cream
-import cream.config
-from cream.util import urljoin_multi
-
-class SkinMetaData(cream.MetaData):
-    def __init__(self, path):
-        cream.MetaData.__init__(self, path)
+import cream.meta
+from cream.util import urljoin_multi, cached_property, random_hash
 
 
-class WidgetMetaData(cream.MetaData):
-    def __init__(self, path):
-        cream.MetaData.__init__(self, path)
+class SkinMetaData(cream.meta.MetaData):
+    pass
 
-
-class WidgetConfiguration(cream.config.Configuration): # TODO: Move to cream.contrib.melange
+class WidgetMetaData(cream.meta.MetaData):
     pass
 
 
-class WidgetBase(cream.WithConfiguration): # TODO: Merge into Widget.
-    def __init__(self):
-        cream.WithConfiguration.__init__(self)
-
-
-class Widget(gobject.GObject, WidgetBase):
+class Widget(gobject.GObject, cream.Configurable):
 
     __gtype_name__ = 'Widget'
     __gsignals__ = {
@@ -42,32 +27,19 @@ class Widget(gobject.GObject, WidgetBase):
     def __init__(self, meta):
 
         gobject.GObject.__init__(self)
-        WidgetBase.__init__(self)
+        cream.Configurable.__init__(self)
 
         self.meta = meta
 
-        # Cream prefix: make sure hashes start with a letter (for xml)
-        self.instance = 'Cream' + hashlib.sha256(str(random.getrandbits(100))).hexdigest()
+        self.instance = 'Cream_%s' % random_hash(bits=100)
 
         skin_dir = os.path.join(self.meta['path'], 'skins')
-        skns = SkinMetaData.scan(skin_dir, type='melange.widget.skin')
-        self.skins = {}
+        self.skins = dict((skin['name'], skin) for skin in
+                          SkinMetaData.scan(skin_dir, type='melange.widget.skin'))
 
-        for s in skns:
-            self.skins[s['name']] = s
+        self.build_ui()
 
-        self.about_dialog = gtk.AboutDialog()
-        self.about_dialog.connect('response', lambda *x: self.about_dialog.hide())
-        self.about_dialog.connect('delete-event', lambda *x: True)
-
-        self.about_dialog.set_name(self.meta['name'])
-        self.about_dialog.set_authors([self.meta['author']])
-        if self.meta.has_key('icon'):
-            icon_path = os.path.join(self.meta['path'], self.meta['icon'])
-            icon_pb = gtk.gdk.pixbuf_new_from_file(icon_path).scale_simple(64, 64, gtk.gdk.INTERP_HYPER)
-            self.about_dialog.set_logo(icon_pb)
-        self.about_dialog.set_comments(self.meta['comment'])
-
+    def build_ui(self):
         self.window = gtk.Window()
         self.window.stick()
         self.window.set_keep_below(True)
@@ -103,21 +75,30 @@ class Widget(gobject.GObject, WidgetBase):
         self.menu.append(item_about)
         self.menu.show_all()
 
+    @cached_property
+    def about_dialog(self):
+        about_dialog = gtk.AboutDialog()
+        about_dialog.connect('response', lambda *x: self.about_dialog.hide())
+        about_dialog.connect('delete-event', lambda *x: True)
+
+        about_dialog.set_name(self.meta['name'])
+        about_dialog.set_authors([self.meta['author']])
+        if self.meta.has_key('icon'):
+            icon_path = os.path.join(self.meta['path'], self.meta['icon'])
+            icon_pb = gtk.gdk.pixbuf_new_from_file(icon_path).scale_simple(64, 64, gtk.gdk.INTERP_HYPER)
+            about_dialog.set_logo(icon_pb)
+        about_dialog.set_comments(self.meta['comment'])
+
+        return about_dialog
+
 
     def _update_position(self, window, event):
         self.emit('position-changed', event.x, event.y)
 
 
     def close(self):
-
         self.emit('removed')
-        self.finalize()
         self.window.destroy()
-
-
-    def __del__(self):
-        raise ItWorks() # never called
-
 
     def clicked_cb(self, source, event):
 
@@ -125,19 +106,17 @@ class Widget(gobject.GObject, WidgetBase):
             self.menu.popup(None, None, None, event.button, event.get_time())
             return True
 
-
     def expose_cb(self, source, event):
-
         ctx = source.window.cairo_create()
 
-        ctx.set_operator(cairo.OPERATOR_SOURCE)
+        ctx.set_operator(0x1) # 0x1 = cairo.OPERATOR_SOURCE
         ctx.set_source_rgba(0, 0, 0, 0)
         ctx.paint()
 
 
     def show(self):
-
-        skin_url = urljoin_multi('http://127.0.0.1:8080', 'widgets', self.instance, 'Default', 'index.html')
+        skin_url = urljoin_multi('http://127.0.0.1:8080', 'widgets',
+                                 self.instance, 'Default', 'index.html')
         self.view.open(skin_url)
         self.window.show_all()
 
@@ -148,5 +127,10 @@ class Widget(gobject.GObject, WidgetBase):
     def set_position(self, x, y):
         return self.window.move(x, y)
 
-    def finalize(self):
-        pass
+    def __xmlserialize__(self):
+        # TODO: Save hash rather than name here?
+        return {
+            'name' : self.meta['name'],
+            'x'    : self.get_position()[0],
+            'y'    : self.get_position()[1],
+        }
