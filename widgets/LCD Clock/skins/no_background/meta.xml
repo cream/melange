@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<meta>
+    <name>No Background</name>
+    <comment>Same as the default theme, but without background</comment>
+    <type>melange.widget.skin</type>
+    <hash>6a8d4b28b6ced1ff67ef6c14d0d86c28db6d64de663d29fb81bdb5a56913ed08</hash>
+    <parent>2b803089aa300bc36b2d6b1a4e28abc77790c21e05afa6fe4b3b94545bc4a848</parent>
+    <author>Lukas Martini</author>
+    <license>zlib license</license>
+    <homepage>http://lutoma.de</homepage>
+    <mail>lukas.martini@junge-piraten.de</mail>
+</meta>
