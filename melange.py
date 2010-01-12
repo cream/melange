@@ -66,16 +66,27 @@ class Melange(cream.Module):
 
         self.messages.debug("Loading widget '%s'..." % name)
 
-        w = Widget(self.widgets.get_by_name(name))
-        self.widget_instances[w.instance] = w
+        widget = Widget(self.widgets.get_by_name(name))
+        self.widget_instances[widget.instance] = widget
 
-        w.connect('position-changed', self.widget_position_changed)
-        w.connect('removed', self.widget_removed)
+        widget.connect('position-changed', self.widget_position_changed)
+        widget.connect('removed', self.widget_removed)
+        widget.connect('reload', self.reload_widget)
 
-        w.show()
+        widget.show()
 
         if x is not None and y is not None:
-            w.set_position(x, y)
+            widget.set_position(x, y)
+
+    def reload_widget(self, widget):
+        info_dict = widget.__xmlserialize__() # just for now, we need a proper
+                                              # shortcut for this information
+                                              # or any other abstraction for
+                                              # information like position/name
+        self.messages.debug("Reloading widget '%(name)s'" % info_dict)
+        widget.close()
+        self.load_widget(**info_dict)
+
 
 
     @cream.ipc.method('', 'a{sa{ss}}')

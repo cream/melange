@@ -22,6 +22,7 @@ class Widget(gobject.GObject, cream.Configurable):
     __gsignals__ = {
         'position-changed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
         'removed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'reload' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
         }
 
     def __init__(self, meta):
@@ -64,6 +65,9 @@ class Widget(gobject.GObject, cream.Configurable):
 
         self.window.add(self.bin)
 
+        item_reload = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
+        item_reload.connect('activate', lambda *x: self.reload())
+
         item_remove = gtk.ImageMenuItem(gtk.STOCK_REMOVE)
         item_remove.connect('activate', lambda *x: self.close())
 
@@ -71,6 +75,7 @@ class Widget(gobject.GObject, cream.Configurable):
         item_about.connect('activate', lambda *x: self.about_dialog.show_all())
 
         self.menu = gtk.Menu()
+        self.menu.append(item_reload)
         self.menu.append(item_remove)
         self.menu.append(item_about)
         self.menu.show_all()
@@ -97,8 +102,8 @@ class Widget(gobject.GObject, cream.Configurable):
 
 
     def close(self):
-        self.emit('removed')
         self.window.destroy()
+        self.emit('removed')
 
     def clicked_cb(self, source, event):
 
@@ -119,6 +124,9 @@ class Widget(gobject.GObject, cream.Configurable):
                                  self.instance, 'Default', 'index.html')
         self.view.open(skin_url)
         self.window.show_all()
+
+    def reload(self):
+        self.emit('reload')
 
 
     def get_position(self):
