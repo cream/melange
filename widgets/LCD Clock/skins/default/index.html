@@ -12,13 +12,13 @@
             }
 
             .widget {
-                width: 170px;
+                width: 160px;
                 height: 35px;
             }
 
             #lcd {
                 font-family: LCDDotMatrix5x8;
-                font-size: 50px;
+                font-size: 48px;
                 text-align: center;
                 display: none;
             }
@@ -35,7 +35,7 @@
 
             function run_clock() {
                 clockupdate();
-                document.getElementById('lcd').style.display = 'inline';
+                document.getElementById('lcd').style.display = 'block';
                 setInterval(clockupdate, 500);
             }
         </script>
