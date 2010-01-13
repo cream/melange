@@ -9,6 +9,9 @@ from cream.util import cached_property
 _OBJECT_CACHE = {}
 _MELANGE = None
 
+HOST = '127.0.0.1'
+PORT = 8080
+
 class HttpServer(object):
     """
     HttpServer for serving static (HTML|JS|CSS) files and proxying DBus for
@@ -62,4 +65,4 @@ class HttpServer(object):
 
 
     def run(self):
-        thread.start_new_thread(run, (), dict(host='127.0.0.1', port=8080, quiet=True))
+        thread.start_new_thread(run, (), dict(host=HOST, port=PORT, quiet=True))

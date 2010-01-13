@@ -8,6 +8,10 @@ import cream
 import cream.meta
 from cream.util import urljoin_multi, cached_property, random_hash
 
+from httpserver import HOST, PORT
+
+import webbrowser
+
 
 class SkinMetaData(cream.meta.MetaData):
     pass
@@ -62,6 +66,8 @@ class Widget(gobject.GObject, cream.Configurable):
         self.bin.add(self.view)
 
         self.view.connect('button-press-event', self.clicked_cb)
+        self.view.connect('new-window-policy-decision-requested', self.navigation_request_cb)
+        self.view.connect('navigation-policy-decision-requested', self.navigation_request_cb)
 
         self.window.add(self.bin)
 
@@ -79,6 +85,16 @@ class Widget(gobject.GObject, cream.Configurable):
         self.menu.append(item_remove)
         self.menu.append(item_about)
         self.menu.show_all()
+
+
+    def navigation_request_cb(self, view, frame, request, action, decision):
+
+        uri = request.get_uri()
+
+        if not uri.startswith('http://{0}:{1}/'.format(HOST, PORT)):
+            webbrowser.open(uri)
+            return True
+
 
     @cached_property
     def about_dialog(self):
@@ -120,7 +136,7 @@ class Widget(gobject.GObject, cream.Configurable):
 
 
     def show(self):
-        skin_url = urljoin_multi('http://127.0.0.1:8080', 'widgets',
+        skin_url = urljoin_multi('http://{0}:{1}'.format(HOST, PORT), 'widgets',
                                  self.instance, 'Default', 'index.html')
         self.view.open(skin_url)
         self.window.show_all()
