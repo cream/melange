@@ -72,6 +72,7 @@ class Widget(gobject.GObject, cream.Configurable):
         self.window.add(self.bin)
 
         item_reload = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
+        item_reload.get_children()[0].set_label("Reload")
         item_reload.connect('activate', lambda *x: self.reload())
 
         item_remove = gtk.ImageMenuItem(gtk.STOCK_REMOVE)
