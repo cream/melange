@@ -38,19 +38,19 @@
             var icons = {
                 'clear': 'clear.png',
                 'cloudy': 'cloudy.png',
-                'flurries': 'snow.png',
+                'flurries': 'flurries.png',
                 'fog': 'fog.png',
-                'hazy': 'fog.png',
-                'mostlycloudy': 'cloudy.png',
-                'mostlysunny': 'clear.png',
-                'partlycloudy': 'cloudy.png',
-                'partlysunny': 'clear.png',
+                'hazy': 'hazy.png',
+                'mostlycloudy': 'mostlycloudy.png',
+                'mostlysunny': 'mostlysunny.png',
+                'partlycloudy': 'partlycloudy.png',
+                'partlysunny': 'partlysunny.png',
                 'rain': 'rain.png',
                 'sleet': 'sleet.png',
                 'snow': 'snow.png',
-                'sunny': 'clear.png',
+                'sunny': 'sunny.png',
                 'tstorms': 'thunderstorms.png',
-                'unknown': 'clear.png',
+                'unknown': 'unknown.png',
                 }
             cream.call_periodically({
                     interval: 60000,
@@ -58,7 +58,7 @@
                     object: '/org/cream/collector/weather',
                     interface: 'org.cream.collector',
                     method: 'get_weather',
-                    params: ['Hildesheim'],
+                    params: ['Heidelberg, Germany'],
                     callback: function(data) {
                         $('temperature').set('text', data['temperature']+'°C');
                         $('wind').set('text', data['wind_speed']+'km/h');
