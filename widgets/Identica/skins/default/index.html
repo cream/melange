@@ -11,44 +11,46 @@
 </head>
 
 <body>
-    <div class="widget" style="width: 160px; height: 220;">
-        <div id="scolled" class="scrolled" style="height: 220px;">
-            <div id="identica">
-            </div>
-
-            <script type="text/javascript">
-            var script = null;
-            function set_data(data) {
-                for (var c = 0; c < data.length && c < 10; c++) {
-                    var content = data[c]['text'];
-                    content = content.replace(/http:\/\/([^ ]+)/g, "<a class=\"thin\" href=\"http://$1\" target=\"_laconica\">http://$1</a>");
-                    content = content.replace(/@([\w*]+)/g, '@<a class=\"thin\" href="http://identi.ca/$1" target=\"_laconica\">$1</a>');
-                    content = content.replace(/#([\w*]+)/g, '#<a class=\"thin\" href="http://identi.ca/tag/$1" target="_laconica">$1</a>');
-                    content = content.replace(/!([\w*]+)/g, '!<a class=\"thin\" href="http://identi.ca/group/$1" target="_laconica">$1</a>');
-
-                    box = document.createElement('div')
-                    box.innerHTML = '<span style="font-size: .9em; font-style: italic;">' + content + '</span><br /><span style="font-size: .7em; color: #999;">- ' + data[c]['user']['screen_name'] + ' at ' + data[c]['created_at'].split(/\+/)[0] + '</span>';
-
-                    if (c != 0) {
-                        box.style.paddingTop = "10px";
+    <div class="widget" style="width: 180px;">
+        <div class="background">
+            <div id="scolled" class="scrolled" style="height: 220px;">
+                <div id="identica">
+                </div>
+    
+                <script type="text/javascript">
+                var script = null;
+                function set_data(data) {
+                    for (var c = 0; c < data.length && c < 10; c++) {
+                        var content = data[c]['text'];
+                        content = content.replace(/http:\/\/([^ ]+)/g, "<a class=\"thin\" href=\"http://$1\" target=\"_laconica\">http://$1</a>");
+                        content = content.replace(/@([\w*]+)/g, '@<a class=\"thin\" href="http://identi.ca/$1" target=\"_laconica\">$1</a>');
+                        content = content.replace(/#([\w*]+)/g, '#<a class=\"thin\" href="http://identi.ca/tag/$1" target="_laconica">$1</a>');
+                        content = content.replace(/!([\w*]+)/g, '!<a class=\"thin\" href="http://identi.ca/group/$1" target="_laconica">$1</a>');
+    
+                        box = document.createElement('div')
+                        box.innerHTML = '<span style="font-size: .9em;">' + content + '</span><br /><span style="font-size: .7em; color: #999;">- ' + data[c]['user']['screen_name'] + ' at ' + data[c]['created_at'].split(/\+/)[0] + '</span>';
+    
+                        if (c != 0) {
+                            box.style.paddingTop = "10px";
+                        }
+    
+                        document.getElementById('identica').appendChild(box)
                     }
-
-                    document.getElementById('identica').appendChild(box)
                 }
-            }
-
-            function update() {
-                var head = document.getElementsByTagName("head")[0];
-                if(script != null) head.removeChild(script);
-                script = document.createElement('script');
-                script.id = 'data';
-                script.type = 'text/javascript';
-                script.src = "https://identi.ca/api/statusnet/groups/timeline/cream.json?callback=set_data";
-                document.getElementById('identica').innerHTML = "";
-                head.appendChild(script);
-            }
-            update();
-            </script>
+    
+                function update() {
+                    var head = document.getElementsByTagName("head")[0];
+                    if(script != null) head.removeChild(script);
+                    script = document.createElement('script');
+                    script.id = 'data';
+                    script.type = 'text/javascript';
+                    script.src = "https://identi.ca/api/statusnet/groups/timeline/cream.json?callback=set_data";
+                    document.getElementById('identica').innerHTML = "";
+                    head.appendChild(script);
+                }
+                update();
+                </script>
+            </div>
         </div>
     </div>
 </body>

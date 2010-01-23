@@ -15,15 +15,18 @@
     </head>
     
     <body>
-        <div class="widget" style="width: 160px; height: 46px;">
-            <div style="font-family: LCDDotMatrix5x8; font-size: 25px; white-space: nowrap;">
-                <span id="main">00:00:00</span><span id="ms" style="font-size: .6em;">.00</span>
-            </div>
-            <div onclick="javascript: startstop();" id="startstop_button" class="button green">
-                Start
-            </div>
-            <div onclick="javascript: reset();" class="button" style="float: right;">
-                Reset
+        <div class="widget" style="width: 180px;">
+            <div class="background">
+                <div style="font-family: LCDDotMatrix5x8; font-size: 25px; white-space: nowrap;">
+                    <span id="main">00:00:00</span><span id="ms" style="font-size: .6em;">.00</span>
+                </div>
+                <div onclick="javascript: startstop();" id="startstop_button" class="button green">
+                    Start
+                </div>
+                <div onclick="javascript: reset();" class="button" style="float: right;">
+                    Reset
+                </div>
+                <div style="clear: both;"></div>
             </div>
         </div>
     </body>

@@ -11,16 +11,12 @@
                 src: url(LCDDotMatrix5x8.ttf ) format("truetype");
             }
 
-            .widget {
-                width: 160px;
-                height: 35px;
-            }
-
             #lcd {
                 font-family: LCDDotMatrix5x8;
                 font-size: 48px;
                 text-align: center;
                 display: none;
+                margin-bottom: -.28em;
             }
         </style>
         <script type="text/javascript">
@@ -42,9 +38,11 @@
     </head>
 
     <body onload="run_clock()">
-        <div class="widget">
-            <div id="lcd" onclick="clockupdate()">
-                00:00
+        <div class="widget" style="width: 180px;">
+            <div class="background">
+                <div id="lcd" onclick="clockupdate()">
+                    00:00
+                </div>
             </div>
         </div>
     </body>

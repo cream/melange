@@ -1,8 +1,9 @@
 /* GENERAL */
 body {
-    margin: 0;
-    padding: 0;
-    font-size: 9pt;;
+    margin: 0px;
+    padding: 0px;
+
+    font-size: 9pt;
 
     cursor: default;
     -webkit-user-select: none;
@@ -20,16 +21,21 @@ a {
 /* WIDGET */
 
 div.widget {
-    margin: 0;
-    padding: 12px;
+    padding: 5px;
+}
+
+div.background {
+    padding: 10px;
 
     color: #efefef;
 
     border-radius: 10px;
 
+    outline-right: 5px solid red;
+
     background: -webkit-gradient(linear, left -18%, left 20%, from(rgba(100, 100, 100, .75)), to(rgba(0, 0, 0, .75)));
 
-    -webkit-box-shadow: 0px 0px 12px -1px #424242;
+    -webkit-box-shadow: 0px 0px 5px rgba(1, 1, 1, .55);
 }
 
 .section {

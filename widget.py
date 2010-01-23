@@ -142,6 +142,7 @@ class Widget(gobject.GObject, cream.Configurable):
         self.view.open(skin_url)
         self.window.show_all()
 
+
     def reload(self):
         self.emit('reload')
 
