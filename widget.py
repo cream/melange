@@ -1,8 +1,10 @@
 import os.path
+import imp
 
 import gobject
 import gtk
 import webkit
+import javascriptcore as jscore
 
 import cream
 import cream.meta
@@ -12,12 +14,20 @@ from httpserver import HOST, PORT
 
 import webbrowser
 
+from cream.contrib.melange.api import APIS
+
 
 class SkinMetaData(cream.meta.MetaData):
     pass
 
 class WidgetMetaData(cream.meta.MetaData):
     pass
+
+
+class WidgetAPI(object):
+
+    def debug(self, message):
+        print message
 
 
 class Widget(gobject.GObject, cream.Configurable):
@@ -43,8 +53,12 @@ class Widget(gobject.GObject, cream.Configurable):
                           SkinMetaData.scan(skin_dir, type='melange.widget.skin'))
 
         self.build_ui()
+        self.init_api()
+
 
     def build_ui(self):
+
+        # Setting up the Widget's window...
         self.window = gtk.Window()
         self.window.stick()
         self.window.set_keep_below(True)
@@ -59,18 +73,22 @@ class Widget(gobject.GObject, cream.Configurable):
         self.window.connect('configure-event', self._update_position)
         self.window.set_colormap(self.window.get_screen().get_rgba_colormap())
 
+        # Initializing the WebView...
         self.view = webkit.WebView()
         self.view.set_transparent(True)
 
+        # Creating container for receiving events:
         self.bin = gtk.EventBox()
         self.bin.add(self.view)
 
+        # Connecting to signals:
         self.view.connect('button-press-event', self.clicked_cb)
         self.view.connect('new-window-policy-decision-requested', self.navigation_request_cb)
         self.view.connect('navigation-policy-decision-requested', self.navigation_request_cb)
 
         self.window.add(self.bin)
 
+        # Building context menu:
         item_reload = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
         item_reload.get_children()[0].set_label("Reload")
         item_reload.connect('activate', lambda *x: self.reload())
@@ -86,6 +104,21 @@ class Widget(gobject.GObject, cream.Configurable):
         self.menu.append(item_remove)
         self.menu.append(item_about)
         self.menu.show_all()
+
+
+    def init_api(self):
+
+        # Creating JavaScript context...
+        self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
+
+        # Setting up JavaScript API...
+        self.js_context.widget = WidgetAPI()
+
+        custom_api_file = os.path.join(self.meta['path'], '__init__.py')
+        if os.path.isfile(custom_api_file):
+            imp.load_module('custom_api', open(custom_api_file), custom_api_file, ('.py', 'rb', imp.PY_SOURCE))
+            for a in APIS[custom_api_file].iteritems():
+                self.js_context.widget.__setattr__(a[0], a[1](self))
 
 
     def navigation_request_cb(self, view, frame, request, action, decision):

@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<meta>
+    <name>Default</name>
+    <comment>A default theme for the Facebook Notifier widget...</comment>
+    <type>melange.widget.skin</type>
+    <hash>ab45f1bc855263b2c1c709f0701e7b034fc2cdf99abf925109ed1a3c566a3cac</hash>
+    <parent>e7cdad4d33bd371fdc22dd65d8b6515fd711f188147fcba1c9475d0c36434cb8</parent>
+    <author>Sebastian Billaudelle</author>
+    <license>GPLv3</license>
+    <homepage>http://cream-project.org</homepage>
+    <mail>stein@cream-project.org</mail>
+</meta>
