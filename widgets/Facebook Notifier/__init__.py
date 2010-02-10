@@ -18,7 +18,7 @@ class API(api.WidgetAPI):
     def __init__(self, widget):
 
         def call_callback(event, arguments=()):
-            print self.widget.js_context.blubb([1, 'aa']) # This works.
+            #print self.widget.js_context.blubb([1, 'aa']) # This works.
             if event == 'authenticated':
                 self.callbacks[event]()
             else:
@@ -32,6 +32,8 @@ class API(api.WidgetAPI):
         self._facebook.connect('authenticated', lambda *x: gobject.timeout_add(0, call_callback, ('authenticated')))
         self._facebook.connect('update-friends', lambda source, friends: gobject.timeout_add(0, call_callback, 'update-friends', (friends,)))
 
+
+    def authenticate(self):
         thread.start_new_thread(self._facebook.authenticate, ())
 
 
@@ -66,9 +68,11 @@ class Facebook(gobject.GObject):
 
         print "AUTHENTICATING..."
 
+        """
         self.api.auth.createToken()
         self.api.login(True)
         res = self.api.auth.getSession()
+        """
 
         gobject.timeout_add(0, lambda: self.emit('authenticated'))
 
@@ -77,10 +81,15 @@ class Facebook(gobject.GObject):
 
         print "RETRIEVING FRIEND LIST..."
 
+        """
         friends = self.api.friends.get()
         #infos = self.api.users.getInfo(friends, ['first_name', 'last_name', 'name'])
         #print infos
-        self.emit('update-friends', friends)
+        """
+
+        friends = [1, 2, 3, 4, 5]
+        
+        gobject.timeout_add(0, lambda: self.emit('update-friends', friends))
 
         print "RETRIEVED FRIEND LIST"
 

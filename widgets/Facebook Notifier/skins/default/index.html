@@ -35,14 +35,10 @@
                 </div>
                     <div id="foo" class="page">
                         <div class="scrolled" style="height: 148px;">
+                            <img src="images/fb_friends.png" />
                         </div>
                     </div>
                     <script type="text/javascript">
-
-                    function blubb(arg) {
-                        foo.innerHTML = arg[1];
-                        }
-
                     foo = $('foo')
 
                     $('categories').addEvent('value_changed', function(option) {
@@ -59,9 +55,12 @@
                         widget.api.request_friends()
                     })
 
+                    widget.api.authenticate();
+
                     widget.api.add_callback('update-friends', function(friends) {
-                        foo.innerHTML = friends;
-                        widget.debug(friends);
+                        //widget.debug(friends);
+                        doo.innerHTML = friends;
+                        widget.debug("Hello!");
                     })
                     </script>
             </div>
