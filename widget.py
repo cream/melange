@@ -72,7 +72,6 @@ class Widget(gobject.GObject, cream.Configurable):
         self.window.set_app_paintable(True)
         self.window.set_resizable(False)
         self.window.set_default_size(10, 10)
-        self.view.connect('expose-event', self.resize_cb)
         self.window.connect('expose-event', self.expose_cb)
         self.window.connect('configure-event', self._update_position)
         self.window.set_colormap(self.window.get_screen().get_rgba_colormap())
@@ -86,6 +85,7 @@ class Widget(gobject.GObject, cream.Configurable):
         self.bin.add(self.view)
 
         # Connecting to signals:
+        self.view.connect('expose-event', self.resize_cb)
         self.view.connect('button-press-event', self.clicked_cb)
         self.view.connect('new-window-policy-decision-requested', self.navigation_request_cb)
         self.view.connect('navigation-policy-decision-requested', self.navigation_request_cb)
