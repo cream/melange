@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<meta>
+    <name>Paste Widget</name>
+    <comment>Widget for pasting text.</comment>
+    <type>melange.widget</type>
+    <icon>paste.svg</icon>
+    <hash>192fe49e3ea7e6a645bac5f0a8a35ad5759baa39c41933ce68bb30d44bbef622</hash>
+    <parent>d0ea875bc2f6bacced494a5d0bb93f2b8743994d47a052c39b893e6ca63d3f84</parent>
+    <author>Sebastian Billaudelle</author>
+    <license>GPLv3</license>
+    <homepage>http://cream-project.org</homepage>
+    <mail>stein@cream-project.org</mail>
+</meta>

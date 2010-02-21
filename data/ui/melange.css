@@ -39,15 +39,14 @@ div.background {
 }
 
 .section {
-    margin: 0px;
-    margin-bottom: 5px;
-    padding: 5px;
+    margin: 5px;
+    padding: 3px;
 
-    border-radius: 5px;
+    border-radius: 3px;
 
-    background: rgba(256, 256, 256, .08);
+    background: rgba(0, 0, 0, .04);
+    border: 1px solid rgba(256, 256, 256, .08);
 }
-
 
 /* BUTTONS */
 
@@ -227,4 +226,28 @@ input.bright_input {
 .red, .red:hover, .red:active {
     border-color: darkred;
     background-color: red;
+}
+
+.dialog {
+    display: none;
+    z-index: 1000;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    margin: 15px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: rgba(40, 40, 40, .95);
+    -webkit-box-shadow: 0px 0px 5px rgba(256, 256, 256, .5);
+}
+.overlay {
+    display: none;
+    z-index: 999;
+    background-color: rgba(40, 40, 40, .8);
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    border-radius: 10px;
 }

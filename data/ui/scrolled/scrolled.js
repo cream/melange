@@ -1,6 +1,6 @@
 window.addEvent('domready', function() {
     $$('.scrolled').each(function(obj){
-        var speed = 2;
+        var speed = 3;
 
         var parent = obj.parentNode;
 
@@ -11,9 +11,10 @@ window.addEvent('domready', function() {
         obj.innerHTML = '';
 
         var container = document.createElement("div");
-        container.id = 'container';
         container.className = 'container';
-        container.style.height = obj.offsetHeight - 32 + "px";
+        height = document.defaultView.getComputedStyle(obj, null).getPropertyValue('height');
+        height = height.replace('px', '');
+        container.style.height = height - 30 + "px";
         container.style.overflow = 'hidden';
         container.appendChild(content);
 

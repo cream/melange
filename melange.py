@@ -19,12 +19,12 @@
 import random
 import hashlib
 
+import gobject
+gobject.threads_init() 
+
 import cream
 import cream.meta
 import cream.ipc
-
-import gtk.gdk
-gtk.gdk.threads_init()
 
 from widget import Widget
 from httpserver import HttpServer
@@ -86,7 +86,6 @@ class Melange(cream.Module):
         self.messages.debug("Reloading widget '%(name)s'" % info_dict)
         widget.close()
         self.load_widget(**info_dict)
-
 
 
     @cream.ipc.method('', 'a{sa{ss}}')

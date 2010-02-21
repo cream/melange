@@ -1,3 +1,4 @@
+import sys
 import os.path
 import imp
 
@@ -106,19 +107,34 @@ class Widget(gobject.GObject, cream.Configurable):
         self.menu.show_all()
 
 
+    def resize_cb(self, *args):
+
+        try:
+            width = int(self.js_context.document.getElementById('widget').offsetWidth)
+            height = int(self.js_context.document.getElementById('widget').offsetHeight)
+            self.window.set_size_request(width, height)
+            self.window.resize(width, height)
+        except:
+            pass
+
+
     def init_api(self):
 
         # Creating JavaScript context...
         self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
+
+        self.js_context.window.onresize = self.resize_cb
 
         # Setting up JavaScript API...
         self.js_context.widget = WidgetAPI()
 
         custom_api_file = os.path.join(self.meta['path'], '__init__.py')
         if os.path.isfile(custom_api_file):
-            imp.load_module('custom_api', open(custom_api_file), custom_api_file, ('.py', 'rb', imp.PY_SOURCE))
+            sys.path.insert(0, self.meta['path'])
+            imp.load_module('custom_api', open(custom_api_file), custom_api_file, ('.py', 'r', imp.PY_SOURCE))
             for a in APIS[custom_api_file].iteritems():
                 self.js_context.widget.__setattr__(a[0], a[1](self))
+            sys.path.remove(self.meta['path'])
 
 
     def navigation_request_cb(self, view, frame, request, action, decision):

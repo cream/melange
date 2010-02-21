@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<meta>
+    <name>Default</name>
+    <comment>A default theme for the Paste widget...</comment>
+    <type>melange.widget.skin</type>
+    <hash>ee5af10d7865a7af9bd48b72389452287d89379f5dc5cb6bf0866b54fe9a7f90</hash>
+    <parent>192fe49e3ea7e6a645bac5f0a8a35ad5759baa39c41933ce68bb30d44bbef622</parent>
+    <author>Sebastian Billaudelle</author>
+    <license>GPLv3</license>
+    <homepage>http://cream-project.org</homepage>
+    <mail>stein@cream-project.org</mail>
+</meta>
