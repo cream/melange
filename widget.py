@@ -42,6 +42,8 @@ class Widget(gobject.GObject, cream.Configurable):
 
     def __init__(self, meta):
 
+        self._widget_size = (None, None)
+
         gobject.GObject.__init__(self)
         cream.Configurable.__init__(self)
 
@@ -70,6 +72,7 @@ class Widget(gobject.GObject, cream.Configurable):
         self.window.set_app_paintable(True)
         self.window.set_resizable(False)
         self.window.set_default_size(10, 10)
+        self.view.connect('expose-event', self.resize_cb)
         self.window.connect('expose-event', self.expose_cb)
         self.window.connect('configure-event', self._update_position)
         self.window.set_colormap(self.window.get_screen().get_rgba_colormap())
@@ -112,8 +115,10 @@ class Widget(gobject.GObject, cream.Configurable):
         try:
             width = int(self.js_context.document.getElementById('widget').offsetWidth)
             height = int(self.js_context.document.getElementById('widget').offsetHeight)
-            self.window.set_size_request(width, height)
-            self.window.resize(width, height)
+            if not self._widget_size == (width, height):
+                self._widget_size = (width, height)
+                self.window.set_size_request(width, height)
+                self.window.resize(width, height)
         except:
             pass
 
@@ -122,8 +127,6 @@ class Widget(gobject.GObject, cream.Configurable):
 
         # Creating JavaScript context...
         self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
-
-        self.js_context.window.onresize = self.resize_cb
 
         # Setting up JavaScript API...
         self.js_context.widget = WidgetAPI()
