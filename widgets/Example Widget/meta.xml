@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<meta>
+    <name>Example Widget</name>
+    <comment>Providing an example for developers.</comment>
+    <type>melange.widget</type>
+    <hash>7c402f7474734bf2cefddbe308e5c497cae33d548654b283c773a3d681ad0105</hash>
+    <parent>d0ea875bc2f6bacced494a5d0bb93f2b8743994d47a052c39b893e6ca63d3f84</parent>
+    <author>Sebastian Billaudelle</author>
+    <license>GPLv3</license>
+    <homepage>http://cream-project.org</homepage>
+    <mail>stein@cream-project.org</mail>
+</meta>
