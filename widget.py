@@ -44,6 +44,8 @@ class Widget(gobject.GObject, cream.Configurable):
 
         self._widget_size = (None, None)
 
+        self.widget_element = None
+
         gobject.GObject.__init__(self)
         cream.Configurable.__init__(self)
 
@@ -110,17 +112,25 @@ class Widget(gobject.GObject, cream.Configurable):
         self.menu.show_all()
 
 
-    def resize_cb(self, *args):
+    def resize_cb(self, widget, event, *args):
 
-        try:
-            width = int(self.js_context.document.getElementById('widget').offsetWidth)
-            height = int(self.js_context.document.getElementById('widget').offsetHeight)
+        if not self.widget_element:
+            for i in range(0, int(self.js_context.document.body.childNodes.length)):
+                try:
+                    e = self.js_context.document.body.childNodes[i]
+                    if e.className == 'widget':
+                        self.widget_element = e
+                        break
+                except:
+                    pass
+
+        if self.widget_element:
+            width = int(self.widget_element.offsetWidth)
+            height = int(self.widget_element.offsetHeight)
             if not self._widget_size == (width, height):
                 self._widget_size = (width, height)
                 self.window.set_size_request(width, height)
                 self.window.resize(width, height)
-        except:
-            pass
 
 
     def init_api(self):
@@ -171,8 +181,10 @@ class Widget(gobject.GObject, cream.Configurable):
 
 
     def close(self):
+
         self.window.destroy()
         self.emit('removed')
+
 
     def clicked_cb(self, source, event):
 

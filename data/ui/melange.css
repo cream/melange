@@ -63,6 +63,7 @@ input[type=button], input[type=submit], input[type=reset], button, .button {
 }
 
 .button {
+    margin: 5px;
     color: #efefef;
 
     cursor: pointer;
