@@ -144,7 +144,7 @@ class Widget(gobject.GObject, cream.Configurable):
         custom_api_file = os.path.join(self.meta['path'], '__init__.py')
         if os.path.isfile(custom_api_file):
             sys.path.insert(0, self.meta['path'])
-            imp.load_module('custom_api', open(custom_api_file), custom_api_file, ('.py', 'r', imp.PY_SOURCE))
+            imp.load_module('custom_api_{0}'.format(self.instance), open(custom_api_file), custom_api_file, ('.py', 'r', imp.PY_SOURCE))
             for a in APIS[custom_api_file].iteritems():
                 self.js_context.widget.__setattr__(a[0], a[1](self))
             sys.path.remove(self.meta['path'])
