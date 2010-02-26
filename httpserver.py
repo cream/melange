@@ -32,7 +32,7 @@ class HttpServer(object):
     def widget_files(instance_hash, skin, file):
 
         w = _MELANGE.widget_instances[instance_hash]
-        path = os.path.join(w.meta['path'], 'skins', w.skins[skin]['path'])
+        path = os.path.join(w.meta['path'], 'skins', w.skins.get_by_name(skin)['path'])
         return send_file(file, path)
 
 

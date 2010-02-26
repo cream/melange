@@ -16,9 +16,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
 
-import random
-import hashlib
-
 import gobject
 gobject.threads_init() 
 
@@ -30,6 +27,7 @@ from widget import Widget
 from httpserver import HttpServer
 
 class Melange(cream.Module):
+    """ The main class of the Melange module. """
 
     __ipc_domain__ = 'org.cream.melange'
 
@@ -37,31 +35,33 @@ class Melange(cream.Module):
 
         cream.Module.__init__(self)
 
+        # Initialize the HTTP server providing the widget data.
         self.server = HttpServer(self)
         self.server.run()
 
+        # Scan for widgets...
         self.widgets = cream.meta.MetaDataDB('widgets', type='melange.widget')
         self.widget_instances = {}
 
+        # Load widgets stored in configuration.
         for widget in self.config.widgets:
             self.load_widget(**widget)
-
-    def quit(self):
-        # Okay, we're going to perish right now, quickly save the current
-        # configuration and then let happen what can't be inhibited.
-        self.config.widgets = self.widget_instances.values()
-        cream.Module.quit(self)
-
-
-    def widget_position_changed(self, widget, x, y):
-        pass
-
-    def widget_removed(self, widget):
-        del self.widget_instances[widget.instance]
 
 
     @cream.ipc.method('svv', '')
     def load_widget(self, name, x=None, y=None):
+        """
+        Load a widget with the given name at the specified coordinates (optional).
+
+        :param name: The name of the widget.
+        :param x: The x-coordinate.
+        :param y: The y-coordinate.
+
+        :type name: `str`
+        :type x: `int`
+        :type y: `int`
+        """
+
         x, y = int(x), int(y)
 
         self.messages.debug("Loading widget '%s'..." % name)
@@ -69,28 +69,54 @@ class Melange(cream.Module):
         widget = Widget(self.widgets.get_by_name(name))
         self.widget_instances[widget.instance] = widget
 
-        widget.connect('position-changed', self.widget_position_changed)
-        widget.connect('removed', self.widget_removed)
-        widget.connect('reload', self.reload_widget)
+        widget.connect('position-changed', self.widget_position_changed_cb)
+        widget.connect('remove', self.widget_remove_cb)
+        widget.connect('reload', self.widget_reload_cb)
 
         widget.show()
 
         if x is not None and y is not None:
             widget.set_position(x, y)
 
-    def reload_widget(self, widget):
-        info_dict = widget.__xmlserialize__() # just for now, we need a proper
-                                              # shortcut for this information
-                                              # or any other abstraction for
-                                              # information like position/name
-        self.messages.debug("Reloading widget '%(name)s'" % info_dict)
-        widget.close()
-        self.load_widget(**info_dict)
-
 
     @cream.ipc.method('', 'a{sa{ss}}')
     def list_widgets(self):
+        """
+        List all available widgets.
+
+        :return: List of widgets.
+        :rtype: `list`
+        """
+
         return self.widgets.by_hash
+
+
+    def quit(self):
+        """ Quit the module. """
+
+        self.config.widgets = self.widget_instances.values()
+        cream.Module.quit(self)
+
+
+    def widget_position_changed_cb(self, widget, x, y):
+        """ Callback function being called when a widget was moved. """
+
+        pass
+
+
+    def widget_remove_cb(self, widget):
+        """ Callback being called when a widget has been removed. """
+
+        del self.widget_instances[widget.instance]
+
+
+    def widget_reload_cb(self, widget):
+        """ Callback function that is called when the user clicks on the "Reload" menu entry. """
+
+        info_dict = widget.__xmlserialize__()
+        self.messages.debug("Reloading widget '%(name)s'" % info_dict)
+        widget.close()
+        self.load_widget(**info_dict)
 
 
 if __name__ == '__main__':

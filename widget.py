@@ -1,28 +1,38 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301, USA.
+
 import sys
 import os.path
 import imp
 
 import gobject
 import gtk
+import cairo
 import webkit
 import javascriptcore as jscore
+import webbrowser
 
 import cream
 import cream.meta
 from cream.util import urljoin_multi, cached_property, random_hash
-
-from httpserver import HOST, PORT
-
-import webbrowser
-
 from cream.contrib.melange.api import APIS
 
-
-class SkinMetaData(cream.meta.MetaData):
-    pass
-
-class WidgetMetaData(cream.meta.MetaData):
-    pass
+from httpserver import HOST, PORT
 
 
 class WidgetAPI(object):
@@ -36,7 +46,7 @@ class Widget(gobject.GObject, cream.Configurable):
     __gtype_name__ = 'Widget'
     __gsignals__ = {
         'position-changed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
-        'removed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'remove': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'reload' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
         }
 
@@ -54,8 +64,7 @@ class Widget(gobject.GObject, cream.Configurable):
         self.instance = 'Cream_%s' % random_hash(bits=100)
 
         skin_dir = os.path.join(self.meta['path'], 'skins')
-        self.skins = dict((skin['name'], skin) for skin in
-                          SkinMetaData.scan(skin_dir, type='melange.widget.skin'))
+        self.skins = cream.meta.MetaDataDB(skin_dir, type='melange.widget.skin')
 
         self.build_ui()
         self.init_api()
@@ -112,7 +121,115 @@ class Widget(gobject.GObject, cream.Configurable):
         self.menu.show_all()
 
 
+    def init_api(self):
+
+        # Creating JavaScript context...
+        self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
+
+        # Setting up JavaScript API...
+        self.js_context.widget = WidgetAPI()
+
+        custom_api_file = os.path.join(self.meta['path'], '__init__.py')
+        if os.path.isfile(custom_api_file):
+            sys.path.insert(0, self.meta['path'])
+            imp.load_module('custom_api_{0}'.format(self.instance), open(custom_api_file), custom_api_file, ('.py', 'r', imp.PY_SOURCE))
+            for a in APIS[custom_api_file].iteritems():
+                self.js_context.widget.__setattr__(a[0], a[1](self))
+            sys.path.remove(self.meta['path'])
+
+
+    def close(self):
+        """ Close the widget window and emit 'remove' signal. """
+
+        self.window.destroy()
+        self.emit('remove')
+
+
+    def show(self):
+        """ Show the widget. """
+
+        skin_url = urljoin_multi('http://{0}:{1}'.format(HOST, PORT), 'widgets',
+                                 self.instance, 'Default', 'index.html')
+        self.view.open(skin_url)
+        self.window.show_all()
+
+
+    def reload(self):
+        """ Reload the widget. Really? Yeah. """
+
+        self.emit('reload')
+
+
+    def get_position(self):
+        """
+        Get the position of the widget.
+
+        :return: Position.
+        :rtype: `tuple`
+        """
+
+        return self.window.get_position()
+
+
+    def set_position(self, x, y):
+        """
+        Set the position of the widget.
+
+        :param x: The x-coordinate.
+        :param y: The y-coordinate.
+
+        :type x: `int`
+        :type y: `int`
+        """
+
+        return self.window.move(x, y)
+
+
+    @cached_property
+    def about_dialog(self):
+        """ Show the 'About' dialog. """
+
+        about_dialog = gtk.AboutDialog()
+        about_dialog.connect('response', lambda *x: self.about_dialog.hide())
+        about_dialog.connect('delete-event', lambda *x: True)
+
+        about_dialog.set_name(self.meta['name'])
+        about_dialog.set_authors([self.meta['author']])
+        if self.meta.has_key('icon'):
+            icon_path = os.path.join(self.meta['path'], self.meta['icon'])
+            icon_pb = gtk.gdk.pixbuf_new_from_file(icon_path).scale_simple(64, 64, gtk.gdk.INTERP_HYPER)
+            about_dialog.set_logo(icon_pb)
+        about_dialog.set_comments(self.meta['comment'])
+
+        return about_dialog
+
+
+    def _update_position(self, window, event):
+        """ Emit the 'position-changed' signal when the widget was moved. """
+
+        self.emit('position-changed', event.x, event.y)
+
+
+    def clicked_cb(self, source, event):
+        """ Handle clicking on the widget (e. g. by showing context menu). """
+
+        if event.button == 3:
+            self.menu.popup(None, None, None, event.button, event.get_time())
+            return True
+
+
+    def expose_cb(self, source, event):
+        """ Clear the widgets background. """
+
+        ctx = source.window.cairo_create()
+
+        ctx.set_operator(cairo.OPERATOR_SOURCE)
+        ctx.set_source_rgba(0, 0, 0, 0)
+        ctx.paint()
+
+
     def resize_cb(self, widget, event, *args):
+        """ Resize the widget properly... """
 
         if not self.widget_element:
             for i in range(0, int(self.js_context.document.body.childNodes.length)):
@@ -133,24 +250,8 @@ class Widget(gobject.GObject, cream.Configurable):
                 self.window.resize(width, height)
 
 
-    def init_api(self):
-
-        # Creating JavaScript context...
-        self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
-
-        # Setting up JavaScript API...
-        self.js_context.widget = WidgetAPI()
-
-        custom_api_file = os.path.join(self.meta['path'], '__init__.py')
-        if os.path.isfile(custom_api_file):
-            sys.path.insert(0, self.meta['path'])
-            imp.load_module('custom_api_{0}'.format(self.instance), open(custom_api_file), custom_api_file, ('.py', 'r', imp.PY_SOURCE))
-            for a in APIS[custom_api_file].iteritems():
-                self.js_context.widget.__setattr__(a[0], a[1](self))
-            sys.path.remove(self.meta['path'])
-
-
     def navigation_request_cb(self, view, frame, request, action, decision):
+        """ Handle clicks on links, etc. """
 
         uri = request.get_uri()
 
@@ -159,65 +260,14 @@ class Widget(gobject.GObject, cream.Configurable):
             return True
 
 
-    @cached_property
-    def about_dialog(self):
-        about_dialog = gtk.AboutDialog()
-        about_dialog.connect('response', lambda *x: self.about_dialog.hide())
-        about_dialog.connect('delete-event', lambda *x: True)
-
-        about_dialog.set_name(self.meta['name'])
-        about_dialog.set_authors([self.meta['author']])
-        if self.meta.has_key('icon'):
-            icon_path = os.path.join(self.meta['path'], self.meta['icon'])
-            icon_pb = gtk.gdk.pixbuf_new_from_file(icon_path).scale_simple(64, 64, gtk.gdk.INTERP_HYPER)
-            about_dialog.set_logo(icon_pb)
-        about_dialog.set_comments(self.meta['comment'])
-
-        return about_dialog
-
-
-    def _update_position(self, window, event):
-        self.emit('position-changed', event.x, event.y)
-
-
-    def close(self):
-
-        self.window.destroy()
-        self.emit('removed')
-
-
-    def clicked_cb(self, source, event):
-
-        if event.button == 3:
-            self.menu.popup(None, None, None, event.button, event.get_time())
-            return True
-
-    def expose_cb(self, source, event):
-        ctx = source.window.cairo_create()
-
-        ctx.set_operator(0x1) # 0x1 = cairo.OPERATOR_SOURCE
-        ctx.set_source_rgba(0, 0, 0, 0)
-        ctx.paint()
-
-
-    def show(self):
-        skin_url = urljoin_multi('http://{0}:{1}'.format(HOST, PORT), 'widgets',
-                                 self.instance, 'Default', 'index.html')
-        self.view.open(skin_url)
-        self.window.show_all()
-
-
-    def reload(self):
-        self.emit('reload')
-
-
-    def get_position(self):
-        return self.window.get_position()
-
-    def set_position(self, x, y):
-        return self.window.move(x, y)
-
     def __xmlserialize__(self):
+        """
+        Return serialized data about widget.
+
+        :return: Dict containing 'name', 'x' and 'y'.
+        :rtype: `dict`
+        """
+
         # TODO: Save hash rather than name here?
         return {
             'name' : self.meta['name'],
