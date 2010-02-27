@@ -41,7 +41,7 @@ class WidgetAPI(object):
         print message
 
 
-class Widget(gobject.GObject, cream.Configurable):
+class Widget(gobject.GObject, cream.Component):
 
     __gtype_name__ = 'Widget'
     __gsignals__ = {
@@ -57,7 +57,7 @@ class Widget(gobject.GObject, cream.Configurable):
         self.widget_element = None
 
         gobject.GObject.__init__(self)
-        cream.Configurable.__init__(self)
+        cream.Component.__init__(self)
 
         self.meta = meta
 

@@ -17,7 +17,9 @@
 # MA 02110-1301, USA.
 
 import gobject
-gobject.threads_init() 
+gobject.threads_init()
+
+import dbus.service
 
 import cream
 import cream.meta
@@ -26,7 +28,7 @@ import cream.ipc
 from widget import Widget
 from httpserver import HttpServer
 
-class Melange(cream.Module):
+class Melange(cream.Module, cream.ipc.Object):
     """ The main class of the Melange module. """
 
     __ipc_domain__ = 'org.cream.melange'
@@ -34,6 +36,15 @@ class Melange(cream.Module):
     def __init__(self):
 
         cream.Module.__init__(self)
+
+        self._bus_name = '.'.join(self.__ipc_domain__.split('.')[:3])
+        self._dbus_bus_name = dbus.service.BusName(self._bus_name, cream.ipc.SESSION_BUS)
+
+        cream.ipc.Object.__init__(self,
+            cream.ipc.SESSION_BUS,
+            self._bus_name,
+            cream.ipc.bus_name_to_path(self.__ipc_domain__)
+        )
 
         # Initialize the HTTP server providing the widget data.
         self.server = HttpServer(self)
