@@ -236,17 +236,17 @@ input.bright_input {
 
     .chooser .option.active {
         border-left-color: rgba(256, 256, 256, 0);
-        background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .32)), to(rgba(256, 256, 256, .1)));
+        background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .3)), to(rgba(256, 256, 256, .1)));
         opacity: 1;
         }
 
         .chooser .option.active:active {
-            background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .14)), to(rgba(256, 256, 256, .32)));
+            background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .14)), to(rgba(256, 256, 256, .3)));
             opacity: 1;
             }
 
         .chooser .option.active:hover {
-            background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .36)), to(rgba(256, 256, 256, .14)));
+            background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .34)), to(rgba(256, 256, 256, .12)));
             opacity: 1;
             }
 
@@ -261,6 +261,11 @@ input.bright_input {
 .red, .red:hover, .red:active {
     border-color: darkred;
     background-color: red;
+}
+
+.blue, .blue:hover, .blue:active {
+    border-color: darkblue;
+    background-color: #001ca2;
 }
 
 .dialog {
