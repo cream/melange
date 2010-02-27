@@ -39,7 +39,7 @@ class HttpServer(object):
     @route(r'/common/(?P<file>.*)')
     def common_files(file):
 
-        path = os.path.join(_MELANGE._base_path, 'data')
+        path = os.path.join(_MELANGE.meta['path'], 'data')
         print send_file(file, path)
         return send_file(file, path)
 
