@@ -39,6 +39,10 @@ div.background {
     -webkit-box-shadow: 0px 0px 5px rgba(1, 1, 1, .55);
 }
 
+.section, .bright_section, .scrolled, .chooser {
+    -webkit-box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, .35);
+}
+
 .section {
     margin-top: 5px;
     margin-bottom: 5px;
@@ -47,7 +51,6 @@ div.background {
     border-radius: 3px;
 
     background: rgba(0, 0, 0, .2);
-    -webkit-box-shadow: 0px 0px 3px 0px #0a0a0a;
     border: 1px solid rgba(256, 256, 256, .2);
 }
 
@@ -59,7 +62,6 @@ div.background {
     color: #0a0a0a;
 
     background: rgba(256, 256, 256, .5);
-    -webkit-box-shadow: 0px 0px 3px 0px #000000;
     border: 1px solid rgba(256, 256, 256, .8);
 }
 
@@ -154,8 +156,6 @@ input.bright_input {
     border-width: 1px;
     border-style: solid;
     border-color: rgba(256, 256, 256, .1);
-
-    -webkit-box-shadow: 0px 0px 3px 0px #181818;
 }
 
     .scrolled .container {
@@ -205,7 +205,6 @@ input.bright_input {
     border-radius: 4px;
     display: table;
     width: 100%;
-    -webkit-box-shadow: 0px 0px 3px 0px #181818;
     }
 
     .chooser .option {
