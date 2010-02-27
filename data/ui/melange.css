@@ -1,4 +1,5 @@
 /* GENERAL */
+
 body {
     margin: 0px;
     padding: 0px;
@@ -39,13 +40,27 @@ div.background {
 }
 
 .section {
-    margin: 5px;
-    padding: 3px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding: 4px;
 
     border-radius: 3px;
 
-    background: rgba(0, 0, 0, .04);
-    border: 1px solid rgba(256, 256, 256, .08);
+    background: rgba(0, 0, 0, .2);
+    -webkit-box-shadow: 0px 0px 3px 0px #0a0a0a;
+    border: 1px solid rgba(256, 256, 256, .2);
+}
+
+.bright_section {
+    margin: 5px;
+    padding: 4px;
+
+    border-radius: 3px;
+    color: #0a0a0a;
+
+    background: rgba(256, 256, 256, .5);
+    -webkit-box-shadow: 0px 0px 3px 0px #000000;
+    border: 1px solid rgba(256, 256, 256, .8);
 }
 
 /* BUTTONS */
@@ -139,42 +154,44 @@ input.bright_input {
     border-width: 1px;
     border-style: solid;
     border-color: rgba(256, 256, 256, .1);
+
+    -webkit-box-shadow: 0px 0px 3px 0px #181818;
 }
 
-.scrolled .container {
-    background-color: rgba(256, 256, 256, .075);
+    .scrolled .container {
+        background-color: rgba(256, 256, 256, .075);
 
-    padding-left: 2px;
-    padding-right: 2px;
-}
+        padding-left: 2px;
+        padding-right: 2px;
+    }
 
-.scrolled .control_up {
-    height: 13px;
-    padding: 1px;
+    .scrolled .control_up {
+        height: 13px;
+        padding: 1px;
 
-    text-align: center;
+        text-align: center;
 
-    background-color: rgba(256, 256, 256, .075);
+        background-color: rgba(256, 256, 256, .075);
 
-    border-top-right-radius: 5px;
-    border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+        border-top-left-radius: 5px;
 
-    cursor: pointer;
-}
+        cursor: pointer;
+    }
 
-.scrolled .control_down {
-    height: 13px;
-    padding: 1px;
+    .scrolled .control_down {
+        height: 13px;
+        padding: 1px;
 
-    text-align: center;
+        text-align: center;
 
-    background-color: rgba(256, 256, 256, .075);
+        background-color: rgba(256, 256, 256, .075);
 
-    border-bottom-right-radius: 5px;
-    border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+        border-bottom-left-radius: 5px;
 
-    cursor: pointer;
-}
+        cursor: pointer;
+    }
 
 
 /* CHOOSER */
@@ -185,36 +202,54 @@ input.bright_input {
     border-style: solid;
     border-color: rgba(256, 256, 256, .1);
     background-color: rgba(256, 256, 256, .075);
-    border-radius: 5px;
+    border-radius: 4px;
     display: table;
     width: 100%;
+    -webkit-box-shadow: 0px 0px 3px 0px #181818;
     }
 
-.chooser .option {
-    padding: 3px;
-    text-align: center;
-    display: table-cell;
-    border-left: 1px solid rgba(256, 256, 256, .1);
-    opacity: .8;
-    cursor: pointer;
-    }
+    .chooser .option {
+        display: table-cell;
+        text-align: center;
 
-.chooser .option:first-child {
-    border-left: none;
-    border-top-left-radius: 4px;
-    border-bottom-left-radius: 4px;
-    }
+        padding: 3px;
+        border-left: 1px solid rgba(256, 256, 256, .1);
 
-.chooser .option:last-child {
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
-    }
+        opacity: .8;
+        cursor: pointer;
+        }
 
-.chooser .option.active {
-    border-left-color: rgba(256, 256, 256, 0);
-    background-color: rgba(256, 256, 256, .06);
-    opacity: 1;
-    }
+        .chooser .option:hover {
+            background: rgba(256, 256, 256, .05);
+            opacity: 1;
+            }
+
+        .chooser .option:first-child {
+            border-left: none;
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+            }
+
+        .chooser .option:last-child {
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+            }
+
+    .chooser .option.active {
+        border-left-color: rgba(256, 256, 256, 0);
+        background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .32)), to(rgba(256, 256, 256, .1)));
+        opacity: 1;
+        }
+
+        .chooser .option.active:active {
+            background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .14)), to(rgba(256, 256, 256, .32)));
+            opacity: 1;
+            }
+
+        .chooser .option.active:hover {
+            background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .36)), to(rgba(256, 256, 256, .14)));
+            opacity: 1;
+            }
 
 
 /* MISC */
