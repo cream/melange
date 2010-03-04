@@ -34,7 +34,6 @@ from cream.contrib.melange.api import APIS
 
 from httpserver import HOST, PORT
 
-
 class WidgetAPI(object):
 
     def debug(self, message):
@@ -45,14 +44,16 @@ class Widget(gobject.GObject, cream.Component):
 
     __gtype_name__ = 'Widget'
     __gsignals__ = {
-        'position-changed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
+        'move': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
+        'resize': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
         'remove': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'reload' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
         }
 
     def __init__(self, meta):
 
-        self._widget_size = (None, None)
+        self._size = (None, None)
+        self._position = (0, 0)
 
         self.widget_element = None
 
@@ -72,36 +73,16 @@ class Widget(gobject.GObject, cream.Component):
 
     def build_ui(self):
 
-        # Setting up the Widget's window...
-        self.window = gtk.Window()
-        self.window.stick()
-        self.window.set_keep_below(True)
-        self.window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
-        self.window.set_skip_pager_hint(True)
-        self.window.set_skip_taskbar_hint(True)
-        self.window.set_decorated(False)
-        self.window.set_app_paintable(True)
-        self.window.set_resizable(False)
-        self.window.set_default_size(10, 10)
-        self.window.connect('expose-event', self.expose_cb)
-        self.window.connect('configure-event', self._update_position)
-        self.window.set_colormap(self.window.get_screen().get_rgba_colormap())
-
         # Initializing the WebView...
         self.view = webkit.WebView()
         self.view.set_transparent(True)
 
-        # Creating container for receiving events:
-        self.bin = gtk.EventBox()
-        self.bin.add(self.view)
-
         # Connecting to signals:
         self.view.connect('expose-event', self.resize_cb)
-        self.view.connect('button-press-event', self.clicked_cb)
+        self.view.connect('button-press-event', self.button_press_cb)
+        self.view.connect('button-release-event', self.button_release_cb)
         self.view.connect('new-window-policy-decision-requested', self.navigation_request_cb)
         self.view.connect('navigation-policy-decision-requested', self.navigation_request_cb)
-
-        self.window.add(self.bin)
 
         # Building context menu:
         item_reload = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
@@ -141,7 +122,6 @@ class Widget(gobject.GObject, cream.Component):
     def close(self):
         """ Close the widget window and emit 'remove' signal. """
 
-        self.window.destroy()
         self.emit('remove')
 
 
@@ -151,13 +131,23 @@ class Widget(gobject.GObject, cream.Component):
         skin_url = urljoin_multi('http://{0}:{1}'.format(HOST, PORT), 'widgets',
                                  self.instance, 'Default', 'index.html')
         self.view.open(skin_url)
-        self.window.show_all()
 
 
     def reload(self):
         """ Reload the widget. Really? Yeah. """
 
         self.emit('reload')
+
+
+    def get_size(self):
+        """
+        Get the size of the widget.
+
+        :return: Size.
+        :rtype: `tuple`
+        """
+
+        return self._size
 
 
     def get_position(self):
@@ -168,7 +158,7 @@ class Widget(gobject.GObject, cream.Component):
         :rtype: `tuple`
         """
 
-        return self.window.get_position()
+        return self._position
 
 
     def set_position(self, x, y):
@@ -182,7 +172,8 @@ class Widget(gobject.GObject, cream.Component):
         :type y: `int`
         """
 
-        return self.window.move(x, y)
+        self._position = (x, y)
+        self.emit('move', *self._position)
 
 
     @cached_property
@@ -207,10 +198,10 @@ class Widget(gobject.GObject, cream.Component):
     def _update_position(self, window, event):
         """ Emit the 'position-changed' signal when the widget was moved. """
 
-        self.emit('position-changed', event.x, event.y)
+        self.emit('move', event.x, event.y)
 
 
-    def clicked_cb(self, source, event):
+    def button_press_cb(self, source, event):
         """ Handle clicking on the widget (e. g. by showing context menu). """
 
         if event.button == 3:
@@ -218,14 +209,9 @@ class Widget(gobject.GObject, cream.Component):
             return True
 
 
-    def expose_cb(self, source, event):
-        """ Clear the widgets background. """
+    def button_release_cb(self, source, event):
 
-        ctx = source.window.cairo_create()
-
-        ctx.set_operator(cairo.OPERATOR_SOURCE)
-        ctx.set_source_rgba(0, 0, 0, 0)
-        ctx.paint()
+        pass
 
 
     def resize_cb(self, widget, event, *args):
@@ -244,10 +230,9 @@ class Widget(gobject.GObject, cream.Component):
         if self.widget_element:
             width = int(self.widget_element.offsetWidth)
             height = int(self.widget_element.offsetHeight)
-            if not self._widget_size == (width, height):
-                self._widget_size = (width, height)
-                self.window.set_size_request(width, height)
-                self.window.resize(width, height)
+            if not self._size == (width, height):
+                self._size = (width, height)
+                self.emit('resize', width, height)
 
 
     def navigation_request_cb(self, view, frame, request, action, decision):
