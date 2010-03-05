@@ -11,6 +11,7 @@ body {
 
     font-family: "Sans";
     font-style: normal;
+    text-shadow: 0px -1px 1px rgba(0, 0, 0, .9);
 }
 
 a {
@@ -69,7 +70,7 @@ div.background {
 
 input[type=button], input[type=submit], input[type=reset], button, .button {
     margin: 0px;
-    padding: 4px;
+    padding: 5px;
     padding-left: 8px;
     padding-right: 8px;
 
@@ -83,23 +84,28 @@ input[type=button], input[type=submit], input[type=reset], button, .button {
     margin: 5px;
     color: #efefef;
 
-    cursor: pointer;
+    cursor: default;
 
-    border: 1px solid #545454;
+/*    border: 1px solid #545454;*/
     border-radius: 4px;
 
-    -webkit-box-shadow: 0px 0px 6px 0px #252525;
-    text-shadow: 0px 0px 4px #000000;
+    -webkit-box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, .2)/*0px 0px 4px 0px rgba(0, 0, 0, .4)*/, inset 0px 1px 1px -1px rgba(256, 256, 256, .68), inset 0px -1px 1px 0px rgba(200, 200, 200, .05), inset 0px -1px 1px -1px rgba(256, 256, 256, .15), inset 1px 0px 1px -1px rgba(256, 256, 256, .15), inset -1px 0px 1px -1px rgba(256, 256, 256, .15);
+/*    text-shadow: 0px 0px 4px #000000;*/
+    text-shadow: 0px -1px 1px rgba(0, 0, 0, .9);
 
-    background: -webkit-gradient(linear, left -10%, left 70%, to(rgba(30, 30, 30, .7)), from(rgba(70, 70, 70, .7)));
+    background: -webkit-gradient(linear, left -10%, left 70%, to(rgba(35, 35, 35, .7)), from(rgba(80, 80, 80, .7)));
 }
 
     .button:hover {
-        background: -webkit-gradient(linear, left -10%, left 70%, to(rgba(35, 35, 35, .72)), from(rgba(75, 75, 75, .72)));
+        background: -webkit-gradient(linear, left -10%, left 70%, to(rgba(40, 40, 40, .72)), from(rgba(95, 95, 95, .72)));
+
+        -webkit-box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, .1)/*0px 0px 4px 0px rgba(0, 0, 0, .4)*/, inset 0px 1px 1px -1px rgba(256, 256, 256, .68), inset 0px -1px 1px 0px rgba(200, 200, 200, .05), inset 0px -1px 1px -1px rgba(256, 256, 256, .15), inset 1px 0px 1px -1px rgba(256, 256, 256, .15), inset -1px 0px 1px -1px rgba(256, 256, 256, .15), 0px 0px 3px 0px rgba(207, 176, 127, .18);
     }
 
     .button:active {
-        background: -webkit-gradient(linear, left 0%, left 80%, to(rgba(70, 70, 70, .7)), from(rgba(30, 30, 30, .7)));
+        background: -webkit-gradient(linear, left 0%, left 80%, to(rgba(90, 90, 90, .7)), from(rgba(40, 40, 40, .7)));
+        
+        -webkit-box-shadow: 0px 0px 1px 1px rgba(0, 0, 0, .1)/*0px 0px 4px 0px rgba(0, 0, 0, .4)*/, inset 0px 1px 1px -1px rgba(256, 256, 256, .68), inset 0px -1px 1px 0px rgba(200, 200, 200, .05), inset 0px -1px 1px -1px rgba(256, 256, 256, .15), inset 1px 0px 1px -1px rgba(256, 256, 256, .15), inset -1px 0px 1px -1px rgba(256, 256, 256, .15), inset 0px 0px 5px 0px rgba(0, 0, 0, .2), 0px 0px 3px 0px rgba(207, 176, 127, .18);
     }
 
 
@@ -205,6 +211,9 @@ input.bright_input {
     border-radius: 4px;
     display: table;
     width: 100%;
+    padding: 2px;
+    
+    -webkit-box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, .25), inset 0px 0px 3px rgba(0, 0, 0, .36);
     }
 
     .chooser .option {
@@ -212,41 +221,51 @@ input.bright_input {
         text-align: center;
 
         padding: 3px;
-        border-left: 1px solid rgba(256, 256, 256, .1);
+        /*border-left: 1px solid rgba(256, 256, 256, .1);*/
 
-        opacity: .8;
+        opacity: .75;
         cursor: pointer;
+        text-shadow: 0px -1px 1px rgba(0, 0, 0, .9);
+        border-radius: 4px;
         }
 
         .chooser .option:hover {
-            background: rgba(256, 256, 256, .05);
+/*            background: rgba(256, 256, 256, .04);*/
+            text-shadow: 0px -1px 1px rgba(0, 0, 0, .9), 0px 0px 5px rgba(256, 256, 256, .7);
             opacity: 1;
             }
 
         .chooser .option:first-child {
             border-left: none;
-            border-top-left-radius: 4px;
-            border-bottom-left-radius: 4px;
+/*            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;*/
             }
 
         .chooser .option:last-child {
-            border-top-right-radius: 4px;
-            border-bottom-right-radius: 4px;
+/*            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;*/
             }
 
     .chooser .option.active {
-        border-left-color: rgba(256, 256, 256, 0);
-        background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .3)), to(rgba(256, 256, 256, .1)));
+        /*border-left-color: rgba(256, 256, 256, 0);*/
+        background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .19)), to(rgba(256, 256, 256, .015)));
+        /*background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(10, 10, 10, .1)), to(rgba(0, 0, 0, .6)));*/
+        /*background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .25)), to(rgba(256, 256, 256, .09)));*/
         opacity: 1;
+        text-shadow: 0px -1px 1px rgba(0, 0, 0, .9), 0px 0px 5px rgba(256, 256, 256, .49);
+        -webkit-box-shadow: 0px 0px 1px 0px rgba(0, 0, 0, .46), inset 0px 1px 0px 0px rgba(256, 256, 256, .11), inset 0px -1px 0px 0px rgba(256, 256, 256, .06);
         }
 
         .chooser .option.active:active {
-            background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .14)), to(rgba(256, 256, 256, .3)));
+            background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .08)), to(rgba(256, 256, 256, .28)));
             opacity: 1;
             }
 
         .chooser .option.active:hover {
-            background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .34)), to(rgba(256, 256, 256, .12)));
+            text-shadow: 0px -1px 1px rgba(0, 0, 0, .9), 0px 0px 5px rgba(256, 256, 256, .9);
+            background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .22)), to(rgba(256, 256, 256, .03)));
+            /*background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(30, 30, 30, .05)), to(rgba(10, 10, 10, .6)));*/
+            /*background: -webkit-gradient(linear, left -18%, left 90%, from(rgba(256, 256, 256, .34)), to(rgba(256, 256, 256, .12)));*/
             opacity: 1;
             }
 
