@@ -36,6 +36,8 @@ from httpserver import HOST, PORT
 
 
 class WidgetAPI(object):
+    def __init__(self, widget):
+        self.widget = widget
 
     def debug(self, message):
         print "DEBUG: %s: %s" % (self.widget.meta['name'], message)
