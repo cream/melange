@@ -1,7 +1,8 @@
 import os
+import sys
 import json
 import thread
-from bottle import route, send_file, abort, run, request, debug
+from bottle import route, send_file, abort, run, request
 
 import cream.ipc
 from cream.util import cached_property
@@ -11,6 +12,7 @@ _MELANGE = None
 
 HOST = '127.0.0.1'
 PORT = 8080
+
 
 class HttpServer(object):
     """
