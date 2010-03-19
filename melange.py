@@ -95,7 +95,8 @@ class Clone(gtk.DrawingArea):
 
     def do_size_request(self, requisition):
 
-        widget_size = self.widget.get_size()
+        #widget_size = self.widget.get_size()
+        widget_size = (100, 100)
 
         requisition.width = widget_size[0]
         requisition.height = widget_size[1]
@@ -205,7 +206,7 @@ class Overlay:
 
         self.window = gtk.Window()
         self.window.fullscreen()
-        #self.window.set_keep_above(True)
+        self.window.set_keep_above(True)
         self.window.set_app_paintable(True)
         self.window.connect('expose-event', self.expose_cb)
         self.window.set_colormap(self.window.get_screen().get_rgba_colormap())
@@ -215,15 +216,25 @@ class Overlay:
         self.window.add(self.bin)
 
 
+    def initialize(self):
+
+        self.window.set_opacity(0)
+        self.window.show_all()
+        self.window.window.input_shape_combine_region(gtk.gdk.Region(), 0, 0)
+
+
     def show(self):
 
-        self.window.show_all()
+        self.window.set_opacity(1)
+        region = gtk.gdk.Region()
+        region.union_with_rect((0, 0, 1280, 800))
+        self.window.window.input_shape_combine_region(region, 0, 0)
 
 
     def hide(self):
 
         self.window.set_opacity(0)
-        self.window.hide()
+        self.window.window.input_shape_combine_region(gtk.gdk.Region(), 0, 0)
 
 
     def expose_cb(self, source, event):
@@ -330,6 +341,8 @@ class Melange(cream.Module, cream.ipc.Object):
             self.overlay.hide()
         else:
             OVERLAY = True
+
+            self.overlay.initialize()
 
             self.overlay.show()
 
