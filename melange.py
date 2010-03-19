@@ -37,32 +37,105 @@ from httpserver import HttpServer
 EDIT_MODE_NONE = 0
 EDIT_MODE_MOVE = 1
 
-class Clone:
+OVERLAY = False
+
+import ctypes
+
+cgdk = ctypes.CDLL("libgdk-x11-2.0.so")
+
+class GdkCursor(ctypes.Structure):
+        _fields_ = [('type', ctypes.c_int)]
+
+
+def gdk_window_get_cursor(window):
+
+    cr = cgdk.gdk_window_get_cursor(hash(window))
+    if cr == 0:
+        return None
+    else:
+        return GdkCursor.from_address(cr)
+
+
+class Clone(gtk.DrawingArea):
+
+    __gtype_name__ = 'Clone'
 
     def __init__(self, widget):
 
+        gtk.DrawingArea.__init__(self)
+
+        self.set_events(gtk.gdk.ALL_EVENTS_MASK)
+
         self.widget = widget
 
-        self.window = gtk.Window()
-        self.window.set_keep_above(True)
-        self.window.set_app_paintable(True)
-        self.window.connect('expose-event', self.expose_cb)
-        self.window.set_colormap(self.window.get_screen().get_rgba_colormap())
-        self.window.show()
-
-        self.widget.connect('expose-event', lambda source, event: self.window.window.invalidate_rect(event.area, True))
+        self.connect('event', self.dispatch_event)
 
 
-    def expose_cb(self, source, event):
+    def do_realize(self):
 
-        ctx = self.window.window.cairo_create()
+        gtk.DrawingArea.do_realize(self)
 
+        self.widget.connect('expose-event', lambda source, event: self.window.invalidate_rect(event.area, True))
+        self.widget.connect('size-allocate', lambda source, allocation: self.do_size_allocate(allocation))
+
+
+    def focus_cb(self, *args):
+
+        self.widget.grab_focus()
+
+        toplevel = self.widget.get_toplevel()
+
+        if toplevel:
+            toplevel.present()
+
+
+    def do_unrealize(self):
+        self.window.destroy()
+
+
+    def do_size_request(self, requisition):
+
+        widget_size = self.widget.get_size()
+
+        requisition.width = widget_size[0]
+        requisition.height = widget_size[1]
+
+    
+    def do_size_allocate(self, allocation):
+        if self.flags() & gtk.REALIZED:
+            widget_size = self.widget.allocation
+            allocation.width += widget_size.width
+            allocation.height += widget_size.height
+            self.allocation = allocation
+            self.window.move_resize(*allocation)
+
+
+    def dispatch_event(self, source, event):
+
+        if event.type in [gtk.gdk.EXPOSE]:
+            return
+
+        if event.type == gtk.gdk.BUTTON_PRESS:
+            self.focus_cb()
+
+        event.copy()
+        event.window = self.widget.window
+        event.put()
+
+        cr = gdk_window_get_cursor(self.widget.window)
+        if cr:
+            self.window.set_cursor(gtk.gdk.Cursor(cr.type))
+
+
+    def do_expose_event(self, event):
+
+        self.set_colormap(self.get_screen().get_rgba_colormap())
+        self.window.set_composited(True)
+
+        ctx = self.window.cairo_create()
         ctx.set_operator(cairo.OPERATOR_SOURCE)
-        ctx.set_source_rgba(0, 0, 0, .8)
+        ctx.set_source_rgba(0, 0, 0, 0)
         ctx.paint()
-
-        ctx.set_operator(cairo.OPERATOR_OVER)
-
         ctx.set_source_pixmap(self.widget.window, 0, 0)
         ctx.paint()
 
@@ -117,8 +190,8 @@ class WidgetWindow(gtk.Window):
 
     def resize_cb(self, widget, width, height):
 
-        self.set_size_request(width, height)
         self.resize(width, height)
+        self.set_size_request(width, height)
 
 
     def move_cb(self, widget, x, y):
@@ -128,31 +201,29 @@ class WidgetWindow(gtk.Window):
 
 class Overlay:
 
-    def __init__(self, foo):
-
-        self.foo = foo
+    def __init__(self):
 
         self.window = gtk.Window()
         self.window.fullscreen()
-        self.window.set_keep_above(True)
+        #self.window.set_keep_above(True)
         self.window.set_app_paintable(True)
         self.window.connect('expose-event', self.expose_cb)
         self.window.set_colormap(self.window.get_screen().get_rgba_colormap())
 
         self.bin = cream.gui.CompositeBin()
+        #self.bin = gtk.Fixed()
         self.window.add(self.bin)
-
-        self.window.show_all()
-
-        gobject.timeout_add(2000, self.show)
 
 
     def show(self):
 
-        for k, v in self.foo.widget_instances.iteritems():
-            x, y = v.get_position()
-            v.bin.remove(v.view)
-            self.bin.add(v.view, x, y)
+        self.window.show_all()
+
+
+    def hide(self):
+
+        self.window.set_opacity(0)
+        self.window.hide()
 
 
     def expose_cb(self, source, event):
@@ -189,12 +260,11 @@ class Melange(cream.Module, cream.ipc.Object):
         self.widgets = cream.meta.MetaDataDB('widgets', type='melange.widget')
         self.widget_instances = {}
 
+        self.overlay = Overlay()
+
         # Load widgets stored in configuration.
         for widget in self.config.widgets:
             self.load_widget(**widget)
-
-
-        #self.overlay = Overlay(self)
 
 
     @cream.ipc.method('svv', '')
@@ -228,15 +298,13 @@ class Melange(cream.Module, cream.ipc.Object):
 
         widget.show()
 
-        window = WidgetWindow(widget)
-        window.show_all()
+        widget.window = WidgetWindow(widget)
+        widget.window.show_all()
 
-        #widget.window.get_group().remove_window(widget.window)
+        widget.clone = Clone(widget.view)
 
-        #c = Clone(widget.view)
-
-        #if x is not None and y is not None:
-        #    widget.set_position(x, y)
+        self.overlay.bin.add(widget.clone, x, y)
+        widget.clone.show()
 
 
     @cream.ipc.method('', 'a{sa{ss}}')
@@ -249,6 +317,21 @@ class Melange(cream.Module, cream.ipc.Object):
         """
 
         return self.widgets.by_hash
+
+
+    @cream.ipc.method('', '')
+    def toggle_overlay(self):
+        """ Show the overlay window. """
+
+        global OVERLAY
+
+        if OVERLAY:
+            OVERLAY = False
+            self.overlay.hide()
+        else:
+            OVERLAY = True
+
+            self.overlay.show()
 
 
     def quit(self):
