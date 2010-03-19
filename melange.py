@@ -127,6 +127,8 @@ class Clone(gtk.DrawingArea):
         if cr:
             self.window.set_cursor(gtk.gdk.Cursor(cr.type))
 
+        return True
+
 
     def do_expose_event(self, event):
 
@@ -209,7 +211,11 @@ class Overlay:
         self.window.stick()
         self.window.set_keep_above(True)
         self.window.set_app_paintable(True)
+        self.window.set_skip_pager_hint(True)
+        self.window.set_skip_taskbar_hint(True)
+        self.window.set_events(self.window.get_events() | gtk.gdk.BUTTON_RELEASE_MASK)
         self.window.connect('expose-event', self.expose_cb)
+        self.window.connect('button-release-event', self.button_release_cb)
         self.window.set_colormap(self.window.get_screen().get_rgba_colormap())
 
         self.bin = cream.gui.CompositeBin()
@@ -246,6 +252,12 @@ class Overlay:
         ctx.paint()
 
         ctx.set_operator(cairo.OPERATOR_OVER)
+
+
+    def button_release_cb(self, source, event):
+        global OVERLAY
+        OVERLAY = False
+        self.hide()
 
 
 class Melange(cream.Module, cream.ipc.Object):
