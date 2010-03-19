@@ -2,15 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 
     <head>
-        <title>Test Widget</title>
+        <title>Weather Widget</title>
         <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+    
+        <script type="text/javascript" src="/common/core/mootools.js"></script>
+
         <link rel="stylesheet" type="text/css" href="/common/ui/melange.css" media="screen">
-        <style type="text/css">
-        @font-face {
-            font-family: LCDDotMatrix5x8 ;
-            src: url(LCDDotMatrix5x8.ttf ) format("truetype");
-            }
-        </style>
     </head>
 
     <body>
@@ -31,44 +28,41 @@
                     <span id="pressure" style="font-size: .8em; font-weight: bold; line-height: 1em;">NaN</span>
                 </div>
                 <div style="clear: both;"></div>
-    
-            <script type="text/javascript" src="/common/core/mootools.js"></script>
-            <script type="text/javascript" src="/common/core/core.js"></script>
-            <script type="text/javascript" src="/common/core/ipc.js"></script>
-            <script type="text/javascript">
-                var icons = {
-                    'clear': 'clear.png',
-                    'cloudy': 'cloudy.png',
-                    'flurries': 'flurries.png',
-                    'fog': 'fog.png',
-                    'hazy': 'hazy.png',
-                    'mostlycloudy': 'mostlycloudy.png',
-                    'mostlysunny': 'mostlysunny.png',
-                    'partlycloudy': 'partlycloudy.png',
-                    'partlysunny': 'partlysunny.png',
-                    'rain': 'rain.png',
-                    'sleet': 'sleet.png',
-                    'snow': 'snow.png',
-                    'sunny': 'sunny.png',
-                    'tstorms': 'thunderstorms.png',
-                    'unknown': 'unknown.png',
+
+                <script type="text/javascript">
+                    var icons = {
+                        'clear': 'clear.png',
+                        'cloudy': 'cloudy.png',
+                        'flurries': 'flurries.png',
+                        'fog': 'fog.png',
+                        'hazy': 'hazy.png',
+                        'mostlycloudy': 'mostlycloudy.png',
+                        'mostlysunny': 'mostlysunny.png',
+                        'partlycloudy': 'partlycloudy.png',
+                        'partlysunny': 'partlysunny.png',
+                        'rain': 'rain.png',
+                        'sleet': 'sleet.png',
+                        'snow': 'snow.png',
+                        'sunny': 'sunny.png',
+                        'tstorms': 'thunderstorms.png',
+                        'unknown': 'unknown.png',
+                    };
+                    
+                    function update_weather() {
+                        data = widget.weather.get('Celle, Germany');
+
+                        $('temperature').set('text', data['temperature'] + '°C');
+                        $('wind').set('text', data['wind_speed'] + 'km/h');
+                        $('humidity').set('text', data['humidity'] + '%');
+                        $('pressure').set('text', data['pressure'] + 'hPa');
+                        $('icon').set('src', 'images/' + icons[data['icon']]);                        
                     }
-                cream.call_periodically({
-                        interval: 60000,
-                        bus: 'org.cream.collector',
-                        object: '/org/cream/collector/weather',
-                        interface: 'org.cream.collector',
-                        method: 'get_weather',
-                        params: ['Heidelberg, Germany'],
-                        callback: function(data) {
-                            $('temperature').set('text', data['temperature']+'°C');
-                            $('wind').set('text', data['wind_speed']+'km/h');
-                            $('humidity').set('text',data['humidity']+'%');
-                            $('pressure').set('text', data['pressure']+'hPa');
-                            $('icon').set('src', 'images/' + icons[data['icon']]);
-                        }
+                    
+                    window.addEvent('domready', function() {
+                        update_weather();
+                        window.setInterval('update_weather()', 60000);
                     });
-            </script>
+                </script>
             </div>
         </div>
     </body>
