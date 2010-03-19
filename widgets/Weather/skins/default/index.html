@@ -59,7 +59,7 @@
                     }
                     
                     window.addEvent('domready', function() {
-                        update_weather();
+                        window.setTimeout('update_weather()', 10);
                         window.setInterval('update_weather()', 60000);
                     });
                 </script>
