@@ -368,12 +368,16 @@ class Melange(cream.Module, cream.ipc.Object):
         if OVERLAY:
             OVERLAY = False
             self.overlay.hide()
+
+            for k, w in self.widget_instances.iteritems():
+                w.window.set_opacity(1)
         else:
             OVERLAY = True
-
             self.overlay.initialize()
-
             self.overlay.show()
+
+            for k, w in self.widget_instances.iteritems():
+                w.window.set_opacity(0)
 
 
     def quit(self):
@@ -426,6 +430,7 @@ class Melange(cream.Module, cream.ipc.Object):
                 res_y = widget.get_position()[1] + mov_y
                 #widget.set_position(res_x, res_y)
                 widget.set_position(res_x, res_y)
+                self.overlay.bin.move(widget.clone, res_x, res_y)
 
                 width, height = widget.get_size()
 
