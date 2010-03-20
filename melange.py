@@ -32,6 +32,7 @@ import cream.ipc
 import cream.gui
 
 from widget import Widget
+from thingy import MelangeThingy
 from httpserver import HttpServer
 
 EDIT_MODE_NONE = 0
@@ -284,6 +285,10 @@ class Melange(cream.Module, cream.ipc.Object):
         self.widget_instances = {}
 
         self.overlay = Overlay()
+        self.thingy = MelangeThingy()
+
+        self.thingy.connect('toggle-overlay', lambda *args: self.toggle_overlay())
+        self.thingy.connect('show-settings', lambda *args: self.config.show_window())
 
         # Load widgets stored in configuration.
         for widget in self.config.widgets:
