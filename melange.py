@@ -22,6 +22,7 @@ gobject.threads_init()
 import gtk
 import cairo
 
+import time
 import math
 
 import cream
@@ -131,13 +132,15 @@ class Clone(gtk.DrawingArea):
 
     def do_expose_event(self, event):
 
-        self.set_colormap(self.get_screen().get_rgba_colormap())
-        self.window.set_composited(True)
-
         ctx = self.window.cairo_create()
+
+        region = gtk.gdk.region_rectangle(self.widget.allocation)
+        r = gtk.gdk.region_rectangle(event.area)
+        region.intersect(r)
+        ctx.region (region)
+        ctx.clip()
+
         ctx.set_operator(cairo.OPERATOR_SOURCE)
-        ctx.set_source_rgba(0, 0, 0, 0)
-        ctx.paint()
         ctx.set_source_pixmap(self.widget.window, 0, 0)
         ctx.paint()
 
@@ -201,9 +204,16 @@ class WidgetWindow(gtk.Window):
         self.move(x, y)
 
 
-class Overlay:
+class Overlay(gobject.GObject):
+
+    __gtype_name__ = 'MelangeOverlay'
+    __gsignals__ = {
+        'close': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+        }
 
     def __init__(self):
+
+        gobject.GObject.__init__(self)
 
         self.window = gtk.Window()
         self.window.fullscreen()
@@ -254,9 +264,7 @@ class Overlay:
 
 
     def button_release_cb(self, source, event):
-        global OVERLAY
-        OVERLAY = False
-        self.hide()
+        self.emit('close')
 
 
 class Melange(cream.Module, cream.ipc.Object):
@@ -283,6 +291,7 @@ class Melange(cream.Module, cream.ipc.Object):
         self.widget_instances = {}
 
         self.overlay = Overlay()
+        self.overlay.connect('close', lambda *args: self.toggle_overlay())
         self.thingy = MelangeThingy()
 
         self.thingy.connect('toggle-overlay', lambda *args: self.toggle_overlay())
