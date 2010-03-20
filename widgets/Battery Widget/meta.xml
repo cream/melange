@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<meta>
+    <name>Battery Widget</name>
+    <comment>Widget that displays the current battery state.</comment>
+    <type>melange.widget</type>
+    <icon>battery-widget.png</icon>
+    <hash>111f91vc3ea7e6a645bac5f0a8a35ad5759baa39c41933ce68bb30d44bbef633</hash>
+    <parent>d0ea875bc2f6bacced494a5d0bb93f2b8743994d47a052c39b893e6ca63d3f84</parent>
+    <author>Immanuel Peratoner</author>
+    <license>GPLv3</license>
+    <homepage>http://cream-project.org</homepage>
+    <mail>immanuel.peratoner@gmail.com</mail>
+</meta>
