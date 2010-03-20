@@ -399,6 +399,7 @@ class Melange(cream.Module, cream.ipc.Object):
     def widget_remove_cb(self, widget):
         """ Callback being called when a widget has been removed. """
 
+        self.overlay.bin.remove(widget.clone)
         del self.widget_instances[widget.instance]
 
 

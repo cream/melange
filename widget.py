@@ -27,7 +27,7 @@ import webkit
 import javascriptcore as jscore
 import webbrowser
 
-import cream
+import cream.base
 import cream.meta
 from cream.util import urljoin_multi, cached_property, random_hash
 from cream.contrib.melange.api import APIS
@@ -35,9 +35,11 @@ from cream.contrib.melange.api import APIS
 from httpserver import HOST, PORT
 
 class WidgetAPI(object):
+    def __init__(self, widget):
+        self.widget = widget
 
     def debug(self, message):
-        print message
+        print "DEBUG: %s: %s" % (self.widget.meta['name'], message)
 
 
 class Widget(gobject.GObject, cream.Component):
@@ -48,17 +50,15 @@ class Widget(gobject.GObject, cream.Component):
         'resize': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
         'remove': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'reload' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
-        }
+    }
 
     def __init__(self, meta):
 
+        gobject.GObject.__init__(self)
+        cream.base.Component.__init__(self)
+
         self._size = (None, None)
         self._position = (0, 0)
-
-        self.widget_element = None
-
-        gobject.GObject.__init__(self)
-        cream.Component.__init__(self)
 
         self.meta = meta
 
@@ -108,15 +108,20 @@ class Widget(gobject.GObject, cream.Component):
         self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
 
         # Setting up JavaScript API...
-        self.js_context.widget = WidgetAPI()
+        self.js_context.widget = WidgetAPI(self)
 
         custom_api_file = os.path.join(self.meta['path'], '__init__.py')
         if os.path.isfile(custom_api_file):
             sys.path.insert(0, self.meta['path'])
-            imp.load_module('custom_api_{0}'.format(self.instance), open(custom_api_file), custom_api_file, ('.py', 'r', imp.PY_SOURCE))
-            for a in APIS[custom_api_file].iteritems():
-                self.js_context.widget.__setattr__(a[0], a[1](self))
-            sys.path.remove(self.meta['path'])
+            imp.load_module(
+                'custom_api_{0}'.format(self.instance),
+                open(custom_api_file),
+                custom_api_file,
+                ('.py', 'r', imp.PY_SOURCE)
+            )
+            for name, value in APIS[custom_api_file].iteritems():
+                self.js_context.widget.__setattr__(name, value(self))
+            del sys.path[0]
 
 
     def close(self):
@@ -214,19 +219,25 @@ class Widget(gobject.GObject, cream.Component):
         pass
 
 
+    @cached_property
+    def widget_element(self):
+        # TODO: Can we eliminate that ugly inices-iterating-loop and use
+        #       something similar to Javascript's `for each`?
+        if not self.js_context.document.body:
+            # we don't have any body yet
+            return
+
+        for i in xrange(0, int(self.js_context.document.body.childNodes.length)):
+            try:
+                element = self.js_context.document.body.childNodes[i]
+                if element.className == 'widget':
+                    return element
+            except:
+                pass
+    widget_element.non_none = True
+
     def resize_cb(self, widget, event, *args):
         """ Resize the widget properly... """
-
-        if not self.widget_element:
-            for i in range(0, int(self.js_context.document.body.childNodes.length)):
-                try:
-                    e = self.js_context.document.body.childNodes[i]
-                    if e.className == 'widget':
-                        self.widget_element = e
-                        break
-                except:
-                    pass
-
         if self.widget_element:
             width = int(self.widget_element.offsetWidth)
             height = int(self.widget_element.offsetHeight)
@@ -241,6 +252,7 @@ class Widget(gobject.GObject, cream.Component):
         uri = request.get_uri()
 
         if not uri.startswith('http://{0}:{1}/'.format(HOST, PORT)):
+            import webbrowser
             webbrowser.open(uri)
             return True
 
