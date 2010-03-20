@@ -1,4 +1,4 @@
 <configuration>
     <widgets field="list" static="YEES, BABY!" hidden="true"></widgets>
-    <hotkey_overlay field="hotkey" hidden="true">F12</hotkey_overlay>
+    <!--<hotkey_overlay field="hotkey" hidden="true">F12</hotkey_overlay>-->
 </configuration>

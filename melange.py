@@ -19,8 +19,6 @@
 import gobject
 gobject.threads_init()
 
-import dbus.service
-
 import gtk
 import cairo
 
@@ -106,8 +104,8 @@ class Clone(gtk.DrawingArea):
     def do_size_allocate(self, allocation):
         if self.flags() & gtk.REALIZED:
             widget_size = self.widget.allocation
-            allocation.width += widget_size.width
-            allocation.height += widget_size.height
+            allocation.width = widget_size.width
+            allocation.height = widget_size.height
             self.allocation = allocation
             self.window.move_resize(*allocation)
 
