@@ -106,6 +106,11 @@ var MooScrollArea = new Class({
         
         this.overHang = this.paddingEl.getSize().y - this.parentEl.getSize().y   ;
         
+        // var that will hold the ID of the timeout to fade the slider out
+        this.fadeout_timeout = 0;
+
+        this.scroll_handle_visible = false;
+
         this.setHandleHeight();
         
         if(this.overHang <=0){this.greyOut();}
@@ -114,13 +119,29 @@ var MooScrollArea = new Class({
         
         this.parentEl.addEvents({
             'mousewheel': function(e){
+                // fade the scroll handle in if it is not visible
+                if (this.scroll_handle_visible == false) {
+                    fade_in_scroll_handle(this);
+                }
+                else {
+                    window.clearTimeout(this.fadeout_timeout);
+                    this.fadeout_timeout = window.setTimeout(fade_out_scroll_handle, 5000, this);
+                }
+
                 e = new Event(e).stop();							
                 // Mousewheel UP 
                 if (e.wheel > 0) { this.scrollUp(true); }				
                 // Mousewheel DOWN
-                else if (e.wheel < 0) { this.scrollDown(true); }			
+                else if (e.wheel < 0) { this.scrollDown(true); }
             }.bind(this),
             'keydown': function(e){	
+                // fade the scroll handle in if it is not visible
+                if (this.scroll_handle_visible == false) {
+                    fade_in_scroll_handle(this);
+                    window.clearTimeout(this.fadeout_timeout);
+                    this.fadeout_timeout = window.setTimeout(fade_out_scroll_handle, 2200, this);
+                }
+
                 if (e.key === 'up') { 
                     e = new Event(e).stop();
                     this.scrollUp(true); 					
@@ -131,7 +152,7 @@ var MooScrollArea = new Class({
                 }			
             }.bind(this),			
             
-            'click':function(e){				
+            'click':function(e){
                 this.hasFocus = true;				
                 this.hasFocusTimeout = (function(){
                     $clear(this.hasFocusTimeout);
@@ -144,8 +165,18 @@ var MooScrollArea = new Class({
                 this.scrollHandle.fade(1);
             }.bind(this),
 
+            'mousemove': function(e) {
+                if (this.scroll_handle_visible) { 
+                    window.clearTimeout(this.fadeout_timeout);
+                    this.fadeout_timeout = window.setTimeout(fade_out_scroll_handle, 2000, this);
+                }
+                else {
+                    fade_in_scroll_handle(this);
+                }
+            }.bind(this),
+
             'mouseout': function(e) {
-                this.scrollHandle.fade(0);
+                //this.scrollHandle.fade(0);
             }.bind(this)
         });
         
@@ -397,6 +428,16 @@ var SmoothMooScroll = new Class({
     }
 
 });
+
+function fade_in_scroll_handle(scroll_area_obj) {
+    scroll_area_obj.scrollHandle.fade(1);
+    scroll_area_obj.scroll_handle_visible = true;
+}
+
+function fade_out_scroll_handle(scroll_area_obj) {
+    scroll_area_obj.scrollHandle.fade(0);
+    scroll_area_obj.scroll_handle_visible = false;
+}
 
 window.addEvent('domready', function() {
 
