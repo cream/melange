@@ -110,6 +110,7 @@ var MooScrollArea = new Class({
         this.fadeout_timeout = 0;
 
         this.scroll_handle_visible = false;
+        this.scroll_handle_fade_lock = false;
 
         this.setHandleHeight();
         
@@ -134,12 +135,15 @@ var MooScrollArea = new Class({
                 // Mousewheel DOWN
                 else if (e.wheel < 0) { this.scrollDown(true); }
             }.bind(this),
+
             'keydown': function(e){	
                 // fade the scroll handle in if it is not visible
                 if (this.scroll_handle_visible == false) {
                     fade_in_scroll_handle(this);
+                }
+                else {
                     window.clearTimeout(this.fadeout_timeout);
-                    this.fadeout_timeout = window.setTimeout(fade_out_scroll_handle, 2200, this);
+                    this.fadeout_timeout = window.setTimeout(fade_out_scroll_handle, 2000, this);
                 }
 
                 if (e.key === 'up') { 
@@ -166,13 +170,33 @@ var MooScrollArea = new Class({
             }.bind(this),
 
             'mousemove': function(e) {
-                if (this.scroll_handle_visible) { 
-                    window.clearTimeout(this.fadeout_timeout);
+                window.clearTimeout(this.fadeout_timeout);
+                if (this.scroll_handle_visible && this.scroll_handle_fade_lock == false) {
                     this.fadeout_timeout = window.setTimeout(fade_out_scroll_handle, 2000, this);
                 }
                 else {
                     fade_in_scroll_handle(this);
                 }
+            }.bind(this),
+
+            'mousedown': function(e) {
+                window.clearTimeout(this.fadeout_timeout);
+
+                // on mouse down it should be always visible, so fade it in, if it's not
+                if (this.scroll_handle_visible == false) {
+                    fade_in_scroll_handle(this);
+                }
+
+                // lock the fade in/out timeouts
+                this.scroll_handle_fade_lock = true;
+            }.bind(this),
+
+            'mouseup': function(e) {
+                // unlock the fade in/out timeouts
+                this.scroll_handle_fade_lock = false;
+
+                window.clearTimeout(this.fadeout_timeout);
+                this.fadeout_timeout = window.setTimeout(fade_out_scroll_handle, 2000, this);
             }.bind(this),
 
             'mouseout': function(e) {
@@ -187,13 +211,13 @@ var MooScrollArea = new Class({
         })
         
         this.scrollHandle.addEvents({
-                'mousedown': function(e){					
+                'mousedown': function(e){
                     this.scrollHandle.addClass(this.options.scrollHandleClass +'-Active').setStyle('opacity',this.options.handleActiveOpacity);
                 }.bind(this)
         });
         
         document.addEvents({
-            'mouseup': function(e){					
+            'mouseup': function(e){	
                 this.scrollHandle.removeClass(this.options.scrollHandleClass +'-Active').setStyle('opacity',this.options.handleOpacity);
                 this.upBtn.removeClass(this.options.upBtnClass +'-Active');
                 this.downBtn.removeClass(this.options.downBtnClass +'-Active');
