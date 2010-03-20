@@ -204,11 +204,27 @@ var MooScrollArea = new Class({
             }.bind(this)
         });
         
+        // if mouse is up outside the widget, it should restart timeout etc.
+        window.addEvents({
+            'mouseup': function(e){
+                this.scroll_handle_fade_lock = false;
+
+                window.clearTimeout(this.fadeout_timeout);
+                if (this.scroll_handle_visible) {
+                    this.fadeout_timeout = window.setTimeout(fade_out_scroll_handle, 2000, this);
+                }
+                else {
+                    fade_in_scroll_handle(this);
+                }
+
+            }.bind(this)
+        });
+        
         this.contentEl.addEvents({
             'scroll': function(e){
                 this.slider.set(this.contentEl.getScroll().y);			
             }.bind(this)
-        })
+        });
         
         this.scrollHandle.addEvents({
                 'mousedown': function(e){
