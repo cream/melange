@@ -294,6 +294,20 @@ class Melange(cream.Module, cream.ipc.Object):
         for widget in self.config.widgets:
             self.load_widget(**widget)
 
+        try:
+            self.hotkey_manager = cream.ipc.get_object('org.cream.hotkeys', '/org/cream/hotkeys')
+    
+            self.hotkey_manager.register_hotkey('F12')
+            self.hotkey_manager.connect_to_signal('activate', self.hotkey_activate_cb)
+        except:
+            self.messages.debug("Not able to register hotkey.")
+
+
+    def hotkey_activate_cb(self, keyval, modifier_mask):
+
+        if keyval == 65481 and modifier_mask == 0:
+            self.toggle_overlay()
+
 
     @cream.ipc.method('svv', '')
     def load_widget(self, name, x=None, y=None):
