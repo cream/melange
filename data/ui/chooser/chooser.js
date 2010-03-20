@@ -36,6 +36,7 @@ window.addEvent('domready', function() {
                 // (which has almost the same ID as this tab,
                 // but it ends without the '-tab', so we'll remove it)
                 tab.option = $(tab.id.replace('-tab', ''));
+                tab.fade(0);
             });
         }
 

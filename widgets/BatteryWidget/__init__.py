@@ -12,10 +12,6 @@ class BatteryWidget(api.API):
 
     def get_state(self):
 
-        handle = open('widgets/BatteryWidget/test.txt', 'w')
-        handle.write('bla')
-        handle.close()
-
         battery_status = acpi.battery_status()
         battery_remaining_capacity = acpi.battery_remaining_capacity(float)
         
