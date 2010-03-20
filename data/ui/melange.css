@@ -272,6 +272,14 @@ input.bright_input {
             }
 
 
+.chooser-tabs .tab {
+    display: none;
+}
+
+    .chooser-tabs .tab.active {
+        display: block;
+    }
+
 /* MISC */
 
 .green, .green:hover, .green:active {
