@@ -301,13 +301,23 @@ class Melange(cream.Module, cream.ipc.Object):
         for widget in self.config.widgets:
             self.load_widget(**widget)
 
+        self.config.connect('field-value-changed', self.configuration_changed_cb)
+
         try:
             self.hotkey_manager = cream.ipc.get_object('org.cream.hotkeys', '/org/cream/hotkeys')
     
             self.hotkey_manager.register_hotkey(self.config.hotkey_overlay)
             self.hotkey_manager.connect_to_signal('activate', self.hotkey_activate_cb)
         except:
+            self.hotkey_manager = None
             self.messages.debug("Not able to register hotkey.")
+
+
+    def configuration_changed_cb(self, source, field, value):
+
+        if field == 'hotkey_overlay':
+            if self.hotkey_manager:
+                self.hotkey_manager.register_hotkey(self.config.hotkey_overlay)
 
 
     def hotkey_activate_cb(self, keyval, modifier_mask):
