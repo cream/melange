@@ -36,6 +36,7 @@ from httpserver import HttpServer
 
 EDIT_MODE_NONE = 0
 EDIT_MODE_MOVE = 1
+MOUSE_BUTTON_MIDDLE = 2
 
 OVERLAY = False
 
@@ -101,7 +102,7 @@ class Clone(gtk.DrawingArea):
         requisition.width = widget_size[0]
         requisition.height = widget_size[1]
 
-    
+
     def do_size_allocate(self, allocation):
         if self.flags() & gtk.REALIZED:
             widget_size = self.widget.allocation
@@ -305,7 +306,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
         try:
             self.hotkey_manager = cream.ipc.get_object('org.cream.hotkeys', '/org/cream/hotkeys')
-    
+
             self.hotkey_manager.register_hotkey(self.config.hotkey_overlay)
             self.hotkey_manager.connect_to_signal('activate', self.hotkey_activate_cb)
         except:
@@ -402,7 +403,7 @@ class Melange(cream.Module, cream.ipc.Object):
     def quit(self):
         """ Quit the module. """
 
-        self.config.widgets = [w.__xmlserialize__() for w in self.widget_instances.values()]
+        self.config.widgets = self.widget_instances.values()
         cream.Module.quit(self)
 
 
@@ -425,7 +426,7 @@ class Melange(cream.Module, cream.ipc.Object):
     def button_press_cb(self, source, event, widget):
         """ Handle clicking on the widget (e. g. by showing context menu). """
 
-        if event.button == 2:
+        if event.button == MOUSE_BUTTON_MIDDLE:
             self._edit_mode = EDIT_MODE_MOVE
             self.start_move(widget)
             return True
@@ -433,13 +434,14 @@ class Melange(cream.Module, cream.ipc.Object):
 
     def button_release_cb(self, source, event, widget):
 
-        if event.button == 2:
+        if event.button == MOUSE_BUTTON_MIDDLE:
             self._edit_mode = EDIT_MODE_NONE
             return True
 
 
     def start_move(self, widget):
 
+        # WTF. Maybe put some comments in here. :)
         def move_cb(old_x, old_y):
             if self._edit_mode == EDIT_MODE_MOVE:
                 new_x, new_y = self.display.get_pointer()[1:3]
