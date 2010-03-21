@@ -304,7 +304,7 @@ class Melange(cream.Module, cream.ipc.Object):
         try:
             self.hotkey_manager = cream.ipc.get_object('org.cream.hotkeys', '/org/cream/hotkeys')
     
-            self.hotkey_manager.register_hotkey('F12')
+            self.hotkey_manager.register_hotkey(self.config.hotkey_overlay)
             self.hotkey_manager.connect_to_signal('activate', self.hotkey_activate_cb)
         except:
             self.messages.debug("Not able to register hotkey.")
@@ -312,7 +312,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
     def hotkey_activate_cb(self, keyval, modifier_mask):
 
-        if keyval == 65481 and modifier_mask == 0:
+        if (keyval, modifier_mask) == gtk.accelerator_parse(self.config.hotkey_overlay):
             self.toggle_overlay()
 
 
@@ -392,7 +392,7 @@ class Melange(cream.Module, cream.ipc.Object):
     def quit(self):
         """ Quit the module. """
 
-        self.config.widgets = self.widget_instances.values()
+        self.config.widgets = [w.__xmlserialize__() for w in self.widget_instances.values()]
         cream.Module.quit(self)
 
 
