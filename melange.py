@@ -272,7 +272,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
     def __init__(self):
 
-        cream.Module.__init__(self)
+        cream.Module.__init__(self, features=['hotkeys'])
 
         cream.ipc.Object.__init__(self,
             'org.cream.melange',
@@ -301,28 +301,12 @@ class Melange(cream.Module, cream.ipc.Object):
         for widget in self.config.widgets:
             self.load_widget(**widget)
 
-        self.config.connect('field-value-changed', self.configuration_changed_cb)
-
-        try:
-            self.hotkey_manager = cream.ipc.get_object('org.cream.hotkeys', '/org/cream/hotkeys')
-    
-            self.hotkey_manager.register_hotkey(self.config.hotkey_overlay)
-            self.hotkey_manager.connect_to_signal('activate', self.hotkey_activate_cb)
-        except:
-            self.hotkey_manager = None
-            self.messages.debug("Not able to register hotkey.")
+        self.hotkeys.connect('hotkey-activated', self.hotkey_activated_cb)
 
 
-    def configuration_changed_cb(self, source, field, value):
+    def hotkey_activated_cb(self, source, action):
 
-        if field == 'hotkey_overlay':
-            if self.hotkey_manager:
-                self.hotkey_manager.register_hotkey(self.config.hotkey_overlay)
-
-
-    def hotkey_activate_cb(self, keyval, modifier_mask):
-
-        if (keyval, modifier_mask) == gtk.accelerator_parse(self.config.hotkey_overlay):
+        if action == 'toggle_overlay':
             self.toggle_overlay()
 
 

@@ -1,4 +1,5 @@
 <configuration>
     <widgets type="list" static="true" hidden="true"></widgets>
-    <hotkey_overlay type="hotkey" label="Hotkey for showing overlay">F12</hotkey_overlay>
+    <foo type="integer" static="true" hidden="true" max="2">1</foo>
+    <hotkey_overlay action="toggle_overlay" type="hotkey" label="Hotkey for showing overlay">F12</hotkey_overlay>
 </configuration>
