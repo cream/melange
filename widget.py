@@ -34,6 +34,10 @@ from cream.contrib.melange.api import APIS
 
 from httpserver import HOST, PORT
 
+
+MOUSE_BUTTON_RIGHT = 3
+
+
 class WidgetAPI(object):
     def __init__(self, widget):
         self.widget = widget
@@ -209,7 +213,7 @@ class Widget(gobject.GObject, cream.Component):
     def button_press_cb(self, source, event):
         """ Handle clicking on the widget (e. g. by showing context menu). """
 
-        if event.button == 3:
+        if event.button == MOUSE_BUTTON_RIGHT:
             self.menu.popup(None, None, None, event.button, event.get_time())
             return True
 
@@ -221,7 +225,7 @@ class Widget(gobject.GObject, cream.Component):
 
     @cached_property
     def widget_element(self):
-        # TODO: Can we eliminate that ugly inices-iterating-loop and use
+        # TODO: Can we eliminate that ugly indices-iterating-loop and use
         #       something similar to Javascript's `for each`?
         if not self.js_context.document.body:
             # we don't have any body yet
