@@ -29,6 +29,7 @@ import cream
 import cream.meta
 import cream.ipc
 import cream.gui
+import cream.util
 
 from widget import Widget
 from thingy import MelangeThingy
@@ -485,5 +486,6 @@ class Melange(cream.Module, cream.ipc.Object):
 
 
 if __name__ == '__main__':
+    cream.util.set_process_name('melange')
     melange = Melange()
     melange.main()
