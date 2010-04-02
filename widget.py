@@ -61,7 +61,7 @@ class Widget(gobject.GObject, cream.Component):
         gobject.GObject.__init__(self)
         cream.base.Component.__init__(self)
 
-        self._size = (None, None)
+        self._size = (0, 0)
         self._position = (0, 0)
 
         self.meta = meta

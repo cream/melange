@@ -58,17 +58,26 @@ def gdk_window_get_cursor(window):
 
 
 class Clone(gtk.DrawingArea):
+    """
+    This subclass of `gtk.DrawingArea` enables cloning of a widget of your choice.
+    While not only a copy of the widgets gets drawn, all important events are going
+    to be redirected.
+    """
 
     __gtype_name__ = 'Clone'
 
     def __init__(self, widget):
+        """
+        Initialize the Clone.
+        
+        :param widget: The gtk.Widget to clone.
+        """
 
         gtk.DrawingArea.__init__(self)
-
-        self.set_events(gtk.gdk.ALL_EVENTS_MASK)
-
+        
         self.widget = widget
 
+        self.set_events(gtk.gdk.ALL_EVENTS_MASK)
         self.connect('event', self.dispatch_event)
 
 
@@ -77,10 +86,22 @@ class Clone(gtk.DrawingArea):
         gtk.DrawingArea.do_realize(self)
 
         self.widget.connect('expose-event', lambda source, event: self.window.invalidate_rect(event.area, True))
-        self.widget.connect('size-allocate', lambda source, allocation: self.do_size_allocate(allocation))
+        self.widget.connect_after('size-allocate', self.size_allocate_cb)
+
+
+    def size_allocate_cb(self, source, allocation):
+
+        if self.flags() & gtk.REALIZED:
+            self.size_allocate(allocation)
+            alloc = gtk.gdk.Rectangle(*allocation)
+            alloc.x = self.allocation.x
+            alloc.y = self.allocation.y
+            self.window.move_resize(*alloc)
 
 
     def focus_cb(self, *args):
+        
+        self.window.raise_()
 
         self.widget.grab_focus()
 
@@ -96,20 +117,8 @@ class Clone(gtk.DrawingArea):
 
     def do_size_request(self, requisition):
 
-        #widget_size = self.widget.get_size()
-        widget_size = (100, 100)
-
-        requisition.width = widget_size[0]
-        requisition.height = widget_size[1]
-
-
-    def do_size_allocate(self, allocation):
-        if self.flags() & gtk.REALIZED:
-            widget_size = self.widget.allocation
-            allocation.width = widget_size.width
-            allocation.height = widget_size.height
-            self.allocation = allocation
-            self.window.move_resize(*allocation)
+        requisition.width = self.widget.allocation.width
+        requisition.height = self.widget.allocation.height
 
 
     def dispatch_event(self, source, event):
@@ -147,6 +156,9 @@ class Clone(gtk.DrawingArea):
 
 
 class WidgetWindow(gtk.Window):
+    """
+    The WidgetWindow class is being used for displaying Melange's widget in window mode.
+    """
 
     def __init__(self, widget):
 
@@ -206,6 +218,9 @@ class WidgetWindow(gtk.Window):
 
 
 class Overlay(gobject.GObject):
+    """
+    The Overlay represents an overlay window holding gtk.Widgets.
+    """
 
     __gtype_name__ = 'MelangeOverlay'
     __gsignals__ = {
@@ -233,6 +248,7 @@ class Overlay(gobject.GObject):
 
 
     def initialize(self):
+        """ Initialize the overlay window. """
 
         self.window.set_opacity(0)
         self.window.show_all()
@@ -240,6 +256,7 @@ class Overlay(gobject.GObject):
 
 
     def show(self):
+        """ Show the overlay window. """
 
         self.window.set_opacity(1)
         region = gtk.gdk.Region()
@@ -248,6 +265,7 @@ class Overlay(gobject.GObject):
 
 
     def hide(self):
+        """ Hide the overlay window. """
 
         self.window.set_opacity(0)
         self.window.window.input_shape_combine_region(gtk.gdk.Region(), 0, 0)
@@ -304,15 +322,6 @@ class Melange(cream.Module, cream.ipc.Object):
 
         self.hotkeys.connect('hotkey-activated', self.hotkey_activated_cb)
 
-        try:
-            self.hotkey_manager = cream.ipc.get_object('org.cream.hotkeys', '/org/cream/hotkeys')
-
-            self.hotkey_manager.register_hotkey(self.config.hotkey_overlay)
-            self.hotkey_manager.connect_to_signal('activate', self.hotkey_activate_cb)
-        except:
-            self.hotkey_manager = None
-            self.messages.debug("Not able to register hotkey.")
-
 
     def hotkey_activated_cb(self, source, action):
 
@@ -348,16 +357,15 @@ class Melange(cream.Module, cream.ipc.Object):
         widget.view.connect('button-release-event', self.button_release_cb, widget)
 
         widget.set_position(x, y)
-
-        widget.show()
+        
+        widget.view.connect('map', lambda *args: widget.clone.show())
+        widget.clone = Clone(widget.view)
+        self.overlay.bin.add(widget.clone, x, y)
 
         widget.window = WidgetWindow(widget)
         widget.window.show_all()
-
-        widget.clone = Clone(widget.view)
-
-        self.overlay.bin.add(widget.clone, x, y)
-        widget.clone.show()
+        
+        widget.show()
 
 
     @cream.ipc.method('', 'a{sa{ss}}')
@@ -443,7 +451,6 @@ class Melange(cream.Module, cream.ipc.Object):
 
                 res_x = widget.get_position()[0] + mov_x
                 res_y = widget.get_position()[1] + mov_y
-                #widget.set_position(res_x, res_y)
                 widget.set_position(res_x, res_y)
                 self.overlay.bin.move(widget.clone, res_x, res_y)
 
@@ -477,7 +484,6 @@ class Melange(cream.Module, cream.ipc.Object):
                         ]
 
                         w_distances.sort(key=lambda x:(x[1], x[0]))
-                        #print w_name, w_distances[0]
 
                 gobject.timeout_add(30, move_cb, new_x, new_y)
 

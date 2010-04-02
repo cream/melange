@@ -59,8 +59,14 @@ class MelangeThingy(gobject.GObject):
         item_settings = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
         item_settings.connect('activate', lambda *x: self.emit('show-settings'))
 
+        item_widgets = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
+        item_widgets.set_image(gtk.image_new_from_pixbuf(gtk.gdk.pixbuf_new_from_file_at_size('melange.png', *gtk.icon_size_lookup(gtk.ICON_SIZE_MENU))))
+        item_widgets.get_children()[0].set_label("Add widgets...")
+        item_widgets.connect('activate', lambda *x: self.emit('show-settings'))
+
         self.menu = gtk.Menu()
         self.menu.append(item_settings)
+        self.menu.append(item_widgets)
         self.menu.show_all()
 
 
