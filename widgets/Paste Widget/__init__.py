@@ -8,12 +8,11 @@ import gtk
 @api.register('paste')
 class Paste(api.API):
 
-    def __init__(self, widget):
+    def __init__(self):
 
-        self.widget = widget
+        api.API.__init__(self)
 
         self.language = 'text'
-
         self.clipboard = gtk.clipboard_get()
 
 
@@ -21,13 +20,15 @@ class Paste(api.API):
         self.language = lang
 
 
-    def paste_clipboard(self):
+    def paste_clipboard(self, cb):
 
         text = self.clipboard.wait_for_text()
-        thread.start_new_thread(self._paste, (text, self.language))
+
+        t = api.Thread(self._paste, args=(text, self.language), callback=cb)
+        t.start()
 
 
-    def paste_file(self):
+    def paste_file(self, cb):
 
         chooser = gtk.FileChooserDialog(buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                     gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
@@ -37,11 +38,12 @@ class Paste(api.API):
             text = fh.read()
             fh.close()
             response = chooser.destroy()
-            thread.start_new_thread(self._paste, (text, self.language))
+            t = api.Thread(self._paste, (text, self.language), callback=cb)
+            t.start()
         elif response == gtk.RESPONSE_REJECT:
             response = chooser.destroy()
 
 
     def _paste(self, text, language):
         url = pasty.pocoo.do_paste(text, language)
-        self.emit_event('pasted', url)
+        return url, text

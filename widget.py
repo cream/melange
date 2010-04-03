@@ -39,9 +39,6 @@ MOUSE_BUTTON_RIGHT = 3
 
 
 class WidgetAPI(object):
-    def __init__(self, widget):
-        self.widget = widget
-
     def debug(self, message):
         print "DEBUG: %s: %s" % (self.widget.meta['name'], message)
 
@@ -112,7 +109,7 @@ class Widget(gobject.GObject, cream.Component):
         self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
 
         # Setting up JavaScript API...
-        self.js_context.widget = WidgetAPI(self)
+        self.js_context.widget = WidgetAPI()
 
         custom_api_file = os.path.join(self.meta['path'], '__init__.py')
         if os.path.isfile(custom_api_file):
@@ -124,7 +121,8 @@ class Widget(gobject.GObject, cream.Component):
                 ('.py', 'r', imp.PY_SOURCE)
             )
             for name, value in APIS[custom_api_file].iteritems():
-                self.js_context.widget.__setattr__(name, value(self))
+                print self.meta['name']
+                self.js_context.widget.__setattr__(name, value())
             del sys.path[0]
 
 

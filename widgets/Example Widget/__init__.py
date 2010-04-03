@@ -5,11 +5,6 @@ from cream.contrib.melange import api
 @api.register('example')
 class Example(api.API):
 
-    def __init__(self, widget):
-
-        self.widget = widget
-
-
     def doit(self, arg):
 
         print "Got '{0}'...".format(arg)

@@ -113,11 +113,6 @@
                     $('language_list').appendChild(e);
                 }
 
-                events.addEvent('pasted', function(url) {
-                    url_field.href = url;
-                    url_field.innerHTML = url;
-                });
-
                 $('language').addEvent('value_changed', function(option) {
                     widget.paste.set_language(option.id);
                     if(option.id == 'other') {
@@ -128,10 +123,16 @@
                     overlay.fade(0);
                 }
                 $('paste_clipboard').onclick = function() {
-                    widget.paste.paste_clipboard();
+                    widget.paste.paste_clipboard(function(url){
+                        url_field.href = url;
+                        url_field.innerHTML = url;
+                        });
                 }
                 $('paste_file').onclick = function() {
-                    widget.paste.paste_file();
+                    widget.paste.paste_file(function(url){
+                        url_field.href = url;
+                        url_field.innerHTML = url;
+                        });
                 }
                 dialog.style.display = 'block';
                 overlay.style.display = 'block';
