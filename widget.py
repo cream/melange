@@ -236,7 +236,7 @@ class Widget(gobject.GObject, cream.Component):
                     return element
             except:
                 pass
-    widget_element.non_none = True
+    widget_element.not_none = True
 
     def resize_cb(self, widget, event, *args):
         """ Resize the widget properly... """
