@@ -5,9 +5,9 @@ import acpi
 @api.register('battery')
 class BatteryWidget(api.API):
 
-    def __init__(self, widget):
+    def __init__(self):
 
-        self.widget = widget
+        api.API.__init__(self)
 
 
     def get_state(self):
