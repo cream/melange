@@ -24,8 +24,15 @@ class Paste(api.API):
 
         text = self.clipboard.wait_for_text()
 
-        t = api.Thread(self._paste, args=(text, self.language), callback=cb)
+        t = api.Thread(self._paste, args=(text, self.language))
+        t.connect('finished', lambda thread, data: cb(data))
+        #t.connect('finished', self.foo)
         t.start()
+
+
+    def foo(self, thread, dat):
+
+        print dat
 
 
     def paste_file(self, cb):
@@ -46,4 +53,4 @@ class Paste(api.API):
 
     def _paste(self, text, language):
         url = pasty.pocoo.do_paste(text, language)
-        return url, text
+        return url
