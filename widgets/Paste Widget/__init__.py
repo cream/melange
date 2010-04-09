@@ -1,9 +1,29 @@
-import thread
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301, USA.
 
 from cream.contrib.melange import api
 
+import gobject
 import pasty
 import gtk
+
+import inspect
+
 
 @api.register('paste')
 class Paste(api.API):
@@ -12,30 +32,37 @@ class Paste(api.API):
 
         api.API.__init__(self)
 
-        self.language = 'text'
+        self.language = 'Python'
         self.clipboard = gtk.clipboard_get()
 
 
+    @api.expose
     def set_language(self, lang):
         self.language = lang
 
+    @api.expose
+    def paste_clipboard(self):
 
-    def paste_clipboard(self, cb):
-
-        text = self.clipboard.wait_for_text()
-
-        t = api.Thread(self._paste, args=(text, self.language))
-        t.connect('finished', lambda thread, data: cb(data))
-        #t.connect('finished', self.foo)
-        t.start()
+        text = self.get_clipboard()
+        url = self.paste(text, self.language)
+        return url
 
 
-    def foo(self, thread, dat):
+    @api.expose
+    def paste_file(self):
 
-        print dat
+        text = self.get_file()
+        url = self.paste(text, self.language)
+        return url
 
 
-    def paste_file(self, cb):
+    @api.in_main_thread
+    def get_clipboard(self):
+        return self.clipboard.wait_for_text()
+
+
+    @api.in_main_thread
+    def get_file(self):
 
         chooser = gtk.FileChooserDialog(buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                     gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
@@ -45,12 +72,11 @@ class Paste(api.API):
             text = fh.read()
             fh.close()
             response = chooser.destroy()
-            t = api.Thread(self._paste, (text, self.language), callback=cb)
-            t.start()
+            return text
         elif response == gtk.RESPONSE_REJECT:
             response = chooser.destroy()
+        return None
 
 
-    def _paste(self, text, language):
-        url = pasty.pocoo.do_paste(text, language)
-        return url
+    def paste(self, text, language):
+        return pasty.dpaste.do_paste(text, language)

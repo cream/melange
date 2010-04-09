@@ -6,6 +6,7 @@
         <meta http-equiv="content-type" content="text/html;charset=utf-8" />
     
         <script type="text/javascript" src="/common/core/mootools.js"></script>
+        <script type="text/javascript" src="/common/core/cream.js"></script>
 
         <link rel="stylesheet" type="text/css" href="/common/ui/melange.css" media="screen">
     </head>
@@ -49,19 +50,21 @@
                     };
                     
                     function update_weather() {
-                        data = widget.weather.get('Celle, Germany');
-
-                        $('temperature').set('text', data['temperature'] + '°C');
-                        $('wind').set('text', data['wind_speed'] + 'km/h');
-                        $('humidity').set('text', data['humidity'] + '%');
-                        $('pressure').set('text', data['pressure'] + 'hPa');
-                        $('icon').set('src', 'images/' + icons[data['icon']]);                        
+                        data = widget.api.weather.get('Celle, Germany', function(data) {
+                            $('temperature').set('text', data['temperature'] + '°C');
+                            $('wind').set('text', data['wind_speed'] + 'km/h');
+                            $('humidity').set('text', data['humidity'] + '%');
+                            $('pressure').set('text', data['pressure'] + 'hPa');
+                            $('icon').set('src', 'images/' + icons[data['icon']]);                        
+                        });
                     }
-                    
+
                     window.addEvent('domready', function() {
                         window.setTimeout('update_weather()', 50);
                         window.setInterval('update_weather()', 60000);
                     });
+
+                    widget.init()
                 </script>
             </div>
         </div>

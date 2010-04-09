@@ -30,7 +30,7 @@ import webbrowser
 import cream.base
 import cream.meta
 from cream.util import urljoin_multi, cached_property, random_hash
-from cream.contrib.melange.api import APIS
+from cream.contrib.melange.api import APIS, PyToJSInterface
 
 from httpserver import HOST, PORT
 
@@ -69,7 +69,33 @@ class Widget(gobject.GObject, cream.Component):
         self.skins = cream.meta.MetaDataDB(skin_dir, type='melange.widget.skin')
 
         self.build_ui()
-        self.init_api()
+
+        # Create JavaScript context...
+        self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
+
+        # Set up JavaScript API...
+        self.js_context._python = WidgetAPI()
+        self.js_context._python.init = self.api_init
+
+
+    def api_init(self):
+
+        custom_api_file = os.path.join(self.meta['path'], '__init__.py')
+        if os.path.isfile(custom_api_file):
+            sys.path.insert(0, self.meta['path'])
+            imp.load_module(
+                'custom_api_{0}'.format(self.instance),
+                open(custom_api_file),
+                custom_api_file,
+                ('.py', 'r', imp.PY_SOURCE)
+            )
+            for name, value in APIS[custom_api_file].iteritems():
+                c = value()
+                i = PyToJSInterface(c)
+                c.ctx = self.js_context
+                self.js_context.widget.api.__setattr__(name, i)
+                print name
+            del sys.path[0]
 
 
     def build_ui(self):
@@ -101,29 +127,6 @@ class Widget(gobject.GObject, cream.Component):
         self.menu.append(item_remove)
         self.menu.append(item_about)
         self.menu.show_all()
-
-
-    def init_api(self):
-
-        # Creating JavaScript context...
-        self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
-
-        # Setting up JavaScript API...
-        self.js_context.widget = WidgetAPI()
-
-        custom_api_file = os.path.join(self.meta['path'], '__init__.py')
-        if os.path.isfile(custom_api_file):
-            sys.path.insert(0, self.meta['path'])
-            imp.load_module(
-                'custom_api_{0}'.format(self.instance),
-                open(custom_api_file),
-                custom_api_file,
-                ('.py', 'r', imp.PY_SOURCE)
-            )
-            for name, value in APIS[custom_api_file].iteritems():
-                print self.meta['name']
-                self.js_context.widget.__setattr__(name, value())
-            del sys.path[0]
 
 
     def close(self):

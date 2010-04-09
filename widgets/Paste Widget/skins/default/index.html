@@ -7,6 +7,7 @@
         <link rel="stylesheet" type="text/css" href="/common/ui/melange.css" media="screen" />
         <script type="text/javascript" src="/common/core/mootools.js" />
         <script type="text/javascript" src="/common/core/events.js" />
+        <script type="text/javascript" src="/common/core/cream.js" />
         <script type="text/javascript" src="/common/ui/chooser/chooser.js" />
         <script type="text/javascript" src="/common/ui/scrolled/scrolled.js" />
         <script type="text/javascript" src="/common/ui/dialog/dialog.js" />
@@ -98,6 +99,8 @@
                 close_button.style.marginTop = '5px';
                 close_button.style.marginBottom = '-3px';
                 dialog.appendChild(close_button);
+                dialog.style.display = 'block';
+                overlay.style.display = 'block';
 
                 for(i in languages) {
                     e = document.createElement('div');
@@ -114,7 +117,7 @@
                 }
 
                 $('language').addEvent('value_changed', function(option) {
-                    widget.paste.set_language(option.id);
+                    widget.api.paste.set_language(option.id);
                     if(option.id == 'other') {
                         overlay.fade(1);
                     }
@@ -122,20 +125,22 @@
                 close_button.onclick = function() {
                     overlay.fade(0);
                 }
-                $('paste_clipboard').onclick = function() {
-                    widget.paste.paste_clipboard(function(url){
-                        url_field.href = url;
-                        url_field.innerHTML = url;
-                        });
-                }
+
                 $('paste_file').onclick = function() {
-                    widget.paste.paste_file(function(url){
-                        url_field.href = url;
-                        url_field.innerHTML = url;
-                        });
+                    widget.api.paste.paste_file(function(data) {
+                        url_field.href = data;
+                        url_field.innerHTML = data;
+                    });
                 }
-                dialog.style.display = 'block';
-                overlay.style.display = 'block';
+
+                $('paste_clipboard').onclick = function() {
+                    widget.api.paste.paste_clipboard(function(data) {
+                        url_field.href = data;
+                        url_field.innerHTML = data;
+                    });
+                }
+
+                widget.init()
             });
         </script>
     </head>
