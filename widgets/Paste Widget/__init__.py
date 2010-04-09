@@ -22,8 +22,6 @@ import gobject
 import pasty
 import gtk
 
-import inspect
-
 
 @api.register('paste')
 class Paste(api.API):
@@ -32,7 +30,7 @@ class Paste(api.API):
 
         api.API.__init__(self)
 
-        self.language = 'Python'
+        self.language = 'text'
         self.clipboard = gtk.clipboard_get()
 
 
@@ -79,4 +77,4 @@ class Paste(api.API):
 
 
     def paste(self, text, language):
-        return pasty.dpaste.do_paste(text, language)
+        return pasty.pocoo.do_paste(text, language)
