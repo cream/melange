@@ -39,9 +39,7 @@ MOUSE_BUTTON_RIGHT = 3
 
 
 class WidgetAPI(object):
-    def debug(self, message):
-        print "DEBUG: %s: %s" % (self.widget.meta['name'], message)
-
+    pass
 
 class Widget(gobject.GObject, cream.Component):
 
@@ -75,10 +73,16 @@ class Widget(gobject.GObject, cream.Component):
 
         # Set up JavaScript API...
         self.js_context._python = WidgetAPI()
-        self.js_context._python.init = self.api_init
+        self.js_context._python.init = self.init_api
+        self.js_context._python.init_config = self.init_config
 
+    def init_config(self):
+        # Register the JavaScript configuration event callback for *all*
+        # configuration events. Further dispatching then *happens in JS*.
+        self.js_context.widget.config._python_config = self.config
+        self.config.connect('all', self.js_context.widget.config.on_config_event)
 
-    def api_init(self):
+    def init_api(self):
 
         custom_api_file = os.path.join(self.meta['path'], '__init__.py')
         if os.path.isfile(custom_api_file):
@@ -94,7 +98,6 @@ class Widget(gobject.GObject, cream.Component):
                 i = PyToJSInterface(c)
                 c.ctx = self.js_context
                 self.js_context.widget.api.__setattr__(name, i)
-                print name
             del sys.path[0]
 
 
@@ -112,6 +115,10 @@ class Widget(gobject.GObject, cream.Component):
         self.view.connect('navigation-policy-decision-requested', self.navigation_request_cb)
 
         # Building context menu:
+        item_configure = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
+        item_configure.get_children()[0].set_label("Configure")
+        item_configure.connect('activate', lambda *x: self.config.run_frontend())
+
         item_reload = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
         item_reload.get_children()[0].set_label("Reload")
         item_reload.connect('activate', lambda *x: self.reload())
@@ -123,6 +130,7 @@ class Widget(gobject.GObject, cream.Component):
         item_about.connect('activate', lambda *x: self.about_dialog.show_all())
 
         self.menu = gtk.Menu()
+        self.menu.append(item_configure)
         self.menu.append(item_reload)
         self.menu.append(item_remove)
         self.menu.append(item_about)
@@ -220,7 +228,6 @@ class Widget(gobject.GObject, cream.Component):
 
 
     def button_release_cb(self, source, event):
-
         pass
 
 
