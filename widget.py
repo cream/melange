@@ -31,6 +31,7 @@ import cream.base
 import cream.meta
 from cream.util import urljoin_multi, cached_property, random_hash
 from cream.contrib.melange.api import APIS, PyToJSInterface
+from cream.config import NoConfigurationFileError
 
 from httpserver import HOST, PORT
 
@@ -66,6 +67,12 @@ class Widget(gobject.GObject, cream.Component):
         skin_dir = os.path.join(self.meta['path'], 'skins')
         self.skins = cream.meta.MetaDataDB(skin_dir, type='melange.widget.skin')
 
+
+        try:
+            self.uses_config = self.config and True
+        except NoConfigurationFileError:
+            self.uses_config = False
+
         self.build_ui()
 
         # Create JavaScript context...
@@ -79,8 +86,9 @@ class Widget(gobject.GObject, cream.Component):
     def init_config(self):
         # Register the JavaScript configuration event callback for *all*
         # configuration events. Further dispatching then *happens in JS*.
-        self.js_context.widget.config._python_config = self.config
-        self.config.connect('all', self.js_context.widget.config.on_config_event)
+        if self.uses_config:
+            self.js_context.widget.config._python_config = self.config
+            self.config.connect('all', self.js_context.widget.config.on_config_event)
 
     def init_api(self):
 
@@ -118,7 +126,10 @@ class Widget(gobject.GObject, cream.Component):
         # Building context menu:
         item_configure = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
         item_configure.get_children()[0].set_label("Configure")
-        item_configure.connect('activate', lambda *x: self.config.run_frontend())
+        if self.uses_config:
+            item_configure.connect('activate', lambda *x: self.config.show_dialog())
+        else:
+            item_configure.set_sensitive(False)
 
         item_reload = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
         item_reload.get_children()[0].set_label("Reload")
