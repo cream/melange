@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<meta>
+    <name>Default</name>
+    <comment>Blah</comment>
+    <type>melange.widget.skin</type>
+    <hash>1b908c736c4f38a4339748bf800ea9f19320791673fbc8bc5ab884208d61b0ba</hash>
+    <parent>5b712e7105345334d58c8ef955c0b5c20943f0cd71996cb89f2072e47aefc929</parent>
+    <author>Jonas Haag</author>
+    <license>BSD</license>
+    <homepage>http://cream-project.org</homepage>
+    <mail>jonas@cream-project.org</mail>
+</meta>

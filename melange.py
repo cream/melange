@@ -22,7 +22,6 @@ gobject.threads_init()
 import gtk
 import cairo
 
-import time
 import math
 
 import cream
@@ -70,12 +69,12 @@ class Clone(gtk.DrawingArea):
     def __init__(self, widget):
         """
         Initialize the Clone.
-        
+
         :param widget: The gtk.Widget to clone.
         """
 
         gtk.DrawingArea.__init__(self)
-        
+
         self.widget = widget
 
         self.set_events(gtk.gdk.ALL_EVENTS_MASK)
@@ -101,7 +100,7 @@ class Clone(gtk.DrawingArea):
 
 
     def focus_cb(self, *args):
-        
+
         self.window.raise_()
 
         self.widget.grab_focus()
@@ -360,14 +359,14 @@ class Melange(cream.Module, cream.ipc.Object):
         widget.view.connect('button-release-event', self.button_release_cb, widget)
 
         widget.set_position(x, y)
-        
+
         widget.view.connect('map', lambda *args: widget.clone.show())
         widget.clone = Clone(widget.view)
         self.overlay.bin.add(widget.clone, x, y)
 
         widget.window = WidgetWindow(widget)
         widget.window.show_all()
-        
+
         widget.show()
 
 
