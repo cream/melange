@@ -31,7 +31,7 @@ var ConfigurationWrapper = new Class({
 });
 
 var Widget = new Class({
-    initialize: function() {
+    init: function() {
         _python.init();
     },
     api: new API(),
@@ -42,5 +42,8 @@ var widget = new Widget();
 _python.init_config();
 
 window.addEvent('domready', function() {
-    if(window.main !== undefined) { main() }
+    if(window.main !== undefined) {
+        widget.init();
+        main();
+    }
 });

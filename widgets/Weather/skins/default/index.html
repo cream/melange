@@ -31,40 +31,42 @@
                 <div style="clear: both;"></div>
 
                 <script type="text/javascript">
-                    var icons = {
-                        'clear': 'clear.png',
-                        'cloudy': 'cloudy.png',
-                        'flurries': 'flurries.png',
-                        'fog': 'fog.png',
-                        'hazy': 'hazy.png',
-                        'mostlycloudy': 'mostlycloudy.png',
-                        'mostlysunny': 'mostlysunny.png',
-                        'partlycloudy': 'partlycloudy.png',
-                        'partlysunny': 'partlysunny.png',
-                        'rain': 'rain.png',
-                        'sleet': 'sleet.png',
-                        'snow': 'snow.png',
-                        'sunny': 'sunny.png',
-                        'tstorms': 'thunderstorms.png',
-                        'unknown': 'unknown.png',
-                    };
-                    
-                    function update_weather() {
-                        data = widget.api.weather.get('Celle, Germany', function(data) {
-                            $('temperature').set('text', data['temperature'] + '°C');
-                            $('wind').set('text', data['wind_speed'] + 'km/h');
-                            $('humidity').set('text', data['humidity'] + '%');
-                            $('pressure').set('text', data['pressure'] + 'hPa');
-                            $('icon').set('src', 'images/' + icons[data['icon']]);                        
+                    function main() {
+                        var icons = {
+                            'clear': 'clear.png',
+                            'cloudy': 'cloudy.png',
+                            'flurries': 'flurries.png',
+                            'fog': 'fog.png',
+                            'hazy': 'hazy.png',
+                            'mostlycloudy': 'mostlycloudy.png',
+                            'mostlysunny': 'mostlysunny.png',
+                            'partlycloudy': 'partlycloudy.png',
+                            'partlysunny': 'partlysunny.png',
+                            'rain': 'rain.png',
+                            'sleet': 'sleet.png',
+                            'snow': 'snow.png',
+                            'sunny': 'sunny.png',
+                            'tstorms': 'thunderstorms.png',
+                            'unknown': 'unknown.png',
+                        };
+                        
+                        function update_weather() {
+                            data = widget.api.weather.get(widget.config.get('location'), function(data) {
+                                $('temperature').set('text', data['temperature'] + '°C');
+                                $('wind').set('text', data['wind_speed'] + 'km/h');
+                                $('humidity').set('text', data['humidity'] + '%');
+                                $('pressure').set('text', data['pressure'] + 'hPa');
+                                $('icon').set('src', 'images/' + icons[data['icon']]);                        
+                            });
+                        }
+
+                        widget.config.addEvent('field-value-changed', function(sender, field, new_value) {
+                            update_weather();
                         });
-                    }
 
-                    window.addEvent('domready', function() {
-                        window.setTimeout('update_weather()', 50);
-                        window.setInterval('update_weather()', 60000);
-                    });
-
-                    widget.init()
+                        window.setTimeout(update_weather, 50);
+                        window.setInterval(update_weather, 60000);
+                    };
                 </script>
             </div>
         </div>
