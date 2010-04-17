@@ -31,16 +31,49 @@ import cream.base
 import cream.meta
 from cream.util import urljoin_multi, cached_property, random_hash
 from cream.contrib.melange.api import APIS, PyToJSInterface
-from cream.config import NoConfigurationFileError
+from cream.config import NoConfigurationFileError, Configuration
+from cream.config.backend import CreamXMLBackend, CONFIGURATION_SCHEME_FILE
 
 from httpserver import HOST, PORT
 
 
 MOUSE_BUTTON_RIGHT = 3
 
-
 class WidgetAPI(object):
     pass
+
+
+class WidgetConfiguration(Configuration):
+
+    @classmethod
+    def fromxml(cls, directory='.', classname=None):
+
+        if CreamXMLBackend.configuration_file_exists(directory):
+            from gpyconf.mvc import ComponentFactory
+            from gpyconf.fields import MultiOptionField
+
+            backend = CreamXMLBackend(directory)
+            class_dict = backend.read_scheme()
+            class_dict['widget_skin'] = MultiOptionField(
+                label = "Skin",
+                section = "Appearance",
+                options=(
+                    (u'foo', u'Default'),
+                    (u'bar', u'Small'),
+                ))
+            class_dict['widget_theme'] = MultiOptionField(
+                label = "Theme",
+                section = "Appearance",
+                options=(
+                    (u'foo', u'Dark'),
+                    (u'bar', u'Light'),
+                ))
+
+            klass = type(classname or cls.__name__, (cls,), class_dict)
+            return klass(backend_instance=backend)
+        else:
+            raise NoConfigurationFileError("Could not find %s." % CONFIGURATION_SCHEME_FILE)
+
 
 class Widget(gobject.GObject, cream.Component):
 
@@ -62,7 +95,7 @@ class Widget(gobject.GObject, cream.Component):
 
         self.meta = meta
 
-        self.instance = 'Cream_%s' % random_hash(bits=100)
+        self.instance = 'widget_%s' % random_hash(bits=100)
 
         skin_dir = os.path.join(self.meta['path'], 'skins')
         self.skins = cream.meta.MetaDataDB(skin_dir, type='melange.widget.skin')
@@ -82,6 +115,13 @@ class Widget(gobject.GObject, cream.Component):
         self.js_context._python = WidgetAPI()
         self.js_context._python.init = self.init_api
         self.js_context._python.init_config = self.init_config
+
+
+    def _load_config(self, base_path=None):
+
+        self.config = WidgetConfiguration.fromxml(base_path or self.meta['path'])
+        self.config_loaded = True
+
 
     def init_config(self):
         # Register the JavaScript configuration event callback for *all*
@@ -116,12 +156,17 @@ class Widget(gobject.GObject, cream.Component):
         self.view = webkit.WebView()
         self.view.set_transparent(True)
 
+        settings = self.view.get_settings()
+        settings.set_property('user-agent', self.instance)
+        self.view.set_settings(settings)
+
         # Connecting to signals:
         self.view.connect('expose-event', self.resize_cb)
         self.view.connect('button-press-event', self.button_press_cb)
         self.view.connect('button-release-event', self.button_release_cb)
         self.view.connect('new-window-policy-decision-requested', self.navigation_request_cb)
         self.view.connect('navigation-policy-decision-requested', self.navigation_request_cb)
+        self.view.connect('resource-request-starting', self.resource_request_cb)
 
         # Building context menu:
         item_configure = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
@@ -147,6 +192,11 @@ class Widget(gobject.GObject, cream.Component):
         self.menu.append(item_remove)
         self.menu.append(item_about)
         self.menu.show_all()
+
+
+    def resource_request_cb(self, view, frame, resource, request, response):
+        uri = request.get_property('uri')
+        #request.set_property('uri', uri + '?id=aa')
 
 
     def close(self):

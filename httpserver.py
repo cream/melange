@@ -30,8 +30,10 @@ class HttpServer(object):
         _MELANGE = melange
 
 
-    @route(r'/widgets/:instance_hash/:skin/(?P<file>.*)')
-    def widget_files(instance_hash, skin, file):
+    @route(r'/widget/(?P<file>.*)')
+    def widget_files(file):
+
+        skin = _MELANGE.widget_instances[request.GET['instance']].config.widget_skin
 
         w = _MELANGE.widget_instances[instance_hash]
         path = os.path.join(w.meta['path'], 'skins', w.skins.get_by_name(skin)['path'])
