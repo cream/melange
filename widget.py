@@ -32,7 +32,7 @@ import cream.meta
 from cream.util import urljoin_multi, cached_property, random_hash
 from cream.contrib.melange.api import APIS, PyToJSInterface
 
-from cream.config import NoConfigurationFileError, Configuration
+from cream.config import Configuration
 from cream.config.backend import CreamXMLBackend, CONFIGURATION_SCHEME_FILE
 
 from httpserver import HOST, PORT
@@ -49,31 +49,28 @@ class WidgetConfiguration(Configuration):
     @classmethod
     def fromxml(cls, directory='.', classname=None):
 
-        if CreamXMLBackend.configuration_file_exists(directory):
-            from gpyconf.mvc import ComponentFactory
-            from gpyconf.fields import MultiOptionField
+        from gpyconf.mvc import ComponentFactory
+        from gpyconf.fields import MultiOptionField
 
-            backend = CreamXMLBackend(directory)
-            class_dict = backend.read_scheme()
-            class_dict['widget_skin'] = MultiOptionField(
-                label = "Skin",
-                section = "Appearance",
-                options=(
-                    (u'foo', u'Default'),
-                    (u'bar', u'Small'),
-                ))
-            class_dict['widget_theme'] = MultiOptionField(
-                label = "Theme",
-                section = "Appearance",
-                options=(
-                    (u'foo', u'Dark'),
-                    (u'bar', u'Light'),
-                ))
+        backend = CreamXMLBackend(directory)
+        class_dict = backend.read_scheme()
+        class_dict['widget_skin'] = MultiOptionField(
+            label = "Skin",
+            section = "Appearance",
+            options=(
+                (u'foo', u'Default'),
+                (u'bar', u'Small'),
+            ))
+        class_dict['widget_theme'] = MultiOptionField(
+            label = "Theme",
+            section = "Appearance",
+            options=(
+                (u'foo', u'Dark'),
+                (u'bar', u'Light'),
+            ))
 
-            klass = type(classname or cls.__name__, (cls,), class_dict)
-            return klass(backend_instance=backend)
-        else:
-            raise NoConfigurationFileError("Could not find %s." % CONFIGURATION_SCHEME_FILE)
+        klass = type(classname or cls.__name__, (cls,), class_dict)
+        return klass(backend_instance=backend)
 
 
 class Widget(gobject.GObject, cream.Component):
@@ -86,24 +83,22 @@ class Widget(gobject.GObject, cream.Component):
         'reload' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
     }
 
-    def __init__(self, meta):
+    def __init__(self, path):
 
         gobject.GObject.__init__(self)
-        cream.base.Component.__init__(self)
+        cream.base.Component.__init__(self, path=path)
 
         self._size = (0, 0)
         self._position = (0, 0)
 
-        self.meta = meta
-
         self.instance = 'widget_%s' % random_hash(bits=100)
 
-        skin_dir = os.path.join(self.meta['path'], 'skins')
-        self.skins = cream.meta.MetaDataDB(skin_dir, type='melange.widget.skin')
+        skin_dir = os.path.join(self.context.wd, 'skins')
 
+        self.skins = cream.manifest.ManifestDB(skin_dir, type='org.cream.melange.Skin')
 
-        # FIXME: Get this information from the manifest file.
-        self.uses_config = False
+        self.config = WidgetConfiguration.fromxml(self.context.wd)
+        self.config_loaded = True
 
         self.build_ui()
 
@@ -116,25 +111,18 @@ class Widget(gobject.GObject, cream.Component):
         self.js_context._python.init_config = self.init_config
 
 
-    def _load_config(self, base_path=None):
-
-        self.config = WidgetConfiguration.fromxml(base_path or self.meta['path'])
-        self.config_loaded = True
-
-
     def init_config(self):
         # Register the JavaScript configuration event callback for *all*
         # configuration events. Further dispatching then *happens in JS*.
-        if self.uses_config:
-            self.js_context.widget.config._python_config = self.config
-            self.config.connect('all', self.js_context.widget.config.on_config_event)
+        self.js_context.widget.config._python_config = self.config
+        self.config.connect('all', self.js_context.widget.config.on_config_event)
 
     def init_api(self):
 
-        custom_api_file = os.path.join(self.meta['path'], '__init__.py')
-        print self.meta['name']
+        custom_api_file = os.path.join(self.context.wd, '__init__.py')
+        print self.context.manifest['name']
         if os.path.isfile(custom_api_file):
-            sys.path.insert(0, self.meta['path'])
+            sys.path.insert(0, self.context.wd)
             imp.load_module(
                 'custom_api_{0}'.format(self.instance),
                 open(custom_api_file),
@@ -170,10 +158,7 @@ class Widget(gobject.GObject, cream.Component):
         # Building context menu:
         item_configure = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
         item_configure.get_children()[0].set_label("Configure")
-        if self.uses_config:
-            item_configure.connect('activate', lambda *x: self.config.show_dialog())
-        else:
-            item_configure.set_sensitive(False)
+        item_configure.connect('activate', lambda *x: self.config.show_dialog())
 
         item_reload = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
         item_reload.get_children()[0].set_label("Reload")
@@ -195,7 +180,7 @@ class Widget(gobject.GObject, cream.Component):
 
     def resource_request_cb(self, view, frame, resource, request, response):
         uri = request.get_property('uri')
-        #request.set_property('uri', uri + '?id=aa')
+        request.set_property('uri', uri + '?instance={0}'.format(self.instance))
 
 
     def close(self):
@@ -207,8 +192,7 @@ class Widget(gobject.GObject, cream.Component):
     def show(self):
         """ Show the widget. """
 
-        skin_url = urljoin_multi('http://{0}:{1}'.format(HOST, PORT), 'widgets',
-                                 self.instance, 'Default', 'index.html')
+        skin_url = urljoin_multi('http://{0}:{1}'.format(HOST, PORT), 'widget', 'index.html')
         self.view.open(skin_url)
 
 
@@ -263,13 +247,13 @@ class Widget(gobject.GObject, cream.Component):
         about_dialog.connect('response', lambda *x: self.about_dialog.hide())
         about_dialog.connect('delete-event', lambda *x: True)
 
-        about_dialog.set_name(self.meta['name'])
-        about_dialog.set_authors([self.meta['author']])
-        if self.meta.has_key('icon'):
-            icon_path = os.path.join(self.meta['path'], self.meta['icon'])
+        about_dialog.set_name(self.context.manifest['name'])
+        about_dialog.set_authors(self.context.manifest['authors'])
+        if self.context.manifest.get('icon'):
+            icon_path = os.path.join(self.context.wd, self.context.manifest['icon'])
             icon_pb = gtk.gdk.pixbuf_new_from_file(icon_path).scale_simple(64, 64, gtk.gdk.INTERP_HYPER)
             about_dialog.set_logo(icon_pb)
-        about_dialog.set_comments(self.meta['comment'])
+        about_dialog.set_comments(self.context.manifest['description'])
 
         return about_dialog
 
@@ -340,7 +324,7 @@ class Widget(gobject.GObject, cream.Component):
 
         # TODO: Save hash rather than name here?
         return {
-            'name' : self.meta['name'],
+            'name' : self.context.manifest['name'],
             'x'    : self.get_position()[0],
             'y'    : self.get_position()[1],
         }

@@ -25,7 +25,7 @@ import cairo
 import math
 
 import cream
-import cream.meta
+import cream.manifest
 import cream.ipc
 import cream.gui
 import cream.util
@@ -293,7 +293,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
     def __init__(self):
 
-        cream.Module.__init__(self, features=['hotkeys'])
+        cream.Module.__init__(self)
 
         cream.ipc.Object.__init__(self,
             'org.cream.melange',
@@ -308,7 +308,7 @@ class Melange(cream.Module, cream.ipc.Object):
         self.server.run()
 
         # Scan for widgets...
-        self.widgets = cream.meta.MetaDataDB('widgets', type='melange.widget')
+        self.widgets = cream.manifest.ManifestDB('widgets', type='org.cream.melange.Widget')
         self.widget_instances = {}
 
         self.overlay = Overlay()
@@ -349,7 +349,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
         self.messages.debug("Loading widget '%s'..." % name)
 
-        widget = Widget(self.widgets.get_by_name(name))
+        widget = Widget(self.widgets.get_by_name(name)._path)
         self.widget_instances[widget.instance] = widget
 
         widget.connect('remove', self.widget_remove_cb)
@@ -379,7 +379,18 @@ class Melange(cream.Module, cream.ipc.Object):
         :rtype: `list`
         """
 
-        return self.widgets.by_hash
+        res = {}
+
+        for id, w in self.widgets.by_id.iteritems():
+            res[id] = {
+                'name': w['name'],
+                'description': '',
+                'path': '',
+                #'icon': '',
+                'id': w['id'],
+                }
+
+        return res
 
 
     @cream.ipc.method('', '')
