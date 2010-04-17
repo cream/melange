@@ -241,7 +241,9 @@ class Overlay(gobject.GObject):
         self.window.set_events(self.window.get_events() | gtk.gdk.BUTTON_RELEASE_MASK)
         self.window.connect('expose-event', self.expose_cb)
         self.window.connect('button-release-event', self.button_release_cb)
-        self.window.set_colormap(self.window.get_screen().get_rgba_colormap())
+
+        self.screen = self.window.get_screen()
+        self.window.set_colormap(self.screen.get_rgba_colormap())
 
         self.bin = cream.gui.CompositeBin()
         self.window.add(self.bin)
@@ -260,7 +262,7 @@ class Overlay(gobject.GObject):
 
         self.window.set_opacity(1)
         region = gtk.gdk.Region()
-        region.union_with_rect((0, 0, 1280, 800))
+        region.union_with_rect((0, 0, self.screen.get_width(), self.screen.get_height()))
         self.window.window.input_shape_combine_region(region, 0, 0)
 
 
@@ -485,7 +487,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
                         w_distances.sort(key=lambda x:(x[1], x[0]))
 
-                gobject.timeout_add(30, move_cb, new_x, new_y)
+                gobject.timeout_add(20, move_cb, new_x, new_y)
 
         move_cb(*self.display.get_pointer()[1:3])
 

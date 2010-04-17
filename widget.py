@@ -90,6 +90,7 @@ class Widget(gobject.GObject, cream.Component):
     def init_api(self):
 
         custom_api_file = os.path.join(self.meta['path'], '__init__.py')
+        print self.meta['name']
         if os.path.isfile(custom_api_file):
             sys.path.insert(0, self.meta['path'])
             imp.load_module(
@@ -101,7 +102,7 @@ class Widget(gobject.GObject, cream.Component):
             for name, value in APIS[custom_api_file].iteritems():
                 c = value()
                 i = PyToJSInterface(c)
-                c.ctx = self.js_context
+                c._js_ctx = self.js_context
                 self.js_context.widget.api.__setattr__(name, i)
             del sys.path[0]
 
