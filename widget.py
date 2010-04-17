@@ -34,6 +34,7 @@ from cream.contrib.melange.api import APIS, PyToJSInterface
 
 from cream.config import Configuration
 from cream.config.backend import CreamXMLBackend, CONFIGURATION_SCHEME_FILE
+from gpyconf.fields import MultiOptionField
 
 from httpserver import HOST, PORT
 
@@ -45,32 +46,14 @@ class WidgetAPI(object):
 
 
 class WidgetConfiguration(Configuration):
-
-    @classmethod
-    def fromxml(cls, directory='.', classname=None):
-
-        from gpyconf.mvc import ComponentFactory
-        from gpyconf.fields import MultiOptionField
-
-        backend = CreamXMLBackend(directory)
-        class_dict = backend.read_scheme()
-        class_dict['widget_skin'] = MultiOptionField(
-            label = "Skin",
-            section = "Appearance",
-            options=(
-                (u'foo', u'Default'),
-                (u'bar', u'Small'),
-            ))
-        class_dict['widget_theme'] = MultiOptionField(
-            label = "Theme",
-            section = "Appearance",
-            options=(
-                (u'foo', u'Dark'),
-                (u'bar', u'Light'),
-            ))
-
-        klass = type(classname or cls.__name__, (cls,), class_dict)
-        return klass(backend_instance=backend)
+    widget_skin = MultiOptionField('Skin', section='Appearance', options=(
+        (u'foo', u'Default'),
+        (u'bar', u'Small'),
+    ))
+    widget_theme = MultiOptionField('Theme', section='Appearance', options=(
+        (u'foo', u'Dark'),
+        (u'bar', u'Light'),
+    ))
 
 
 class Widget(gobject.GObject, cream.Component):

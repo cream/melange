@@ -1,13 +1,13 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
- 
+
 import urllib
 from xml.dom.minidom import parseString as parse_xml
- 
+
 from cream.contrib.melange import api
- 
+
 @api.register('weather')
-class Weather(api.API): 
+class Weather(api.API):
 
     @api.expose
     def get(self, location):
@@ -15,7 +15,7 @@ class Weather(api.API):
         handle = urllib.urlopen('http://api.wunderground.com/auto/wui/geo/WXCurrentObXML/index.xml?query={0}'.format(location))
         data = handle.read()
         handle.close()
-        
+
         dom = parse_xml(data)
 
         return {
