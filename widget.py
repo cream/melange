@@ -46,14 +46,17 @@ class WidgetAPI(object):
 
 
 class WidgetConfiguration(Configuration):
-    widget_skin = MultiOptionField('Skin', section='Appearance', options=(
-        (u'foo', u'Default'),
-        (u'bar', u'Small'),
-    ))
-    widget_theme = MultiOptionField('Theme', section='Appearance', options=(
-        (u'foo', u'Dark'),
-        (u'bar', u'Light'),
-    ))
+    def get_additional_fields(self):
+        return {
+            'widget_skin'  : MultiOptionField('Skin', section='Appearance', options=(
+                                (u'foo', u'Default'),
+                                (u'bar', u'Small'),
+                            )),
+            'widget_theme' : MultiOptionField('Theme', section='Appearance', options=(
+                                (u'foo', u'Dark'),
+                                (u'bar', u'Light'),
+            ))
+        }
 
 
 class Widget(gobject.GObject, cream.Component):
