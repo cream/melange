@@ -31,6 +31,7 @@ import cream.base
 import cream.meta
 from cream.util import urljoin_multi, cached_property, random_hash
 from cream.contrib.melange.api import APIS, PyToJSInterface
+
 from cream.config import NoConfigurationFileError, Configuration
 from cream.config.backend import CreamXMLBackend, CONFIGURATION_SCHEME_FILE
 
@@ -101,10 +102,8 @@ class Widget(gobject.GObject, cream.Component):
         self.skins = cream.meta.MetaDataDB(skin_dir, type='melange.widget.skin')
 
 
-        try:
-            self.uses_config = self.config and True
-        except NoConfigurationFileError:
-            self.uses_config = False
+        # FIXME: Get this information from the manifest file.
+        self.uses_config = False
 
         self.build_ui()
 
