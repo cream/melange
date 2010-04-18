@@ -39,14 +39,14 @@ class HttpServer(object):
         skin = 'org.cream.melange.weather-widget.DefaultSkin'
 
         w = _MELANGE.widget_instances[instance]
-        path = os.path.join(w.context.wd, 'skins', os.path.dirname(w.skins.get_by_id(skin)._path))
+        path = os.path.join(w.context.working_directory, 'skins', os.path.dirname(w.skins.get_by_id(skin)._path))
         return send_file(file, path)
 
 
     @route(r'/common/(?P<file>.*)')
     def common_files(file):
 
-        path = os.path.join(_MELANGE.context.wd, 'data')
+        path = os.path.join(_MELANGE.context.working_directory, 'data')
         print send_file(file, path)
         return send_file(file, path)
 

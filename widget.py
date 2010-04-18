@@ -79,11 +79,11 @@ class Widget(gobject.GObject, cream.Component):
 
         self.instance = 'widget_%s' % random_hash(bits=100)
 
-        skin_dir = os.path.join(self.context.wd, 'skins')
+        skin_dir = os.path.join(self.context.working_directory, 'skins')
 
         self.skins = cream.manifest.ManifestDB(skin_dir, type='org.cream.melange.Skin')
 
-        self.config = WidgetConfiguration.fromxml(self.context.wd)
+        self.config = WidgetConfiguration.fromxml(self.context.working_directory)
         self.config_loaded = True
 
         self.build_ui()
@@ -105,10 +105,10 @@ class Widget(gobject.GObject, cream.Component):
 
     def init_api(self):
 
-        custom_api_file = os.path.join(self.context.wd, '__init__.py')
+        custom_api_file = os.path.join(self.context.working_directory, '__init__.py')
         print self.context.manifest['name']
         if os.path.isfile(custom_api_file):
-            sys.path.insert(0, self.context.wd)
+            sys.path.insert(0, self.context.working_directory)
             imp.load_module(
                 'custom_api_{0}'.format(self.instance),
                 open(custom_api_file),
@@ -236,7 +236,7 @@ class Widget(gobject.GObject, cream.Component):
         about_dialog.set_name(self.context.manifest['name'])
         about_dialog.set_authors(self.context.manifest['authors'])
         if self.context.manifest.get('icon'):
-            icon_path = os.path.join(self.context.wd, self.context.manifest['icon'])
+            icon_path = os.path.join(self.context.working_directory, self.context.manifest['icon'])
             icon_pb = gtk.gdk.pixbuf_new_from_file(icon_path).scale_simple(64, 64, gtk.gdk.INTERP_HYPER)
             about_dialog.set_logo(icon_pb)
         about_dialog.set_comments(self.context.manifest['description'])
