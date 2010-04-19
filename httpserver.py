@@ -35,8 +35,7 @@ class HttpServer(object):
 
         instance = request.GET.get('instance')
 
-        #skin = _MELANGE.widget_instances[request.GET['instance']].config.widget_skin
-        skin = 'org.cream.melange.weather-widget.DefaultSkin'
+        skin = _MELANGE.widget_instances[request.GET['instance']].config.widget_skin
 
         w = _MELANGE.widget_instances[instance]
         path = os.path.join(w.context.working_directory, 'skins', os.path.dirname(w.skins.get_by_id(skin)._path))

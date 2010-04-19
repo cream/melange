@@ -478,7 +478,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
                 for k, w in self.widget_instances.iteritems():
                     if not w == widget:
-                        w_name = w.meta['name']
+                        w_name = w.context.manifest['name']
                         w_x, w_y = w.get_position()
                         w_width, w_height = w.get_size()
 

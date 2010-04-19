@@ -19,6 +19,7 @@
 import sys
 import os.path
 import imp
+import weakref
 
 import gobject
 import gtk
@@ -28,11 +29,10 @@ import javascriptcore as jscore
 import webbrowser
 
 import cream.base
-import cream.meta
 from cream.util import urljoin_multi, cached_property, random_hash
 from cream.contrib.melange.api import APIS, PyToJSInterface
 
-from cream.config import Configuration
+from cream.config import Configuration, MissingConfigurationDefinitionFile
 from cream.config.backend import CreamXMLBackend, CONFIGURATION_SCHEME_FILE
 from gpyconf.fields import MultiOptionField
 
@@ -46,17 +46,23 @@ class WidgetAPI(object):
 
 
 class WidgetConfiguration(Configuration):
-    def get_additional_fields(self):
-        return {
-            'widget_skin'  : MultiOptionField('Skin', section='Appearance', options=(
-                                (u'foo', u'Default'),
-                                (u'bar', u'Small'),
-                            )),
-            'widget_theme' : MultiOptionField('Theme', section='Appearance', options=(
-                                (u'foo', u'Dark'),
-                                (u'bar', u'Light'),
-            ))
-        }
+
+    def __init__(self, path, skins={}, themes={'aaa':{'name':"Foo"}}):
+
+        Configuration.__init__(self, backend_instance=CreamXMLBackend(path))
+
+        try:
+            configuration_scheme = self.backend_instance.read_scheme()
+        except MissingConfigurationDefinitionFile:
+            configuration_scheme = dict()
+
+        self._add_fields(configuration_scheme)
+        self._add_fields({
+            'widget_skin'  : MultiOptionField('Skin', section='Appearance', options=[(key, val['name']) for key, val in skins.iteritems()]),
+            'widget_theme' : MultiOptionField('Theme', section='Appearance', options=[(key, val['name']) for key, val in themes.iteritems()])
+            })
+
+        self.read()
 
 
 class Widget(gobject.GObject, cream.Component):
@@ -83,7 +89,7 @@ class Widget(gobject.GObject, cream.Component):
 
         self.skins = cream.manifest.ManifestDB(skin_dir, type='org.cream.melange.Skin')
 
-        self.config = WidgetConfiguration.fromxml(self.context.working_directory)
+        self.config = WidgetConfiguration(self.context.working_directory, skins=self.skins.by_id)
         self.config_loaded = True
 
         self.build_ui()
