@@ -49,7 +49,7 @@ class WidgetConfiguration(Configuration):
 
     def __init__(self, path, skins={}, themes={'aaa':{'name':"Foo"}}):
 
-        Configuration.__init__(self, path)
+        Configuration.__init__(self, path, read=False)
 
         self._add_field(
             'widget_skin',
