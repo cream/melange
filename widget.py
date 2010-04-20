@@ -83,7 +83,7 @@ class Widget(gobject.GObject, cream.Component):
         self._size = (0, 0)
         self._position = (0, 0)
 
-        self.instance = 'widget_%s' % random_hash(bits=100)
+        self.instance = '%s' % random_hash(bits=100)[0:32]
 
         skin_dir = os.path.join(self.context.working_directory, 'skins')
 
