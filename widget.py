@@ -49,18 +49,22 @@ class WidgetConfiguration(Configuration):
 
     def __init__(self, path, skins={}, themes={'aaa':{'name':"Foo"}}):
 
-        Configuration.__init__(self, backend_instance=CreamXMLBackend(path))
+        Configuration.__init__(self, path)
 
-        try:
-            configuration_scheme = self.backend_instance.read_scheme()
-        except MissingConfigurationDefinitionFile:
-            configuration_scheme = dict()
-
-        self._add_fields(configuration_scheme)
-        self._add_fields({
-            'widget_skin'  : MultiOptionField('Skin', section='Appearance', options=[(key, val['name']) for key, val in skins.iteritems()]),
-            'widget_theme' : MultiOptionField('Theme', section='Appearance', options=[(key, val['name']) for key, val in themes.iteritems()])
-            })
+        self._add_field(
+            'widget_skin',
+            MultiOptionField('Skin',
+                section='Appearance',
+                options=((key, val['name']) for key, val in skins.iteritems())
+            )
+        )
+        self._add_field(
+            'widget_theme',
+            MultiOptionField('Theme',
+                section='Appearance',
+                options=((key, val['name']) for key, val in themes.iteritems())
+            )
+        )
 
         self.read()
 
@@ -90,7 +94,6 @@ class Widget(gobject.GObject, cream.Component):
         self.skins = cream.manifest.ManifestDB(skin_dir, type='org.cream.melange.Skin')
 
         self.config = WidgetConfiguration(self.context.working_directory, skins=self.skins.by_id)
-        self.config_loaded = True
 
         self.build_ui()
 
