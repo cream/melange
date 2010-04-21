@@ -16,17 +16,17 @@
             <div class="background">
                 <div style="width: 70px; float: left; text-align: center;">
                     <img id="icon" src="images/clear.png" onmousedown="return false;" /><br />
-                    <span id="temperature" style="font-size: 1.8em; font-weight: bold; line-height: 1em;">NaN</span>
+                    <span id="temperature" style="font-size: 1.8em; font-weight: bold; line-height: 1em;">N/A</span>
                 </div>
                 <div style="margin-left: 80px;">
                     <span style="font-size: .65em; line-height: 1em;">Wind:</span><br />
-                    <span id="wind" style="font-size: .8em; font-weight: bold; line-height: 1em;">NaN</span><br />
+                    <span id="wind" style="font-size: .8em; font-weight: bold; line-height: 1em;">N/A</span><br />
     
                     <span style="font-size: .65em; line-height: 1em;">Humidity:</span><br />
-                    <span id="humidity" style="font-size: .8em; font-weight: bold; line-height: 1em;">NaN</span><br />
+                    <span id="humidity" style="font-size: .8em; font-weight: bold; line-height: 1em;">N/A</span><br />
     
                     <span style="font-size: .65em; line-height: 1em;">Pressure:</span><br />
-                    <span id="pressure" style="font-size: .8em; font-weight: bold; line-height: 1em;">NaN</span>
+                    <span id="pressure" style="font-size: .8em; font-weight: bold; line-height: 1em;">N/A</span>
                 </div>
                 <div style="clear: both;"></div>
 
@@ -60,12 +60,21 @@
                             });
                         }
 
+
+                        var configuration_update_timeout_id;
                         widget.config.addEvent('field-value-changed', function(sender, field, new_value) {
-                            update_weather();
+                            /* This function is called every time the user types something in the
+                               configuration dialog input box. To avoid lots of requests to the weather
+                               service, ensure that at least 3 seconds have passed before the next
+                               request is send by using a timeout.
+                            */
+                            $clear(configuration_update_timeout_id);
+                            configuration_update_timeout_id = update_weather.delay(3000);
                         });
 
-                        window.setTimeout(update_weather, 50);
-                        window.setInterval(update_weather, 60000);
+
+                        update_weather.delay(50);
+                        update_weather.periodical(60000);
                     };
                 </script>
             </div>
