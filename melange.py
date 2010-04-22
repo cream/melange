@@ -89,7 +89,7 @@ class Clone(gtk.DrawingArea):
         self.widget.connect_after('size-allocate', self.size_allocate_cb)
 
 
-    def size_allocate_cb(self, source, allocation):
+    """def size_allocate_cb(self, source, allocation):
 
         if self.flags() & gtk.REALIZED:
             self.size_allocate(allocation)
@@ -97,6 +97,12 @@ class Clone(gtk.DrawingArea):
             alloc.x = self.allocation.x
             alloc.y = self.allocation.y
             self.window.move_resize(*alloc)
+
+
+    def do_size_allocate(self, allocation):
+
+        self.allocation = allocation
+        self.window.move_resize(*allocation)"""
 
 
     def focus_cb(self, *args):
@@ -360,14 +366,13 @@ class Melange(cream.Module, cream.ipc.Object):
 
         widget.set_position(x, y)
 
-        widget.view.connect('map', lambda *args: widget.clone.show())
-        widget.clone = Clone(widget.view)
-        self.overlay.bin.add(widget.clone, x, y)
-
         widget.window = WidgetWindow(widget)
         widget.window.show_all()
 
         widget.show()
+
+        widget.clone = Clone(widget.view)
+        self.overlay.bin.add(widget.clone, x, y)
 
 
     @cream.ipc.method('', 'a{sa{ss}}')
