@@ -30,6 +30,13 @@ class HttpServer(object):
         _MELANGE = melange
 
 
+    @route(r'/thingy/(?P<file>.*)')
+    def thingy_files(file):
+
+        path = os.path.join(_MELANGE.context.working_directory, 'data/thingy')
+        return send_file(file, path)
+
+
     @route(r'/widget/(?P<file>.*)')
     def widget_files(file):
 

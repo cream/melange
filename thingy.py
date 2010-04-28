@@ -19,63 +19,40 @@
 import gobject
 import gtk
 import cairo
+import webkit
+import javascriptcore as jscore
+import cream.gui
+from httpserver import HOST, PORT
 
-class MelangeThingy(gobject.GObject):
-
-    __gtype_name__ = 'MelangeThingy'
-    __gsignals__ = {
-        'toggle-overlay': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'show-settings': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
-        }
+class ThingyWindow(gtk.Window):
 
     def __init__(self):
 
-        gobject.GObject.__init__(self)
+        gtk.Window.__init__(self)
 
-        self.window = gtk.Window()
-        self.window.stick()
-        self.window.set_keep_below(True)
-        self.window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
-        self.window.set_skip_pager_hint(True)
-        self.window.set_skip_taskbar_hint(True)
-        self.window.set_decorated(False)
-        self.window.set_app_paintable(True)
-        self.window.set_resizable(False)
-        self.window.set_events(self.window.get_events() | gtk.gdk.BUTTON_RELEASE_MASK)
-        self.window.connect('expose-event', self.expose_cb)
-        self.window.connect('button-release-event', self.click_cb)
+        self.stick()
+        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
+        self.set_keep_below(True)
+        self.set_skip_pager_hint(True)
+        self.set_skip_taskbar_hint(True)
+        self.set_decorated(False)
+        self.set_app_paintable(True)
+        self.set_resizable(False)
+        self.connect('expose-event', self.expose_cb)
 
-        self.screen = self.window.get_screen()
-        self.window.set_colormap(self.screen.get_rgba_colormap())
+        self.screen = self.get_screen()
+        self.set_colormap(self.screen.get_rgba_colormap())
 
-        self.window.show()
-        self.window.set_size_request(50, 50)
+        self.view = webkit.WebView()
+        self.view.set_transparent(True)
 
-        self.window.move(self.screen.get_width() - 50, 0)
+        self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
 
-        self.pixbuf = gtk.gdk.pixbuf_new_from_file('thingy.png')
-
-        # Building context menu:
-        item_settings = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
-        item_settings.connect('activate', lambda *x: self.emit('show-settings'))
-
-        item_widgets = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
-        item_widgets.set_image(gtk.image_new_from_pixbuf(gtk.gdk.pixbuf_new_from_file_at_size('melange.png', *gtk.icon_size_lookup(gtk.ICON_SIZE_MENU))))
-        item_widgets.get_children()[0].set_label("Add widgets...")
-        item_widgets.connect('activate', lambda *x: self.emit('show-settings'))
-
-        self.menu = gtk.Menu()
-        self.menu.append(item_settings)
-        self.menu.append(item_widgets)
-        self.menu.show_all()
+        self.add(self.view)
 
 
-    def click_cb(self, source, event):
-
-        if event.button == 1:
-            self.emit('toggle-overlay')
-        elif event.button == 3:
-            self.menu.popup(None, None, None, event.button, event.get_time())
+    def load(self, uri):
+        self.view.open(uri)
 
 
     def expose_cb(self, source, event):
@@ -86,5 +63,77 @@ class MelangeThingy(gobject.GObject):
         ctx.set_operator(cairo.OPERATOR_SOURCE)
         ctx.set_source_rgba(0, 0, 0, 0)
         ctx.paint()
-        ctx.set_source_pixbuf(self.pixbuf, 0, 0)
-        ctx.paint()
+
+
+class Thingy(gobject.GObject):
+
+    __gtype_name__ = 'MelangeThingy'
+    __gsignals__ = {
+        'toggle-overlay': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'show-settings': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'show-add-widgets': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+        }
+
+    def __init__(self):
+
+        gobject.GObject.__init__(self)
+
+        self.thingy_window = ThingyWindow()
+        self.thingy_window.set_size_request(35, 35)
+
+        self.screen = self.thingy_window.get_screen()
+        self.thingy_window.move(self.screen.get_width() - 35, 0)
+
+        self.thingy_window.load('http://{0}:{1}/thingy/thingy.html'.format(HOST, PORT))
+        self.thingy_window.show_all()
+
+        self.thingy_window.js_context.toggle_overlay = self.toggle_overlay
+
+
+        self.control_window = ThingyWindow()
+        self.control_window.set_size_request(70, 35)
+
+        self.screen = self.control_window.get_screen()
+        self.control_window.move(self.screen.get_width() - 70 - 40, -35)
+
+        self.control_window.load('http://{0}:{1}/thingy/control.html'.format(HOST, PORT))
+        self.control_window.show_all()
+
+        self.control_window.js_context.show_settings = self.show_settings
+        self.control_window.js_context.show_add_widgets = self.show_add_widgets
+
+
+        self.thingy_window.window.set_override_redirect(True)
+        self.control_window.window.set_override_redirect(True)
+
+
+    def toggle_overlay(self):
+        self.emit('toggle-overlay')
+
+
+    def show_settings(self):
+        self.emit('show-settings')
+
+
+    def show_add_widgets(self):
+        self.emit('show-add-widgets')
+
+
+    def slide_in(self):
+
+        def update(source, state):
+            self.control_window.move(self.screen.get_width() - 70 - 40, -35 + state*35)
+
+        t = cream.gui.Timeline(600, cream.gui.CURVE_SINE)
+        t.connect('update', update)
+        t.run()
+
+
+    def slide_out(self):
+
+        def update(source, state):
+            self.control_window.move(self.screen.get_width() - 70 - 40, -state*35)
+
+        t = cream.gui.Timeline(600, cream.gui.CURVE_SINE)
+        t.connect('update', update)
+        t.run()

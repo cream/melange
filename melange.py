@@ -22,7 +22,10 @@ gobject.threads_init()
 import gtk
 import cairo
 
+import os.path
 import math
+
+import wnck
 
 import cream
 import cream.manifest
@@ -30,13 +33,18 @@ import cream.ipc
 import cream.gui
 import cream.util
 
+from cream.contrib.melange.dialogs import AddWidgetDialog
+
 from widget import Widget
-from thingy import MelangeThingy
+from thingy import Thingy
 from httpserver import HttpServer
 
 EDIT_MODE_NONE = 0
 EDIT_MODE_MOVE = 1
 MOUSE_BUTTON_MIDDLE = 2
+
+MODE_NORMAL = 0
+MODE_EDIT = 1
 
 OVERLAY = False
 
@@ -81,28 +89,23 @@ class Clone(gtk.DrawingArea):
         self.connect('event', self.dispatch_event)
 
 
+    def dispatch_expose(self, source, event):
+
+        self.window.invalidate_rect(event.area, True)
+
+
     def do_realize(self):
 
         gtk.DrawingArea.do_realize(self)
 
-        self.widget.connect('expose-event', lambda source, event: self.window.invalidate_rect(event.area, True))
-        self.widget.connect_after('size-allocate', self.size_allocate_cb)
-
-
-    """def size_allocate_cb(self, source, allocation):
-
-        if self.flags() & gtk.REALIZED:
-            self.size_allocate(allocation)
-            alloc = gtk.gdk.Rectangle(*allocation)
-            alloc.x = self.allocation.x
-            alloc.y = self.allocation.y
-            self.window.move_resize(*alloc)
+        self.widget.connect('expose-event', self.dispatch_expose)
 
 
     def do_size_allocate(self, allocation):
 
-        self.allocation = allocation
-        self.window.move_resize(*allocation)"""
+        if self.flags() & gtk.REALIZED:
+            self.allocation = allocation
+            self.window.resize(allocation.width, allocation.height)
 
 
     def focus_cb(self, *args):
@@ -177,8 +180,9 @@ class WidgetWindow(gtk.Window):
 
         # Setting up the Widget's window...
         self.stick()
-        self.set_keep_below(True)
         self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
+        #self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
+        self.set_keep_below(True)
         self.set_skip_pager_hint(True)
         self.set_skip_taskbar_hint(True)
         self.set_decorated(False)
@@ -294,8 +298,104 @@ class Overlay(gobject.GObject):
         self.emit('close')
 
 
+class Background(gobject.GObject):
+    """
+    The Overlay represents an overlay window holding gtk.Widgets.
+    """
+
+    __gtype_name__ = 'Background'
+    __gsignals__ = {
+        'close': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+        }
+
+    def __init__(self):
+
+        gobject.GObject.__init__(self)
+
+        self.window = gtk.Window()
+        self.window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
+        self.window.fullscreen()
+        self.window.stick()
+        self.window.set_keep_below(True)
+        self.window.set_decorated(False)
+        self.window.set_app_paintable(True)
+        self.window.set_skip_pager_hint(True)
+        self.window.set_skip_taskbar_hint(True)
+        self.window.connect('expose-event', self.expose_cb)
+
+        self.screen = self.window.get_screen()
+        self.root_window = gtk.gdk.get_default_root_window()
+        self.window.resize(self.screen.get_width(), self.screen.get_height())
+        self.window.set_colormap(self.screen.get_rgba_colormap())
+
+
+    def expose_cb(self, source, event):
+
+        self.draw()
+
+
+    def draw(self):
+
+        workarea = self.root_window.property_get('_NET_WORKAREA')[-1]
+
+        ctx = self.window.window.cairo_create()
+
+        ctx.set_operator(cairo.OPERATOR_SOURCE)
+        ctx.set_source_rgba(0, 0, 0, .7)
+        ctx.paint()
+
+        ctx.rectangle(workarea[0] - 1, workarea[1] - 1, workarea[2] + 2, workarea[3] + 2)
+
+        ctx.set_source_rgba(0, 0, 0, .5)
+        ctx.fill_preserve()
+
+        ctx.set_line_width(1)
+        ctx.set_source_rgba(1, 1, 1, .5)
+        ctx.stroke()
+
+
+    def initialize(self):
+        """ Initialize the overlay window. """
+
+        self.window.set_opacity(0)
+        self.window.show_all()
+        self.window.window.input_shape_combine_region(gtk.gdk.Region(), 0, 0)
+
+
+    def show(self):
+        """ Show the overlay window. """
+
+        def update(source, state):
+            self.window.set_opacity(state)
+
+        t = cream.gui.Timeline(600, cream.gui.CURVE_SINE)
+        t.connect('update', update)
+        t.run()
+
+        self.draw()
+
+        region = gtk.gdk.Region()
+        region.union_with_rect((0, 0, self.screen.get_width(), self.screen.get_height()))
+        self.window.window.input_shape_combine_region(region, 0, 0)
+
+
+    def hide(self):
+        """ Hide the overlay window. """
+
+        def update(source, state):
+            self.window.set_opacity(1 - state)
+
+        t = cream.gui.Timeline(600, cream.gui.CURVE_SINE)
+        t.connect('update', update)
+        t.run()
+
+        self.window.window.input_shape_combine_region(gtk.gdk.Region(), 0, 0)
+
+
 class Melange(cream.Module, cream.ipc.Object):
     """ The main class of the Melange module. """
+
+    mode = MODE_NORMAL
 
     def __init__(self):
 
@@ -305,6 +405,8 @@ class Melange(cream.Module, cream.ipc.Object):
             'org.cream.melange',
             '/org/cream/melange'
         )
+
+        self.screen = wnck.screen_get_default()
 
         self.display = gtk.gdk.display_get_default()
         self._edit_mode = EDIT_MODE_NONE
@@ -317,18 +419,50 @@ class Melange(cream.Module, cream.ipc.Object):
         self.widgets = cream.manifest.ManifestDB('widgets', type='org.cream.melange.Widget')
         self.widget_instances = {}
 
-        self.overlay = Overlay()
-        self.overlay.connect('close', lambda *args: self.toggle_overlay())
-        self.thingy = MelangeThingy()
+        self.background = Background()
+        self.background.initialize()
+        #self.widget_layer.window.window.input_shape_combine_region(gtk.gdk.Region(), 0, 0)
+
+        self.add_widget_dialog = AddWidgetDialog()
+
+        self.thingy = Thingy()
+        self.thingy.thingy_window.set_transient_for(self.background.window)
+        self.thingy.control_window.set_transient_for(self.background.window)
 
         self.thingy.connect('toggle-overlay', lambda *args: self.toggle_overlay())
         self.thingy.connect('show-settings', lambda *args: self.config.show_dialog())
+        self.thingy.connect('show-settings', lambda *args: self.config.show_dialog())
+        self.thingy.connect('show-add-widgets', lambda *args: self.add_widget())
 
         # Load widgets stored in configuration.
         for widget in self.config.widgets:
             self.load_widget(**widget)
 
+        for w in self.widgets.by_id.itervalues():
+            if w.has_key('icon'):
+                p = os.path.join(w['path'], w['icon'])
+                pb = gtk.gdk.pixbuf_new_from_file(p).scale_simple(28, 28, gtk.gdk.INTERP_HYPER)
+            else:
+                pb = gtk.gdk.pixbuf_new_from_file(os.path.join(self.context.working_directory, 'melange.png')).scale_simple(28, 28, gtk.gdk.INTERP_HYPER)
+            #label = "<b>{0}</b>\n{1}".format(w['name'], w['description'])
+            label = "<b>{0}</b>\n{1}".format(w['name'], '')
+            #self.liststore.append((w['id'], w['id'], w['name'], w['description'], pb, label))
+            self.add_widget_dialog.liststore.append((w['id'], w['id'], w['name'], '', pb, label))
+
         self.hotkeys.connect('hotkey-activated', self.hotkey_activated_cb)
+
+
+    def add_widget(self):
+
+        self.add_widget_dialog.show_all()
+
+        if self.add_widget_dialog.run() == 1:
+            selection = self.add_widget_dialog.treeview.get_selection()
+            model, iter = selection.get_selected()
+    
+            id = model.get_value(iter, 2)
+            self.load_widget(id, False, False)
+        self.add_widget_dialog.hide()
 
 
     def hotkey_activated_cb(self, source, action):
@@ -367,12 +501,20 @@ class Melange(cream.Module, cream.ipc.Object):
         widget.set_position(x, y)
 
         widget.window = WidgetWindow(widget)
+        widget.window.set_transient_for(self.background.window)
         widget.window.show_all()
+        #self.widget_layer.bin.add(widget.view, x, y)
+        #self.widget_layer.bin.put(widget.view, x, y)
 
         widget.show()
+        widget.view.show()
 
-        widget.clone = Clone(widget.view)
-        self.overlay.bin.add(widget.clone, x, y)
+        #widget.clone = Clone(widget.view)
+        #self.overlay.bin.add(widget.clone, x, y)
+        #win = gtk.Window()
+        #win.set_size_request(100, 100)
+        #win.add(widget.clone)
+        #win.show_all()
 
 
     @cream.ipc.method('', 'a{sa{ss}}')
@@ -402,21 +544,16 @@ class Melange(cream.Module, cream.ipc.Object):
     def toggle_overlay(self):
         """ Show the overlay window. """
 
-        global OVERLAY
-
-        if OVERLAY:
-            OVERLAY = False
-            self.overlay.hide()
-
-            for k, w in self.widget_instances.iteritems():
-                w.window.set_opacity(1)
+        if self.mode == MODE_NORMAL:
+            self.mode = MODE_EDIT
+            self.thingy.slide_in()
+            self.screen.toggle_showing_desktop(True)
+            self.background.show()
         else:
-            OVERLAY = True
-            self.overlay.initialize()
-            self.overlay.show()
-
-            for k, w in self.widget_instances.iteritems():
-                w.window.set_opacity(0)
+            self.mode = MODE_NORMAL
+            self.thingy.slide_out()
+            self.screen.toggle_showing_desktop(False)
+            self.background.hide()
 
 
     def quit(self):
@@ -429,7 +566,8 @@ class Melange(cream.Module, cream.ipc.Object):
     def widget_remove_cb(self, widget):
         """ Callback being called when a widget has been removed. """
 
-        self.overlay.bin.remove(widget.clone)
+        #self.overlay.bin.remove(widget.clone)
+        #self.widget_layer.bin.remove(widget.view)
         del self.widget_instances[widget.instance]
 
 
@@ -445,7 +583,7 @@ class Melange(cream.Module, cream.ipc.Object):
     def button_press_cb(self, source, event, widget):
         """ Handle clicking on the widget (e. g. by showing context menu). """
 
-        if event.button == MOUSE_BUTTON_MIDDLE:
+        if self.mode == MODE_EDIT and event.button == MOUSE_BUTTON_MIDDLE:
             self._edit_mode = EDIT_MODE_MOVE
             self.start_move(widget)
             return True
@@ -470,7 +608,8 @@ class Melange(cream.Module, cream.ipc.Object):
                 res_x = widget.get_position()[0] + mov_x
                 res_y = widget.get_position()[1] + mov_y
                 widget.set_position(res_x, res_y)
-                self.overlay.bin.move(widget.clone, res_x, res_y)
+                #self.overlay.bin.move(widget.clone, res_x, res_y)
+                #self.widget_layer.bin.move(widget.view, res_x, res_y)
 
                 width, height = widget.get_size()
 
