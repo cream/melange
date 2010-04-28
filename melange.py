@@ -249,6 +249,8 @@ class Background(gobject.GObject):
         self.window.set_skip_taskbar_hint(True)
         self.window.connect('expose-event', self.expose_cb)
 
+        self.window.move(0, 0)
+
         self.screen = self.window.get_screen()
         self.root_window = gtk.gdk.get_default_root_window()
         self.window.resize(self.screen.get_width(), self.screen.get_height())
@@ -356,7 +358,7 @@ class Melange(cream.Module, cream.ipc.Object):
         self.add_widget_dialog = AddWidgetDialog()
 
         self.thingy = Thingy()
-        self.thingy.thingy_window.set_transient_for(self.background.window)
+        #self.thingy.thingy_window.set_transient_for(self.background.window)
         self.thingy.control_window.set_transient_for(self.background.window)
 
         self.thingy.connect('toggle-overlay', lambda *args: self.toggle_overlay())

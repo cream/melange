@@ -91,6 +91,7 @@ class Thingy(gobject.GObject):
 
 
         self.control_window = ThingyWindow()
+        self.control_window.set_title('aa')
         self.control_window.set_size_request(70, 35)
 
         self.screen = self.control_window.get_screen()
@@ -102,9 +103,10 @@ class Thingy(gobject.GObject):
         self.control_window.js_context.show_settings = self.show_settings
         self.control_window.js_context.show_add_widgets = self.show_add_widgets
 
-
-        self.thingy_window.window.set_override_redirect(True)
-        self.control_window.window.set_override_redirect(True)
+        if self.thingy_window.get_position()[1] != 0:
+            self.thingy_window.window.set_override_redirect(True)
+        if self.control_window.get_position()[1] != -35:
+            self.control_window.window.set_override_redirect(True)
 
 
     def toggle_overlay(self):
