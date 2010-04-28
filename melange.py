@@ -227,81 +227,7 @@ class WidgetWindow(gtk.Window):
         self.move(x, y)
 
 
-class Overlay(gobject.GObject):
-    """
-    The Overlay represents an overlay window holding gtk.Widgets.
-    """
-
-    __gtype_name__ = 'MelangeOverlay'
-    __gsignals__ = {
-        'close': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
-        }
-
-    def __init__(self):
-
-        gobject.GObject.__init__(self)
-
-        self.window = gtk.Window()
-        self.window.fullscreen()
-        self.window.stick()
-        self.window.set_keep_above(True)
-        self.window.set_app_paintable(True)
-        self.window.set_skip_pager_hint(True)
-        self.window.set_skip_taskbar_hint(True)
-        self.window.set_events(self.window.get_events() | gtk.gdk.BUTTON_RELEASE_MASK)
-        self.window.connect('expose-event', self.expose_cb)
-        self.window.connect('button-release-event', self.button_release_cb)
-
-        self.screen = self.window.get_screen()
-        self.window.set_colormap(self.screen.get_rgba_colormap())
-
-        self.bin = cream.gui.CompositeBin()
-        self.window.add(self.bin)
-
-
-    def initialize(self):
-        """ Initialize the overlay window. """
-
-        self.window.set_opacity(0)
-        self.window.show_all()
-        self.window.window.input_shape_combine_region(gtk.gdk.Region(), 0, 0)
-
-
-    def show(self):
-        """ Show the overlay window. """
-
-        self.window.set_opacity(1)
-        region = gtk.gdk.Region()
-        region.union_with_rect((0, 0, self.screen.get_width(), self.screen.get_height()))
-        self.window.window.input_shape_combine_region(region, 0, 0)
-
-
-    def hide(self):
-        """ Hide the overlay window. """
-
-        self.window.set_opacity(0)
-        self.window.window.input_shape_combine_region(gtk.gdk.Region(), 0, 0)
-
-
-    def expose_cb(self, source, event):
-
-        ctx = self.window.window.cairo_create()
-
-        ctx.set_operator(cairo.OPERATOR_SOURCE)
-        ctx.set_source_rgba(0, 0, 0, .8)
-        ctx.paint()
-
-        ctx.set_operator(cairo.OPERATOR_OVER)
-
-
-    def button_release_cb(self, source, event):
-        self.emit('close')
-
-
 class Background(gobject.GObject):
-    """
-    The Overlay represents an overlay window holding gtk.Widgets.
-    """
 
     __gtype_name__ = 'Background'
     __gsignals__ = {
@@ -336,7 +262,11 @@ class Background(gobject.GObject):
 
     def draw(self):
 
-        workarea = self.root_window.property_get('_NET_WORKAREA')[-1]
+        workarea = self.root_window.property_get('_NET_WORKAREA')
+        if workarea:
+            workarea = workarea[-1]
+        else:
+            workarea = (0, 0, self.screen.get_width(), self.screen.get_height())
 
         ctx = self.window.window.cairo_create()
 
@@ -355,7 +285,7 @@ class Background(gobject.GObject):
 
 
     def initialize(self):
-        """ Initialize the overlay window. """
+        """ Initialize the background window. """
 
         self.window.set_opacity(0)
         self.window.show_all()
@@ -363,7 +293,7 @@ class Background(gobject.GObject):
 
 
     def show(self):
-        """ Show the overlay window. """
+        """ Show the background window. """
 
         def update(source, state):
             self.window.set_opacity(state)
@@ -380,7 +310,7 @@ class Background(gobject.GObject):
 
 
     def hide(self):
-        """ Hide the overlay window. """
+        """ Hide the background window. """
 
         def update(source, state):
             self.window.set_opacity(1 - state)
@@ -503,18 +433,9 @@ class Melange(cream.Module, cream.ipc.Object):
         widget.window = WidgetWindow(widget)
         widget.window.set_transient_for(self.background.window)
         widget.window.show_all()
-        #self.widget_layer.bin.add(widget.view, x, y)
-        #self.widget_layer.bin.put(widget.view, x, y)
 
         widget.show()
         widget.view.show()
-
-        #widget.clone = Clone(widget.view)
-        #self.overlay.bin.add(widget.clone, x, y)
-        #win = gtk.Window()
-        #win.set_size_request(100, 100)
-        #win.add(widget.clone)
-        #win.show_all()
 
 
     @cream.ipc.method('', 'a{sa{ss}}')
@@ -566,8 +487,6 @@ class Melange(cream.Module, cream.ipc.Object):
     def widget_remove_cb(self, widget):
         """ Callback being called when a widget has been removed. """
 
-        #self.overlay.bin.remove(widget.clone)
-        #self.widget_layer.bin.remove(widget.view)
         del self.widget_instances[widget.instance]
 
 
