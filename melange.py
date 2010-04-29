@@ -48,122 +48,6 @@ MODE_EDIT = 1
 
 OVERLAY = False
 
-import ctypes
-
-cgdk = ctypes.CDLL("libgdk-x11-2.0.so")
-
-class GdkCursor(ctypes.Structure):
-        _fields_ = [('type', ctypes.c_int)]
-
-
-def gdk_window_get_cursor(window):
-
-    cr = cgdk.gdk_window_get_cursor(hash(window))
-    if cr == 0:
-        return None
-    else:
-        return GdkCursor.from_address(cr)
-
-
-class Clone(gtk.DrawingArea):
-    """
-    This subclass of `gtk.DrawingArea` enables cloning of a widget of your choice.
-    While not only a copy of the widgets gets drawn, all important events are going
-    to be redirected.
-    """
-
-    __gtype_name__ = 'Clone'
-
-    def __init__(self, widget):
-        """
-        Initialize the Clone.
-
-        :param widget: The gtk.Widget to clone.
-        """
-
-        gtk.DrawingArea.__init__(self)
-
-        self.widget = widget
-
-        self.set_events(gtk.gdk.ALL_EVENTS_MASK)
-        self.connect('event', self.dispatch_event)
-
-
-    def dispatch_expose(self, source, event):
-
-        self.window.invalidate_rect(event.area, True)
-
-
-    def do_realize(self):
-
-        gtk.DrawingArea.do_realize(self)
-
-        self.widget.connect('expose-event', self.dispatch_expose)
-
-
-    def do_size_allocate(self, allocation):
-
-        if self.flags() & gtk.REALIZED:
-            self.allocation = allocation
-            self.window.resize(allocation.width, allocation.height)
-
-
-    def focus_cb(self, *args):
-
-        self.window.raise_()
-
-        self.widget.grab_focus()
-
-        toplevel = self.widget.get_toplevel()
-
-        if toplevel:
-            toplevel.present()
-
-
-    def do_unrealize(self):
-        self.window.destroy()
-
-
-    def do_size_request(self, requisition):
-
-        requisition.width = self.widget.allocation.width
-        requisition.height = self.widget.allocation.height
-
-
-    def dispatch_event(self, source, event):
-
-        if event.type in [gtk.gdk.EXPOSE]:
-            return
-
-        if event.type == gtk.gdk.BUTTON_PRESS:
-            self.focus_cb()
-
-        event.copy()
-        event.window = self.widget.window
-        event.put()
-
-        cr = gdk_window_get_cursor(self.widget.window)
-        if cr:
-            self.window.set_cursor(gtk.gdk.Cursor(cr.type))
-
-        return True
-
-
-    def do_expose_event(self, event):
-
-        ctx = self.window.cairo_create()
-
-        region = gtk.gdk.region_rectangle(self.widget.allocation)
-        r = gtk.gdk.region_rectangle(event.area)
-        region.intersect(r)
-        ctx.region (region)
-        ctx.clip()
-
-        ctx.set_operator(cairo.OPERATOR_SOURCE)
-        ctx.set_source_pixmap(self.widget.window, 0, 0)
-        ctx.paint()
-
-
 class WidgetWindow(gtk.Window):
     """
     The WidgetWindow class is being used for displaying Melange's widget in window mode.
@@ -190,7 +74,10 @@ class WidgetWindow(gtk.Window):
         self.set_resizable(False)
         self.set_default_size(10, 10)
         self.connect('expose-event', self.expose_cb)
+        self.connect('focus-out-event', self.focus_cb)
         self.set_colormap(self.get_screen().get_rgba_colormap())
+
+        self.set_property('accept-focus', False)
 
         # Creating container for receiving events:
         self.bin = gtk.EventBox()
@@ -199,6 +86,10 @@ class WidgetWindow(gtk.Window):
         self.add(self.bin)
 
         self.move(*self.widget.get_position())
+
+
+    def focus_cb(self, source, event):
+        self.set_property('accept-focus', False)
 
 
     def expose_cb(self, source, event):
@@ -248,6 +139,8 @@ class Background(gobject.GObject):
         self.window.set_skip_pager_hint(True)
         self.window.set_skip_taskbar_hint(True)
         self.window.connect('expose-event', self.expose_cb)
+
+        self.window.set_property('accept-focus', False)
 
         self.window.move(0, 0)
 
@@ -358,7 +251,7 @@ class Melange(cream.Module, cream.ipc.Object):
         self.add_widget_dialog = AddWidgetDialog()
 
         self.thingy = Thingy()
-        #self.thingy.thingy_window.set_transient_for(self.background.window)
+        self.thingy.thingy_window.set_transient_for(self.background.window)
         self.thingy.control_window.set_transient_for(self.background.window)
 
         self.thingy.connect('toggle-overlay', lambda *args: self.toggle_overlay())
@@ -503,6 +396,9 @@ class Melange(cream.Module, cream.ipc.Object):
 
     def button_press_cb(self, source, event, widget):
         """ Handle clicking on the widget (e. g. by showing context menu). """
+
+        widget.window.set_property('accept-focus', True)
+        widget.window.present()
 
         if self.mode == MODE_EDIT and event.button == MOUSE_BUTTON_MIDDLE:
             self._edit_mode = EDIT_MODE_MOVE
