@@ -38,6 +38,7 @@ class ThingyWindow(gtk.Window):
         self.set_decorated(False)
         self.set_app_paintable(True)
         self.set_resizable(False)
+        self.set_property('accept-focus', False)
         self.connect('expose-event', self.expose_cb)
 
         self.screen = self.get_screen()

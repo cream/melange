@@ -141,6 +141,91 @@ div.background {
     border: 1px solid rgba(256, 256, 256, .8);
 }
 
+/* CONTAINER == PANEL */
+
+.panel {
+    padding: 5px;
+    -webkit-box-shadow: 0px 0px 5px rgba(1, 1, 1, .55);
+}
+
+.panel .panel-row {
+    clear: both;
+}
+
+    .panel .panel-row .widget {
+        float: left;
+        padding: 0px;
+        margin: 5px;
+    }
+    
+    .panel .widget .background {
+        margin: 0px;
+        padding: 0px;
+        
+        border-radius: 0px;
+        
+        background: none;
+        -webkit-box-shadow: none;
+    }
+
+.free-panel {
+    border-radius: 10px;
+    background: -webkit-gradient(linear, left -18%, left 20%, from(rgba(100, 100, 100, .75)), to(rgba(0, 0, 0, .75)));
+}
+
+.top-panel {
+    border-bottom-left-radius: 7px;
+    border-bottom-right-radius: 7px;
+
+    background: -webkit-gradient(
+        linear,
+        left -75%,
+        left 90%,
+        color-stop(0, rgba(0, 0, 0, .2)),
+        color-stop(1, rgba(0, 0, 0, .8))
+    );
+}
+
+.bottom-panel {
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+
+    background: -webkit-gradient(
+        linear,
+        left -75%,
+        left 90%,
+        color-stop(0, rgba(0, 0, 0, .2)),
+        color-stop(1, rgba(0, 0, 0, .8))
+    );
+}
+
+.left-panel {
+    border-top-right-radius: 7px;
+    border-bottom-right-radius: 7px;
+
+    background: -webkit-gradient(
+        linear,
+        left top,
+        right top,
+        color-stop(0, rgba(0, 0, 0, .2)),
+        color-stop(1, rgba(0, 0, 0, .8))
+    );
+}
+
+.right-panel {
+    border-top-left-radius: 7px;
+    border-bottom-left-radius: 7px;
+
+    background: -webkit-gradient(
+        linear,
+        left top,
+        right top,
+        color-stop(0, rgba(0, 0, 0, .2)),
+        color-stop(1, rgba(0, 0, 0, .8))
+    );
+}
+
+
 /* BUTTONS */
 
 input[type=button], input[type=submit], input[type=reset], button, .button {
