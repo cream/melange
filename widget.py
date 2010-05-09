@@ -271,7 +271,7 @@ class Widget(gobject.GObject, cream.Component):
         pass
 
 
-    @cached_property
+    @cached_property(not_none=True)
     def widget_element(self):
         # TODO: Can we eliminate that ugly indices-iterating-loop and use
         #       something similar to Javascript's `for each`?
@@ -286,7 +286,6 @@ class Widget(gobject.GObject, cream.Component):
                     return element
             except:
                 pass
-    widget_element.not_none = True
 
     def resize_cb(self, widget, event, *args):
         """ Resize the widget properly... """
