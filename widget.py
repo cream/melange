@@ -113,14 +113,6 @@ class WidgetWindow(gtk.Window):
 
         self.set_property('accept-focus', False)
 
-        #### Creating container for receiving events:
-        ###self.bin = gtk.EventBox()
-        ###self.bin.add(self.widget.view)
-
-        ###self.add(self.bin)
-
-        ###self.move(*self.widget.get_position())
-
 
     def focus_cb(self, source, event):
         self.set_property('accept-focus', False)
@@ -134,16 +126,6 @@ class WidgetWindow(gtk.Window):
         ctx.set_operator(cairo.OPERATOR_SOURCE)
         ctx.set_source_rgba(0, 0, 0, 0)
         ctx.paint()
-
-
-    def remove_cb(self, widget):
-
-        self.destroy()
-
-
-    def move_cb(self, widget, x, y):
-
-        self.move(x, y)
 
 
 class WidgetInstance(gobject.GObject):
@@ -437,6 +419,8 @@ class Widget(gobject.GObject, cream.Component):
         """ Close the widget window and emit 'remove' signal. """
 
         self.hide()
+
+        self.config.save()
 
         self.window.destroy()
         del self
