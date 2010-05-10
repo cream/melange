@@ -29,6 +29,7 @@ import javascriptcore as jscore
 import webbrowser
 
 import cream.base
+import cream.gui
 from cream.util import urljoin_multi, cached_property, random_hash
 from cream.contrib.melange.api import APIS, PyToJSInterface
 
@@ -38,7 +39,12 @@ from gpyconf.fields import MultiOptionField
 
 from httpserver import HOST, PORT
 
+WIDGET_STATE_NONE = 0
+WIDGET_STATE_VISIBLE = 1
+WIDGET_STATE_HIDDEN = 2
+WIDGET_STATE_MOVE = 3
 
+MOUSE_BUTTON_MIDDLE = 2
 MOUSE_BUTTON_RIGHT = 3
 
 class WidgetAPI(object):
@@ -69,33 +75,134 @@ class WidgetConfiguration(Configuration):
         self.read()
 
 
-class Widget(gobject.GObject, cream.Component):
+class WidgetConfigurationProxy(object):
 
-    __gtype_name__ = 'Widget'
+    def __init__(self, config):
+        self.config_ref = weakref.ref(config)
+
+    def __getattribute__(self, key):
+
+        try:
+            return object.__getattribute__(self, key)
+        except AttributeError:
+            return getattr(self.config_ref(), key)
+
+
+class WidgetWindow(gtk.Window):
+    """
+    The WidgetWindow class is being used for displaying Melange's widget in window mode.
+    """
+
+    def __init__(self):
+
+        gtk.Window.__init__(self)
+
+        # Setting up the Widget's window...
+        self.stick()
+        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
+        self.set_keep_below(True)
+        self.set_skip_pager_hint(True)
+        self.set_skip_taskbar_hint(True)
+        self.set_decorated(False)
+        self.set_app_paintable(True)
+        self.set_resizable(False)
+        self.set_default_size(10, 10)
+        self.connect('expose-event', self.expose_cb)
+        self.connect('focus-out-event', self.focus_cb)
+        self.set_colormap(self.get_screen().get_rgba_colormap())
+
+        self.set_property('accept-focus', False)
+
+        #### Creating container for receiving events:
+        ###self.bin = gtk.EventBox()
+        ###self.bin.add(self.widget.view)
+
+        ###self.add(self.bin)
+
+        ###self.move(*self.widget.get_position())
+
+
+    def focus_cb(self, source, event):
+        self.set_property('accept-focus', False)
+
+
+    def expose_cb(self, source, event):
+        """ Clear the widgets background. """
+
+        ctx = source.window.cairo_create()
+
+        ctx.set_operator(cairo.OPERATOR_SOURCE)
+        ctx.set_source_rgba(0, 0, 0, 0)
+        ctx.paint()
+
+
+    def remove_cb(self, widget):
+
+        self.destroy()
+
+
+    def move_cb(self, widget, x, y):
+
+        self.move(x, y)
+
+
+class WidgetInstance(gobject.GObject):
+
+    __gtype_name__ = 'WidgetInstance'
     __gsignals__ = {
-        'move': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
-        'resize': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
-        'remove': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'reload' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+        'remove-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'reload-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'resize-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
+        'begin-move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'end-move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'show-config-dialog-request' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'show-about-dialog-request' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
     }
 
-    def __init__(self, path):
+    def __init__(self, widget):
 
         gobject.GObject.__init__(self)
-        cream.base.Component.__init__(self, path=path)
+
+        self.widget_ref = weakref.ref(widget)
+
+        self.config = WidgetConfigurationProxy(self.widget_ref().config)
 
         self._size = (0, 0)
         self._position = (0, 0)
 
-        self.instance = '%s' % random_hash(bits=100)[0:32]
+        # Initializing the WebView...
+        self.view = webkit.WebView()
+        self.view.set_transparent(True)
 
-        skin_dir = os.path.join(self.context.working_directory, 'skins')
+        # Connecting to signals:
+        self.view.connect('expose-event', self.resize_cb)
+        self.view.connect('button-press-event', self.button_press_cb)
+        self.view.connect('button-release-event', self.button_release_cb)
+        self.view.connect('new-window-policy-decision-requested', self.navigation_request_cb)
+        self.view.connect('navigation-policy-decision-requested', self.navigation_request_cb)
+        self.view.connect('resource-request-starting', self.resource_request_cb)
 
-        self.skins = cream.manifest.ManifestDB(skin_dir, type='org.cream.melange.Skin')
+        # Building context menu:
+        item_configure = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
+        item_configure.get_children()[0].set_label("Configure")
+        item_configure.connect('activate', lambda *x: self.emit('show-config-dialog-request'))
 
-        self.config = WidgetConfiguration(self.context.working_directory, skins=self.skins.by_id)
+        item_reload = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
+        item_reload.get_children()[0].set_label("Reload")
+        item_reload.connect('activate', lambda *x: self.emit('reload-request'))
 
-        self.build_ui()
+        item_remove = gtk.ImageMenuItem(gtk.STOCK_REMOVE)
+        item_remove.connect('activate', lambda *x: self.emit('remove-request'))
+
+        item_about = gtk.ImageMenuItem(gtk.STOCK_ABOUT)
+        item_about.connect('activate', lambda *x: self.emit('show-about-dialog-request'))
+
+        self.menu = gtk.Menu()
+        self.menu.append(item_configure)
+        self.menu.append(item_reload)
+        self.menu.append(item_remove)
+        self.menu.append(item_about)
+        self.menu.show_all()
 
         # Create JavaScript context...
         self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
@@ -104,6 +211,13 @@ class Widget(gobject.GObject, cream.Component):
         self.js_context._python = WidgetAPI()
         self.js_context._python.init = self.init_api
         self.js_context._python.init_config = self.init_config
+
+        skin_url = urljoin_multi('http://{0}:{1}'.format(HOST, PORT), 'widget', 'index.html')
+        self.view.open(skin_url)
+
+
+    def get_view(self):
+        return self.view
 
 
     def init_config(self):
@@ -114,11 +228,11 @@ class Widget(gobject.GObject, cream.Component):
 
 
     def init_api(self):
-        custom_api_file = os.path.join(self.context.working_directory, '__init__.py')
+        custom_api_file = os.path.join(self.widget_ref().context.working_directory, '__init__.py')
         if os.path.isfile(custom_api_file):
-            sys.path.insert(0, self.context.working_directory)
+            sys.path.insert(0, self.widget_ref().context.working_directory)
             imp.load_module(
-                'custom_api_{0}'.format(self.instance),
+                'custom_api_{0}'.format(self.widget_ref().instance_id),
                 open(custom_api_file),
                 custom_api_file,
                 ('.py', 'r', imp.PY_SOURCE)
@@ -132,69 +246,200 @@ class Widget(gobject.GObject, cream.Component):
             del sys.path[0]
 
 
-    def build_ui(self):
-
-        # Initializing the WebView...
-        self.view = webkit.WebView()
-        self.view.set_transparent(True)
-
-        settings = self.view.get_settings()
-        settings.set_property('user-agent', self.instance)
-        self.view.set_settings(settings)
-
-        # Connecting to signals:
-        self.view.connect('expose-event', self.resize_cb)
-        self.view.connect('button-press-event', self.button_press_cb)
-        self.view.connect('button-release-event', self.button_release_cb)
-        self.view.connect('new-window-policy-decision-requested', self.navigation_request_cb)
-        self.view.connect('navigation-policy-decision-requested', self.navigation_request_cb)
-        self.view.connect('resource-request-starting', self.resource_request_cb)
-
-        # Building context menu:
-        item_configure = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
-        item_configure.get_children()[0].set_label("Configure")
-        item_configure.connect('activate', lambda *x: self.config.show_dialog())
-
-        item_reload = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
-        item_reload.get_children()[0].set_label("Reload")
-        item_reload.connect('activate', lambda *x: self.reload())
-
-        item_remove = gtk.ImageMenuItem(gtk.STOCK_REMOVE)
-        item_remove.connect('activate', lambda *x: self.close())
-
-        item_about = gtk.ImageMenuItem(gtk.STOCK_ABOUT)
-        item_about.connect('activate', lambda *x: self.about_dialog.show_all())
-
-        self.menu = gtk.Menu()
-        self.menu.append(item_configure)
-        self.menu.append(item_reload)
-        self.menu.append(item_remove)
-        self.menu.append(item_about)
-        self.menu.show_all()
-
-
     def resource_request_cb(self, view, frame, resource, request, response):
         uri = request.get_property('uri')
-        request.set_property('uri', uri + '?instance={0}'.format(self.instance))
+        request.set_property('uri', uri + '?instance={0}'.format(self.widget_ref().instance_id))
 
 
-    def close(self):
-        """ Close the widget window and emit 'remove' signal. """
+    @cached_property
+    def widget_element(self):
+        # TODO: Can we eliminate that ugly indices-iterating-loop and use
+        #       something similar to Javascript's `for each`?
+        if not self.js_context.document.body:
+            # we don't have any body yet
+            return
 
-        self.emit('remove')
+        for i in xrange(0, int(self.js_context.document.body.childNodes.length)):
+            try:
+                element = self.js_context.document.body.childNodes[i]
+                if element.className == 'widget':
+                    return element
+            except:
+                pass
+    widget_element.not_none = True
 
 
-    def show(self):
-        """ Show the widget. """
+    def resize_cb(self, widget, event, *args):
 
-        skin_url = urljoin_multi('http://{0}:{1}'.format(HOST, PORT), 'widget', 'index.html')
-        self.view.open(skin_url)
+        """ Resize the widget properly... """
+        if self.widget_element:
+            width = int(self.widget_element.offsetWidth)
+            height = int(self.widget_element.offsetHeight)
+            if not self._size == (width, height):
+                self._size = (width, height)
+                self.emit('resize-request', width, height)
+
+
+    def button_press_cb(self, source, event):
+        """ Handle clicking on the widget (e. g. by showing context menu). """
+
+        if event.button == MOUSE_BUTTON_RIGHT:
+            self.menu.popup(None, None, None, event.button, event.get_time())
+            return True
+        elif event.button == MOUSE_BUTTON_MIDDLE:
+            self.emit('begin-move-request')
+            return True
+
+
+    def button_release_cb(self, source, event):
+        
+        if event.button == MOUSE_BUTTON_MIDDLE:
+            self.emit('end-move-request')
+            return True
+
+
+    def navigation_request_cb(self, view, frame, request, action, decision):
+        """ Handle clicks on links, etc. """
+
+        uri = request.get_uri()
+
+        if not uri.startswith('http://{0}:{1}/'.format(HOST, PORT)):
+            import webbrowser
+            webbrowser.open(uri)
+            return True
+
+
+class Widget(gobject.GObject, cream.Component):
+
+    __gtype_name__ = 'Widget'
+    __gsignals__ = {
+        'remove-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT))
+        }
+
+    def __init__(self, path, backref):
+
+        self.__melange_ref__ = weakref.ref(backref)
+
+        gobject.GObject.__init__(self)
+        cream.base.Component.__init__(self, path=path)
+
+        self.state = WIDGET_STATE_NONE
+
+        self.display = gtk.gdk.display_get_default()
+
+        self.instance_id = '%s' % random_hash(bits=100)[0:32]
+
+        skin_dir = os.path.join(self.context.working_directory, 'skins')
+        self.skins = cream.manifest.ManifestDB(skin_dir, type='org.cream.melange.Skin')
+
+        self.config = WidgetConfiguration(self.context.working_directory, skins=self.skins.by_id, themes=self.__melange_ref__().themes.by_id)
+        self.config.connect('field-value-changed', self.configuration_value_changed_cb)
+
+        self.window = WidgetWindow()
+
+        self.load()
+
+
+    def begin_move(self):
+
+        self.state = WIDGET_STATE_MOVE
+        self.move()
+
+
+    def end_move(self):
+        self.state = WIDGET_STATE_VISIBLE
+
+
+    def move(self):
+
+        def move_cb(old_x, old_y):
+            new_x, new_y = self.display.get_pointer()[1:3]
+            move_x = new_x - old_x
+            move_y = new_y - old_y
+
+            if self.state == WIDGET_STATE_MOVE:
+                self.emit('move-request', move_x, move_y)
+                gobject.timeout_add(20, move_cb, new_x, new_y)
+
+        move_cb(*self.display.get_pointer()[1:3])
+
+
+    def load(self):
+
+        self.instance = WidgetInstance(self)
+
+        self.instance.connect('show-config-dialog-request', lambda *args: self.config.show_dialog())
+        self.instance.connect('show-about-dialog-request', lambda *args: self.about_dialog.show_all())
+        self.instance.connect('resize-request', self.resize_request_cb)
+        self.instance.connect('remove-request', lambda *args: self.emit('remove-request'))
+        self.instance.connect('reload-request', lambda *args: self.reload())
+        self.instance.connect('begin-move-request', lambda *args: self.begin_move())
+        self.instance.connect('end-move-request', lambda *args: self.end_move())
+
+        view = self.instance.get_view()
+        self.window.add(view)
+
+
+    def resize_request_cb(self, widget_instance, width, height):
+
+        self.window.set_size_request(width, height)
+        self.window.resize(width, height)
 
 
     def reload(self):
         """ Reload the widget. Really? Yeah. """
 
-        self.emit('reload')
+        def go_on():
+            view = self.instance.get_view()
+            self.window.remove(view)
+    
+            del self.instance
+    
+            self.load()
+            self.show()
+
+        self.hide().connect('completed', lambda *args: go_on())
+
+
+    def show(self):
+        """ Show the widget. """
+
+        self.window.set_opacity(0)
+        self.window.show_all()
+
+        def update(source, state):
+            self.window.set_opacity(state)
+
+        t = cream.gui.Timeline(500, cream.gui.CURVE_SINE)
+        t.connect('update', update)
+        t.run()
+
+        return t
+
+
+    def hide(self):
+        """ Hide the widget. """
+
+        def update(source, state):
+            self.window.set_opacity(1 - state)
+            if state == 1:
+                self.window.hide()
+
+        t = cream.gui.Timeline(500, cream.gui.CURVE_SINE)
+        t.connect('update', update)
+        t.run()
+
+        return t
+
+
+    def remove(self):
+        """ Close the widget window and emit 'remove' signal. """
+
+        self.hide()
+
+        self.window.destroy()
+        del self
 
 
     def get_size(self):
@@ -216,7 +461,7 @@ class Widget(gobject.GObject, cream.Component):
         :rtype: `tuple`
         """
 
-        return self._position
+        return self.window.get_position()
 
 
     def set_position(self, x, y):
@@ -230,8 +475,13 @@ class Widget(gobject.GObject, cream.Component):
         :type y: `int`
         """
 
-        self._position = (x, y)
-        self.emit('move', *self._position)
+        self.window.move(x, y)
+
+
+    def configuration_value_changed_cb(self, source, key, value):
+
+        if key == 'widget_theme':
+            self.reload()
 
 
     @cached_property
@@ -251,62 +501,6 @@ class Widget(gobject.GObject, cream.Component):
         about_dialog.set_comments(self.context.manifest['description'])
 
         return about_dialog
-
-
-    def _update_position(self, window, event):
-        """ Emit the 'position-changed' signal when the widget was moved. """
-
-        self.emit('move', event.x, event.y)
-
-
-    def button_press_cb(self, source, event):
-        """ Handle clicking on the widget (e. g. by showing context menu). """
-
-        if event.button == MOUSE_BUTTON_RIGHT:
-            self.menu.popup(None, None, None, event.button, event.get_time())
-            return True
-
-
-    def button_release_cb(self, source, event):
-        pass
-
-
-    @cached_property
-    def widget_element(self):
-        # TODO: Can we eliminate that ugly indices-iterating-loop and use
-        #       something similar to Javascript's `for each`?
-        if not self.js_context.document.body:
-            # we don't have any body yet
-            return
-
-        for i in xrange(0, int(self.js_context.document.body.childNodes.length)):
-            try:
-                element = self.js_context.document.body.childNodes[i]
-                if element.className == 'widget':
-                    return element
-            except:
-                pass
-    widget_element.not_none = True
-
-    def resize_cb(self, widget, event, *args):
-        """ Resize the widget properly... """
-        if self.widget_element:
-            width = int(self.widget_element.offsetWidth)
-            height = int(self.widget_element.offsetHeight)
-            if not self._size == (width, height):
-                self._size = (width, height)
-                self.emit('resize', width, height)
-
-
-    def navigation_request_cb(self, view, frame, request, action, decision):
-        """ Handle clicks on links, etc. """
-
-        uri = request.get_uri()
-
-        if not uri.startswith('http://{0}:{1}/'.format(HOST, PORT)):
-            import webbrowser
-            webbrowser.open(uri)
-            return True
 
 
     def __xmlserialize__(self):

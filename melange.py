@@ -36,7 +36,7 @@ import cream.util
 from cream.contrib.melange.dialogs import AddWidgetDialog
 
 from widget import Widget
-from thingy import Thingy
+from chrome import Background, Thingy
 from httpserver import HttpServer
 
 EDIT_MODE_NONE = 0
@@ -48,173 +48,92 @@ MODE_EDIT = 1
 
 OVERLAY = False
 
-class WidgetWindow(gtk.Window):
-    """
-    The WidgetWindow class is being used for displaying Melange's widget in window mode.
-    """
 
-    def __init__(self, widget):
+class WidgetManager(gobject.GObject):
 
-        self.widget = widget
-        self.widget.connect('remove', self.remove_cb)
-        self.widget.connect('move', self.move_cb)
-        self.widget.connect('resize', self.resize_cb)
-
-        gtk.Window.__init__(self)
-
-        # Setting up the Widget's window...
-        self.stick()
-        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
-        #self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_UTILITY)
-        self.set_keep_below(True)
-        self.set_skip_pager_hint(True)
-        self.set_skip_taskbar_hint(True)
-        self.set_decorated(False)
-        self.set_app_paintable(True)
-        self.set_resizable(False)
-        self.set_default_size(10, 10)
-        self.connect('expose-event', self.expose_cb)
-        self.connect('focus-out-event', self.focus_cb)
-        self.set_colormap(self.get_screen().get_rgba_colormap())
-
-        self.set_property('accept-focus', False)
-
-        # Creating container for receiving events:
-        self.bin = gtk.EventBox()
-        self.bin.add(self.widget.view)
-
-        self.add(self.bin)
-
-        self.move(*self.widget.get_position())
-
-
-    def focus_cb(self, source, event):
-        self.set_property('accept-focus', False)
-
-
-    def expose_cb(self, source, event):
-        """ Clear the widgets background. """
-
-        ctx = source.window.cairo_create()
-
-        ctx.set_operator(cairo.OPERATOR_SOURCE)
-        ctx.set_source_rgba(0, 0, 0, 0)
-        ctx.paint()
-
-
-    def remove_cb(self, widget):
-
-        self.destroy()
-
-
-    def resize_cb(self, widget, width, height):
-
-        self.resize(width, height)
-        self.set_size_request(width, height)
-
-
-    def move_cb(self, widget, x, y):
-
-        self.move(x, y)
-
-
-class Background(gobject.GObject):
-
-    __gtype_name__ = 'Background'
+    __gtype_name__ = 'WidgetManager'
     __gsignals__ = {
-        'close': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+        'window-added': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gtk.Window,)),
+        'window-removed': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gtk.Window,)),
         }
 
     def __init__(self):
 
         gobject.GObject.__init__(self)
 
-        self.window = gtk.Window()
-        self.window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
-        self.window.fullscreen()
-        self.window.stick()
-        self.window.set_keep_below(True)
-        self.window.set_decorated(False)
-        self.window.set_app_paintable(True)
-        self.window.set_skip_pager_hint(True)
-        self.window.set_skip_taskbar_hint(True)
-        self.window.connect('expose-event', self.expose_cb)
-
-        self.window.set_property('accept-focus', False)
-
-        self.window.move(0, 0)
-
-        self.screen = self.window.get_screen()
-        self.root_window = gtk.gdk.get_default_root_window()
-        self.window.resize(self.screen.get_width(), self.screen.get_height())
-        self.window.set_colormap(self.screen.get_rgba_colormap())
+        self._widgets = {}
 
 
-    def expose_cb(self, source, event):
-
-        self.draw()
-
-
-    def draw(self):
-
-        workarea = self.root_window.property_get('_NET_WORKAREA')
-        if workarea:
-            workarea = workarea[-1]
-        else:
-            workarea = (0, 0, self.screen.get_width(), self.screen.get_height())
-
-        ctx = self.window.window.cairo_create()
-
-        ctx.set_operator(cairo.OPERATOR_SOURCE)
-        ctx.set_source_rgba(0, 0, 0, .7)
-        ctx.paint()
-
-        ctx.rectangle(workarea[0] - 1, workarea[1] - 1, workarea[2] + 2, workarea[3] + 2)
-
-        ctx.set_source_rgba(0, 0, 0, .5)
-        ctx.fill_preserve()
-
-        ctx.set_line_width(1)
-        ctx.set_source_rgba(1, 1, 1, .5)
-        ctx.stroke()
+    def keys(self):
+        return self._widgets.keys()
 
 
-    def initialize(self):
-        """ Initialize the background window. """
-
-        self.window.set_opacity(0)
-        self.window.show_all()
-        self.window.window.input_shape_combine_region(gtk.gdk.Region(), 0, 0)
+    def values(self):
+        return self._widgets.values()
 
 
-    def show(self):
-        """ Show the background window. """
-
-        def update(source, state):
-            self.window.set_opacity(state)
-
-        t = cream.gui.Timeline(600, cream.gui.CURVE_SINE)
-        t.connect('update', update)
-        t.run()
-
-        self.draw()
-
-        region = gtk.gdk.Region()
-        region.union_with_rect((0, 0, self.screen.get_width(), self.screen.get_height()))
-        self.window.window.input_shape_combine_region(region, 0, 0)
+    def items(self):
+        return self._widgets.items()
 
 
-    def hide(self):
-        """ Hide the background window. """
+    def has_key(self, key):
+        return self._widgets.has_key(key)
 
-        def update(source, state):
-            self.window.set_opacity(1 - state)
 
-        t = cream.gui.Timeline(600, cream.gui.CURVE_SINE)
-        t.connect('update', update)
-        t.run()
+    def __getitem__(self, key):
+        return self._widgets[key]
 
-        self.window.window.input_shape_combine_region(gtk.gdk.Region(), 0, 0)
+
+    def __setitem__(self, key, value):
+        self._widgets[key] = value
+
+
+    def __delitem__(self, key):
+        del self._widgets[key]
+
+
+    def add(self, widget, x=None, y=None):
+        self[widget.instance_id] = widget
+
+        widget.connect('move-request', self.move_request_cb)
+        widget.connect('remove-request', self.remove_request_cb)
+
+        if x and y:
+            widget.set_position(x, y) # TODO: Use own moving algorithms.
+
+        self.emit('window-added', widget.window)
+
+
+    def move_request_cb(self, widget, x, y):
+
+        old_x, old_y = widget.get_position()
+        new_x = old_x + x
+        new_y = old_y + y
+
+        widget.set_position(new_x, new_y)
+
+
+    def remove_request_cb(self, widget):
+
+        self.emit('window-removed', widget.window)
+
+        widget.remove()
+        self.remove(widget)
+
+
+    def remove(self, widget):
+        del self[widget.instance_id]
+
+
+class CommonWidgetManager(WidgetManager):
+
+    def move_request_cb(self, widget, x, y):
+
+        old_x, old_y = widget.get_position()
+        new_x = old_x + x
+        new_y = old_y + y
+
+        widget.set_position(new_x, new_y)
 
 
 class Melange(cream.Module, cream.ipc.Object):
@@ -232,7 +151,6 @@ class Melange(cream.Module, cream.ipc.Object):
         )
 
         self.screen = wnck.screen_get_default()
-
         self.display = gtk.gdk.display_get_default()
         self._edit_mode = EDIT_MODE_NONE
 
@@ -240,13 +158,18 @@ class Melange(cream.Module, cream.ipc.Object):
         self.server = HttpServer(self)
         self.server.run()
 
+        # Scan for themes...
+        theme_dir = os.path.join(self.context.working_directory, 'themes')
+        self.themes = cream.manifest.ManifestDB(theme_dir, type='org.cream.melange.Theme')
+
         # Scan for widgets...
-        self.widgets = cream.manifest.ManifestDB('widgets', type='org.cream.melange.Widget')
-        self.widget_instances = {}
+        self.available_widgets = cream.manifest.ManifestDB('widgets', type='org.cream.melange.Widget')
 
         self.background = Background()
         self.background.initialize()
-        #self.widget_layer.window.window.input_shape_combine_region(gtk.gdk.Region(), 0, 0)
+
+        self.widgets = CommonWidgetManager()
+        self.widgets.connect('window-added', lambda widget_manager, window: window.set_transient_for(self.background.window))
 
         self.add_widget_dialog = AddWidgetDialog()
 
@@ -263,7 +186,7 @@ class Melange(cream.Module, cream.ipc.Object):
         for widget in self.config.widgets:
             self.load_widget(**widget)
 
-        for w in self.widgets.by_id.itervalues():
+        for w in self.available_widgets.by_id.itervalues():
             if w.has_key('icon'):
                 p = os.path.join(w['path'], w['icon'])
                 pb = gtk.gdk.pixbuf_new_from_file(p).scale_simple(28, 28, gtk.gdk.INTERP_HYPER)
@@ -314,23 +237,13 @@ class Melange(cream.Module, cream.ipc.Object):
 
         self.messages.debug("Loading widget '%s'..." % name)
 
-        widget = Widget(self.widgets.get_by_name(name)._path)
-        self.widget_instances[widget.instance] = widget
+        widget = Widget(self.available_widgets.get_by_name(name)._path, backref=self)
+        self.widgets.add(widget, x, y)
 
-        widget.connect('remove', self.widget_remove_cb)
-        widget.connect('reload', self.widget_reload_cb)
-
-        widget.view.connect('button-press-event', self.button_press_cb, widget)
-        widget.view.connect('button-release-event', self.button_release_cb, widget)
-
-        widget.set_position(x, y)
-
-        widget.window = WidgetWindow(widget)
-        widget.window.set_transient_for(self.background.window)
-        widget.window.show_all()
+        #widget.view.connect('button-press-event', self.button_press_cb, widget)
+        #widget.view.connect('button-release-event', self.button_release_cb, widget)
 
         widget.show()
-        widget.view.show()
 
 
     @cream.ipc.method('', 'a{sa{ss}}')
@@ -344,7 +257,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
         res = {}
 
-        for id, w in self.widgets.by_id.iteritems():
+        for id, w in self.available_widgets.by_id.iteritems():
             res[id] = {
                 'name': w['name'],
                 'description': '',
@@ -375,23 +288,14 @@ class Melange(cream.Module, cream.ipc.Object):
     def quit(self):
         """ Quit the module. """
 
-        self.config.widgets = self.widget_instances.values()
+        self.config.widgets = self.widgets.values()
         cream.Module.quit(self)
 
 
     def widget_remove_cb(self, widget):
         """ Callback being called when a widget has been removed. """
 
-        del self.widget_instances[widget.instance]
-
-
-    def widget_reload_cb(self, widget):
-        """ Callback function that is called when the user clicks on the "Reload" menu entry. """
-
-        info_dict = widget.__xmlserialize__()
-        self.messages.debug("Reloading widget '%(name)s'" % info_dict)
-        widget.close()
-        self.load_widget(**info_dict)
+        del self.widgets[widget.instance]
 
 
     def button_press_cb(self, source, event, widget):
@@ -437,7 +341,7 @@ class Melange(cream.Module, cream.ipc.Object):
                     'bottom': (res_x + width / 2, res_y + height)
                 }
 
-                for k, w in self.widget_instances.iteritems():
+                for k, w in self.widgets.iteritems():
                     if not w == widget:
                         w_name = w.context.manifest['name']
                         w_x, w_y = w.get_position()

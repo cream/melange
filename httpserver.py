@@ -42,9 +42,9 @@ class HttpServer(object):
 
         instance = request.GET.get('instance')
 
-        skin = _MELANGE.widget_instances[request.GET['instance']].config.widget_skin
+        skin = _MELANGE.widgets[request.GET['instance']].config.widget_skin
 
-        w = _MELANGE.widget_instances[instance]
+        w = _MELANGE.widgets[instance]
         path = os.path.join(w.context.working_directory, 'skins', os.path.dirname(w.skins.get_by_id(skin)._path))
         return send_file(file, path)
 
@@ -52,8 +52,15 @@ class HttpServer(object):
     @route(r'/common/(?P<file>.*)')
     def common_files(file):
 
-        path = os.path.join(_MELANGE.context.working_directory, 'data')
-        print send_file(file, path)
+        instance = request.GET.get('instance')
+        if instance:
+            widget = _MELANGE.widgets[instance]
+            theme = widget.config.widget_theme
+            path = os.path.dirname(_MELANGE.themes.get_by_id(theme)._path)
+        else:
+            theme = _MELANGE.config.default_theme
+            path = os.path.dirname(_MELANGE.themes.get_by_id(theme)._path)
+
         return send_file(file, path)
 
 

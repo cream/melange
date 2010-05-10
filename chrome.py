@@ -24,6 +24,105 @@ import javascriptcore as jscore
 import cream.gui
 from httpserver import HOST, PORT
 
+class Background(gobject.GObject):
+
+    __gtype_name__ = 'Background'
+    __gsignals__ = {
+        'close': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+        }
+
+    def __init__(self):
+
+        gobject.GObject.__init__(self)
+
+        self.window = gtk.Window()
+        self.window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
+        self.window.fullscreen()
+        self.window.stick()
+        self.window.set_keep_below(True)
+        self.window.set_decorated(False)
+        self.window.set_app_paintable(True)
+        self.window.set_skip_pager_hint(True)
+        self.window.set_skip_taskbar_hint(True)
+        self.window.connect('expose-event', self.expose_cb)
+
+        self.window.set_property('accept-focus', False)
+
+        self.window.move(0, 0)
+
+        self.screen = self.window.get_screen()
+        self.root_window = gtk.gdk.get_default_root_window()
+        self.window.resize(self.screen.get_width(), self.screen.get_height())
+        self.window.set_colormap(self.screen.get_rgba_colormap())
+
+
+    def expose_cb(self, source, event):
+
+        self.draw()
+
+
+    def draw(self):
+
+        workarea = self.root_window.property_get('_NET_WORKAREA')
+        if workarea:
+            workarea = workarea[-1]
+        else:
+            workarea = (0, 0, self.screen.get_width(), self.screen.get_height())
+
+        ctx = self.window.window.cairo_create()
+
+        ctx.set_operator(cairo.OPERATOR_SOURCE)
+        ctx.set_source_rgba(0, 0, 0, .7)
+        ctx.paint()
+
+        ctx.rectangle(workarea[0] - 1, workarea[1] - 1, workarea[2] + 2, workarea[3] + 2)
+
+        ctx.set_source_rgba(0, 0, 0, .5)
+        ctx.fill_preserve()
+
+        ctx.set_line_width(1)
+        ctx.set_source_rgba(1, 1, 1, .5)
+        ctx.stroke()
+
+
+    def initialize(self):
+        """ Initialize the background window. """
+
+        self.window.set_opacity(0)
+        self.window.show_all()
+        self.window.window.input_shape_combine_region(gtk.gdk.Region(), 0, 0)
+
+
+    def show(self):
+        """ Show the background window. """
+
+        def update(source, state):
+            self.window.set_opacity(state)
+
+        t = cream.gui.Timeline(600, cream.gui.CURVE_SINE)
+        t.connect('update', update)
+        t.run()
+
+        self.draw()
+
+        region = gtk.gdk.Region()
+        region.union_with_rect((0, 0, self.screen.get_width(), self.screen.get_height()))
+        self.window.window.input_shape_combine_region(region, 0, 0)
+
+
+    def hide(self):
+        """ Hide the background window. """
+
+        def update(source, state):
+            self.window.set_opacity(1 - state)
+
+        t = cream.gui.Timeline(600, cream.gui.CURVE_SINE)
+        t.connect('update', update)
+        t.run()
+
+        self.window.window.input_shape_combine_region(gtk.gdk.Region(), 0, 0)
+
+
 class ThingyWindow(gtk.Window):
 
     def __init__(self):
