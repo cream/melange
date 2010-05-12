@@ -68,7 +68,7 @@ class WidgetConfiguration(Configuration):
             'widget_theme',
             MultiOptionField('Theme',
                 section='Appearance',
-                options=((key, val['name']) for key, val in themes.iteritems())
+                options=([('use.the.fucking.global.settings.and.suck.my.Dick', 'Use global settings')] + [(key, val['name']) for key, val in themes.iteritems()])
             )
         )
 

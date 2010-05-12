@@ -56,6 +56,8 @@ class HttpServer(object):
         if instance:
             widget = _MELANGE.widgets[instance]
             theme = widget.config.widget_theme
+            if theme == 'use.the.fucking.global.settings.and.suck.my.Dick':
+                theme =  _MELANGE.config.default_theme
             path = os.path.dirname(_MELANGE.themes.get_by_id(theme)._path)
         else:
             theme = _MELANGE.config.default_theme

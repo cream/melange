@@ -240,9 +240,6 @@ class Melange(cream.Module, cream.ipc.Object):
         widget = Widget(self.available_widgets.get_by_name(name)._path, backref=self)
         self.widgets.add(widget, x, y)
 
-        #widget.view.connect('button-press-event', self.button_press_cb, widget)
-        #widget.view.connect('button-release-event', self.button_release_cb, widget)
-
         widget.show()
 
 
@@ -262,7 +259,6 @@ class Melange(cream.Module, cream.ipc.Object):
                 'name': w['name'],
                 'description': '',
                 'path': '',
-                #'icon': '',
                 'id': w['id'],
                 }
 
@@ -290,82 +286,6 @@ class Melange(cream.Module, cream.ipc.Object):
 
         self.config.widgets = self.widgets.values()
         cream.Module.quit(self)
-
-
-    def widget_remove_cb(self, widget):
-        """ Callback being called when a widget has been removed. """
-
-        del self.widgets[widget.instance]
-
-
-    def button_press_cb(self, source, event, widget):
-        """ Handle clicking on the widget (e. g. by showing context menu). """
-
-        widget.window.set_property('accept-focus', True)
-        widget.window.present()
-
-        if self.mode == MODE_EDIT and event.button == MOUSE_BUTTON_MIDDLE:
-            self._edit_mode = EDIT_MODE_MOVE
-            self.start_move(widget)
-            return True
-
-
-    def button_release_cb(self, source, event, widget):
-
-        if event.button == MOUSE_BUTTON_MIDDLE:
-            self._edit_mode = EDIT_MODE_NONE
-            return True
-
-
-    def start_move(self, widget):
-
-        # WTF. Maybe put some comments in here. :)
-        def move_cb(old_x, old_y):
-            if self._edit_mode == EDIT_MODE_MOVE:
-                new_x, new_y = self.display.get_pointer()[1:3]
-                mov_x = new_x - old_x
-                mov_y = new_y - old_y
-
-                res_x = widget.get_position()[0] + mov_x
-                res_y = widget.get_position()[1] + mov_y
-                widget.set_position(res_x, res_y)
-                #self.overlay.bin.move(widget.clone, res_x, res_y)
-                #self.widget_layer.bin.move(widget.view, res_x, res_y)
-
-                width, height = widget.get_size()
-
-                centers = {
-                    'left': (res_x, res_y + height / 2),
-                    'right': (res_x + width, res_y + height / 2),
-                    'top': (res_x + width / 2, res_y),
-                    'bottom': (res_x + width / 2, res_y + height)
-                }
-
-                for k, w in self.widgets.iteritems():
-                    if not w == widget:
-                        w_name = w.context.manifest['name']
-                        w_x, w_y = w.get_position()
-                        w_width, w_height = w.get_size()
-
-                        w_centers = {
-                            'left': (w_x, w_y + w_height / 2),
-                            'right': (w_x + w_width, w_y + w_height / 2),
-                            'top': (w_x + w_width / 2, w_y),
-                            'bottom': (w_x + w_width / 2, w_y + w_height)
-                        }
-
-                        w_distances = [
-                            ('left', int(math.sqrt(abs(w_centers['left'][0] - centers['right'][0]) ** 2 + abs(w_centers['left'][1] - centers['right'][1]) ** 2))),
-                            ('right', int(math.sqrt(abs(w_centers['right'][0] - centers['left'][0]) ** 2 + abs(w_centers['right'][1] - centers['left'][1]) ** 2))),
-                            ('top', int(math.sqrt(abs(w_centers['top'][0] - centers['bottom'][0]) ** 2 + abs(w_centers['top'][1] - centers['bottom'][1]) ** 2))),
-                            ('bottom', int(math.sqrt(abs(w_centers['bottom'][0] - centers['top'][0]) ** 2 + abs(w_centers['bottom'][1] - centers['top'][1]) ** 2)))
-                        ]
-
-                        w_distances.sort(key=lambda x:(x[1], x[0]))
-
-                gobject.timeout_add(20, move_cb, new_x, new_y)
-
-        move_cb(*self.display.get_pointer()[1:3])
 
 
 if __name__ == '__main__':
