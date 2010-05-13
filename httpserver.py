@@ -1,11 +1,5 @@
 import os
-import sys
-import json
-import thread
-from bottle import route, send_file, abort, run, request
-
-import cream.ipc
-from cream.util import cached_property
+import bjoern
 
 _OBJECT_CACHE = {}
 _MELANGE = None
@@ -14,77 +8,38 @@ HOST = '127.0.0.1'
 PORT = 8080
 
 
-class HttpServer(object):
-    """
-    HttpServer for serving static (HTML|JS|CSS) files and proxying DBus for
-    javascript.
+@bjoern.route(r'/thingy/(?P<file>.*)')
+def thingy_files(env, start_response, file=None):
 
-    Instantiated by the `melange.Melange` class.
-
-    TODO: It's all an ugly hack. We need routing functions with `self`
-    references, proper route-resolving, a non-global Melange reference, ...
-    """
-    def __init__(self, melange):
-
-        global _MELANGE
-        _MELANGE = melange
+    path = os.path.join(_MELANGE.context.working_directory, 'data/thingy')
+    return open(os.path.join(path, file))
 
 
-    @route(r'/thingy/(?P<file>.*)')
-    def thingy_files(file):
+@bjoern.route(r'/widget/(?P<file>.*)')
+def widget_files(env, start_response, file=None):
 
-        path = os.path.join(_MELANGE.context.working_directory, 'data/thingy')
-        return send_file(file, path)
+    instance = request.GET.get('instance')
 
+    skin = _MELANGE.widgets[request.GET['instance']].config.widget_skin
 
-    @route(r'/widget/(?P<file>.*)')
-    def widget_files(file):
+    w = _MELANGE.widgets[instance]
+    path = os.path.join(w.context.working_directory, 'skins', os.path.dirname(w.skins.get_by_id(skin)._path))
+    return open(os.path.join(path, file))
 
-        instance = request.GET.get('instance')
+@bjoern.route(r'/common/(?P<file>.*)')
+def common_files(env, start_response, file=None):
 
-        skin = _MELANGE.widgets[request.GET['instance']].config.widget_skin
+    instance = request.GET.get('instance')
+    if instance:
+        widget = _MELANGE.widgets[instance]
+        theme = widget.config.widget_theme
+        if theme == 'use.the.fucking.global.settings.and.suck.my.Dick':
+            theme =  _MELANGE.config.default_theme
+        path = os.path.dirname(_MELANGE.themes.get_by_id(theme)._path)
+    else:
+        theme = _MELANGE.config.default_theme
+        path = os.path.dirname(_MELANGE.themes.get_by_id(theme)._path)
 
-        w = _MELANGE.widgets[instance]
-        path = os.path.join(w.context.working_directory, 'skins', os.path.dirname(w.skins.get_by_id(skin)._path))
-        return send_file(file, path)
+    return open(os.path.join(path, file))
 
-
-    @route(r'/common/(?P<file>.*)')
-    def common_files(file):
-
-        instance = request.GET.get('instance')
-        if instance:
-            widget = _MELANGE.widgets[instance]
-            theme = widget.config.widget_theme
-            if theme == 'use.the.fucking.global.settings.and.suck.my.Dick':
-                theme =  _MELANGE.config.default_theme
-            path = os.path.dirname(_MELANGE.themes.get_by_id(theme)._path)
-        else:
-            theme = _MELANGE.config.default_theme
-            path = os.path.dirname(_MELANGE.themes.get_by_id(theme)._path)
-
-        return send_file(file, path)
-
-
-    @route('/ipc/call', method='POST')
-    def ipc_call():
-
-        # TODO: cleanup!
-        print request.POST
-        bus, object, method, arguments, interface = (request.POST[k] for k in
-            ('bus', 'object', 'method', 'arguments','interface'))
-
-        cache_name = ':'.join((bus, object))
-        obj = _OBJECT_CACHE.get(cache_name, None)
-        if obj is None:
-            obj = cream.ipc.get_object(bus, object, interface)
-            _OBJECT_CACHE[cache_name] = obj
-
-        method = getattr(obj, method)
-        result = method(*json.loads(arguments))
-
-        return json.dumps(result)
-
-
-    def run(self):
-        thread.start_new_thread(run, (), dict(host=HOST, port=PORT, quiet=True))
+bjoern.run(HOST, PORT, bjoern.Response)

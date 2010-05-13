@@ -37,7 +37,6 @@ from cream.contrib.melange.dialogs import AddWidgetDialog
 
 from widget import Widget
 from chrome import Background, Thingy
-from httpserver import HttpServer
 
 EDIT_MODE_NONE = 0
 EDIT_MODE_MOVE = 1
@@ -153,10 +152,6 @@ class Melange(cream.Module, cream.ipc.Object):
         self.screen = wnck.screen_get_default()
         self.display = gtk.gdk.display_get_default()
         self._edit_mode = EDIT_MODE_NONE
-
-        # Initialize the HTTP server providing the widget data.
-        self.server = HttpServer(self)
-        self.server.run()
 
         # Scan for themes...
         theme_dir = os.path.join(self.context.working_directory, 'themes')
