@@ -12,6 +12,8 @@
         <script type="text/javascript" src="/common/ui/scrolled/scrolled.js" />
         <script type="text/javascript" src="/common/ui/dialog/dialog.js" />
         <script type="text/javascript">
+            function main() {
+      
             var languages = {'apache': 'Apache Config (.htaccess)',
                              'bash': 'Bash',
                              'bat': 'Batch (.bat)',
@@ -84,7 +86,6 @@
                              'xslt': 'XSLT',
                              'yaml': 'YAML'}
 
-            window.addEvent('domready', function() {
                 var dialog = $('languageselect');
                 var url_field = $('url_field');
                 var overlay = document.createElement('div');
@@ -109,7 +110,7 @@
                     e.innerHTML = languages[i];
                     e.style.cursor = 'pointer';
                     e.onclick = function() {
-                        widget.paste.set_language(this.id);
+                        widget.api.paste.set_language(this.id);
                         $('other').innerHTML = "Other (" + this.name + ")";
                         overlay.fade(0);
                     }
@@ -140,8 +141,7 @@
                     });
                 }
 
-                widget.init()
-            });
+            };
         </script>
     </head>
 

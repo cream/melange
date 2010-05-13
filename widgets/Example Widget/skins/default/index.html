@@ -13,11 +13,12 @@
         <script type="text/javascript" src="/common/ui/chooser/chooser.js" />
         <script type="text/javascript" src="/common/ui/scroll/mooscroll/mooscroll.js" />
         <script type="text/javascript" src="/common/ui/scroll/scroll.js" />
+        <script type="text/javascript" src="/common/core/events.js" />
+        <script type="text/javascript" src="/common/core/cream.js" />
         <script type="text/javascript">
-            var foo = 'foo';
-
-            // Initialize your code when the DOM is loaded.
-            window.addEvent('domready', function() {
+            function main() {
+                
+                var foo = 'foo';
                 // This event is being emitted, when the option of
                 // the specific chooser-object has been changed.
                 $('mode').addEvent('value_changed', function(option) {
@@ -27,9 +28,14 @@
                 // Connect to the `onclick` signal of a button.
                 $('doit').onclick = function() {
                     // Write the return value of your API function `doit` to the widget.
-                    $('response').innerHTML = widget.example.doit(foo);
+                    widget.api.example.doit(foo, function(ret) {
+                        $('response').innerHTML = ret;
+
+                    });
                 };
-            });
+
+            };
+
         </script>
     </head>
 

@@ -9,7 +9,7 @@ class BatteryWidget(api.API):
 
         api.API.__init__(self)
 
-
+    @api.expose
     def get_state(self):
 
         battery_status = acpi.battery_status()
