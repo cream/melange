@@ -1,11 +1,6 @@
 import os
-import sys
-import json
 import thread
 from bottle import route, send_file, abort, run, request
-
-import cream.ipc
-from cream.util import cached_property
 
 _OBJECT_CACHE = {}
 _MELANGE = None
@@ -64,27 +59,6 @@ class HttpServer(object):
             path = os.path.dirname(_MELANGE.themes.get_by_id(theme)._path)
 
         return send_file(file, path)
-
-
-    @route('/ipc/call', method='POST')
-    def ipc_call():
-
-        # TODO: cleanup!
-        print request.POST
-        bus, object, method, arguments, interface = (request.POST[k] for k in
-            ('bus', 'object', 'method', 'arguments','interface'))
-
-        cache_name = ':'.join((bus, object))
-        obj = _OBJECT_CACHE.get(cache_name, None)
-        if obj is None:
-            obj = cream.ipc.get_object(bus, object, interface)
-            _OBJECT_CACHE[cache_name] = obj
-
-        method = getattr(obj, method)
-        result = method(*json.loads(arguments))
-
-        return json.dumps(result)
-
 
     def run(self):
         thread.start_new_thread(run, (), dict(host=HOST, port=PORT, quiet=True))
