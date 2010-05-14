@@ -179,7 +179,6 @@ class Melange(cream.Module, cream.ipc.Object):
 
         self.thingy.connect('toggle-overlay', lambda *args: self.toggle_overlay())
         self.thingy.connect('show-settings', lambda *args: self.config.show_dialog())
-        self.thingy.connect('show-settings', lambda *args: self.config.show_dialog())
         self.thingy.connect('show-add-widgets', lambda *args: self.add_widget())
 
         # Load widgets stored in configuration.
