@@ -46,8 +46,6 @@ MOUSE_BUTTON_MIDDLE = 2
 MODE_NORMAL = 0
 MODE_EDIT = 1
 
-OVERLAY = False
-
 
 class WidgetManager(gobject.GObject):
 
