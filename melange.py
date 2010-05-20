@@ -15,7 +15,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
-
+import thread
 import gobject
 gobject.threads_init()
 
@@ -37,6 +37,8 @@ from cream.contrib.melange.dialogs import AddWidgetDialog
 
 from widget import Widget
 from chrome import Background, Thingy
+from httpserver import MelangeResponse, run as httpserver_run, \
+                       HOST as HTTPSERVER_HOST, PORT as HTTPSERVER_PORT
 
 EDIT_MODE_NONE = 0
 EDIT_MODE_MOVE = 1
@@ -149,6 +151,8 @@ class Melange(cream.Module, cream.ipc.Object):
             '/org/cream/melange'
         )
 
+        self.run_server()
+
         self.screen = wnck.screen_get_default()
         self.display = gtk.gdk.display_get_default()
         self._edit_mode = EDIT_MODE_NONE
@@ -194,6 +198,15 @@ class Melange(cream.Module, cream.ipc.Object):
         self.hotkeys.connect('hotkey-activated', self.hotkey_activated_cb)
 
 
+    def run_server(self):
+        class _MelangeResponse(MelangeResponse):
+            _melange = self
+        self._server_thread = thread.start_new_thread(
+            httpserver_run,
+            (HTTPSERVER_HOST, HTTPSERVER_PORT, _MelangeResponse)
+        )
+
+
     def add_widget(self):
 
         self.add_widget_dialog.show_all()
@@ -201,7 +214,7 @@ class Melange(cream.Module, cream.ipc.Object):
         if self.add_widget_dialog.run() == 1:
             selection = self.add_widget_dialog.treeview.get_selection()
             model, iter = selection.get_selected()
-    
+
             id = model.get_value(iter, 2)
             self.load_widget(id, False, False)
         self.add_widget_dialog.hide()

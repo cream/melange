@@ -274,7 +274,7 @@ class WidgetInstance(gobject.GObject):
 
 
     def button_release_cb(self, source, event):
-        
+
         if event.button == MOUSE_BUTTON_MIDDLE:
             self.emit('end-move-request')
             return True
@@ -321,6 +321,16 @@ class Widget(gobject.GObject, cream.Component):
         self.window = WidgetWindow()
 
         self.load()
+
+    def get_skin_path(self):
+        return self.get_skin_path_by_id(self.config.widget_skin)
+
+    def get_skin_path_by_id(self, skin_id):
+        return os.path.join(
+            self.context.working_directory,
+            'skins',
+            os.path.dirname(self.skins.get_by_id(skin_id)._path)
+        )
 
 
     def begin_move(self):
