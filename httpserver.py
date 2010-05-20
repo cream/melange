@@ -41,5 +41,3 @@ def common_files(env, start_response, file=None):
         path = os.path.dirname(_MELANGE.themes.get_by_id(theme)._path)
 
     return open(os.path.join(path, file))
-
-bjoern.run(HOST, PORT, bjoern.Response)
