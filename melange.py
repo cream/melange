@@ -46,8 +46,6 @@ MOUSE_BUTTON_MIDDLE = 2
 MODE_NORMAL = 0
 MODE_EDIT = 1
 
-OVERLAY = False
-
 
 class WidgetManager(gobject.GObject):
 
@@ -185,7 +183,12 @@ class Melange(cream.Module, cream.ipc.Object):
         for widget in self.config.widgets:
             self.load_widget(**widget)
 
+        widgets = []
         for w in self.available_widgets.by_id.itervalues():
+            widgets.append(w)
+        widgets = sorted(widgets, key=lambda widget: widget['name'])
+
+        for w in widgets:
             if w.has_key('icon'):
                 p = os.path.join(w['path'], w['icon'])
                 pb = gtk.gdk.pixbuf_new_from_file(p).scale_simple(28, 28, gtk.gdk.INTERP_HYPER)
@@ -291,3 +294,4 @@ if __name__ == '__main__':
     cream.util.set_process_name('melange')
     melange = Melange()
     melange.main()
+
