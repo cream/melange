@@ -265,6 +265,9 @@ class WidgetInstance(gobject.GObject):
     def button_press_cb(self, source, event):
         """ Handle clicking on the widget (e. g. by showing context menu). """
 
+        self.window.set_property('accept-focus', True)
+        self.window.present()
+
         if event.button == MOUSE_BUTTON_RIGHT:
             self.menu.popup(None, None, None, event.button, event.get_time())
             return True
