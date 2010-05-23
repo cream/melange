@@ -135,6 +135,7 @@ class WidgetInstance(gobject.GObject):
         'remove-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'reload-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'resize-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
+        'focus-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'begin-move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'end-move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'show-config-dialog-request' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
@@ -265,6 +266,8 @@ class WidgetInstance(gobject.GObject):
     def button_press_cb(self, source, event):
         """ Handle clicking on the widget (e. g. by showing context menu). """
 
+        self.emit('focus-request')
+
         if event.button == MOUSE_BUTTON_RIGHT:
             self.menu.popup(None, None, None, event.button, event.get_time())
             return True
@@ -366,6 +369,7 @@ class Widget(gobject.GObject, cream.Component):
         self.instance.connect('resize-request', self.resize_request_cb)
         self.instance.connect('remove-request', lambda *args: self.emit('remove-request'))
         self.instance.connect('reload-request', lambda *args: self.reload())
+        self.instance.connect('focus-request', self.focus_request_cb)
         self.instance.connect('begin-move-request', lambda *args: self.begin_move())
         self.instance.connect('end-move-request', lambda *args: self.end_move())
 
@@ -377,6 +381,12 @@ class Widget(gobject.GObject, cream.Component):
 
         self.window.set_size_request(width, height)
         self.window.resize(width, height)
+
+
+    def focus_request_cb(self, source):
+
+        self.window.set_property('accept-focus', True)
+        self.window.present()
 
 
     def reload(self):
