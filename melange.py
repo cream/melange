@@ -15,15 +15,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
-import thread
+import os.path
+from operator import itemgetter
+
 import gobject
 gobject.threads_init()
 
 import gtk
 import cairo
-
-import os.path
-import math
 
 import wnck
 
@@ -39,6 +38,7 @@ from widget import Widget
 from chrome import Background, Thingy
 from httpserver import MelangeResponse, run as httpserver_run, \
                        HOST as HTTPSERVER_HOST, PORT as HTTPSERVER_PORT
+
 
 EDIT_MODE_NONE = 0
 EDIT_MODE_MOVE = 1
@@ -182,21 +182,17 @@ class Melange(cream.Module, cream.ipc.Object):
         for widget in self.config.widgets:
             self.load_widget(**widget)
 
-        widgets = []
-        for w in self.available_widgets.by_id.itervalues():
-            widgets.append(w)
-        widgets = sorted(widgets, key=lambda widget: widget['name'])
-
-        for w in widgets:
-            if w.has_key('icon'):
-                p = os.path.join(w['path'], w['icon'])
-                pb = gtk.gdk.pixbuf_new_from_file(p).scale_simple(28, 28, gtk.gdk.INTERP_HYPER)
+        widgets = sorted(self.available_widgets.by_id.itervalues(), key=itemgetter('name'))
+        for widget in widgets:
+            if widget.has_key('icon'):
+                icon_path = os.path.join(widget['path'], widget['icon'])
+                pixbuf = gtk.gdk.pixbuf_new_from_file(icon_path).scale_simple(28, 28, gtk.gdk.INTERP_HYPER)
             else:
-                pb = gtk.gdk.pixbuf_new_from_file(os.path.join(self.context.working_directory, 'melange.png')).scale_simple(28, 28, gtk.gdk.INTERP_HYPER)
+                pixbuf = gtk.gdk.pixbuf_new_from_file(os.path.join(self.context.working_directory, 'melange.png')).scale_simple(28, 28, gtk.gdk.INTERP_HYPER)
             #label = "<b>{0}</b>\n{1}".format(w['name'], w['description'])
-            label = "<b>{0}</b>\n{1}".format(w['name'], '')
+            label = "<b>{0}</b>\n{1}".format(widget['name'], '')
             #self.liststore.append((w['id'], w['id'], w['name'], w['description'], pb, label))
-            self.add_widget_dialog.liststore.append((w['id'], w['id'], w['name'], '', pb, label))
+            self.add_widget_dialog.liststore.append((widget['id'], widget['id'], widget['name'], '', pixbuf, label))
 
         self.hotkeys.connect('hotkey-activated', self.hotkey_activated_cb)
 
