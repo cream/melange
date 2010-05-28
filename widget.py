@@ -152,6 +152,7 @@ class WidgetInstance(gobject.GObject):
 
         self._size = (0, 0)
         self._position = (0, 0)
+        self._tmp = None
 
         # Initializing the WebView...
         self.view = webkit.WebView()
@@ -199,6 +200,10 @@ class WidgetInstance(gobject.GObject):
         self.view.open(skin_url)
 
 
+    def get_tmp(self):
+        return self._tmp
+
+
     def get_view(self):
         return self.view
 
@@ -224,6 +229,7 @@ class WidgetInstance(gobject.GObject):
                 c = value
                 c._js_ctx = self.js_context
                 c = c()
+                self._tmp = c.get_tmp()
                 i = PyToJSInterface(c)
                 self.js_context.widget.api.__setattr__(name, i)
             del sys.path[0]
@@ -360,11 +366,21 @@ class Widget(gobject.GObject, cream.Component):
         self.instance.connect('remove-request', lambda *args: self.emit('remove-request'))
         self.instance.connect('reload-request', lambda *args: self.reload())
         self.instance.connect('focus-request', self.focus_request_cb)
-        self.instance.connect('begin-move-request', lambda *args: self.begin_move())
-        self.instance.connect('end-move-request', lambda *args: self.end_move())
+        self.instance.connect('begin-move-request', self.begin_move_request_cb)
+        self.instance.connect('end-move-request', self.end_move_request_cb)
 
         view = self.instance.get_view()
         self.window.add(view)
+
+
+    def begin_move_request_cb(self, source):
+
+        self.begin_move()
+
+
+    def end_move_request_cb(self, source):
+
+        self.end_move()
 
 
     def resize_request_cb(self, widget_instance, width, height):
