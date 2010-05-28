@@ -332,6 +332,10 @@ class Widget(gobject.GObject, cream.Component):
         self.load()
 
 
+    def get_tmp(self):
+        return self.instance.get_tmp()
+
+
     def begin_move(self):
 
         self.state = WIDGET_STATE_MOVE
