@@ -5,11 +5,11 @@ import gobject
 
 from cream.contrib.melange import api
 
-from cream_indicator.host import StatusNotifierHost
+from cream_indicator.host import StatusNotifierHost, Status
 
 def construct_js_item(item):
     return {
-        'icon': '...',
+        'icon': item.cached_icon_filename,
         'id': item.id,
     }
 
@@ -27,6 +27,15 @@ class AppIndicators(api.API):
 
     def sig_item_added(self, host, item):
         self.emit('item-added', construct_js_item(item))
+        item.connect('status-new', self.sig_status_new)
+
+    def sig_status_new(self, item, status):
+        if status == Status.NeedsAttention:
+            print 'Attention icon'
+            # TODO: Show attention icon and BLING BLING
+        else:
+            # TODO: Show normal icon without BLING BLING.
+            pass
 
     def sig_item_removed(self, host, item):
         self.emit('item-removed', item.id)

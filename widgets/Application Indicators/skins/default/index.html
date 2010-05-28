@@ -30,7 +30,7 @@
             $('item-container').appendChild(i);
 
             icon = document.createElement('img');
-            icon.src = 'images/clot.png';
+            icon.src = item['icon'];
             i.appendChild(icon)
 
             i.set('morph', {duration: 500, transition: 'bounce:out'});
