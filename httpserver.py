@@ -32,7 +32,7 @@ class HttpServer(object):
         return send_file(file, path)
 
 
-    @route(r'/tmp/(?P<file>.*)')
+    @route(r'/widget/tmp/(?P<file>.*)')
     def tmp_files(file):
 
         instance = request.GET.get('instance')
