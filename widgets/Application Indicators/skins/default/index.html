@@ -45,6 +45,17 @@
                 });
             }
 
+        function remove_item(id) {
+            $('item-container').removeChild($(id));
+            }
+
+        function change_item(item) {
+            $(item['id']).innerHTML = '';
+            icon = document.createElement('img');
+            icon.src = item['icon'];
+            $(item['id']).appendChild(icon)
+            }
+
         function main() {
             widget.api.addEvent('item-added', add_item)
             widget.api.appindicators.get_items(function(items) {
