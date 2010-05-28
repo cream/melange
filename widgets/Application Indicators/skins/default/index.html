@@ -58,6 +58,7 @@
 
         function main() {
             widget.api.addEvent('item-added', add_item)
+            widget.api.addEvent('item-changed', change_item)
             widget.api.appindicators.get_items(function(items) {
                 for(c=0; c<items.length; c++) {
                     add_item(items[c]);
