@@ -3,12 +3,12 @@
 .thingy-area {
     height: 35px;
     padding: 0px 0px 3px 3px;
-    }
+}
 
 .control-area {
     height: 35px;
     padding: 0px 3px 3px 3px;
-    }
+}
 
 .thingy {
     width: 32px;
@@ -278,6 +278,7 @@ input.bright_input {
     }
 
 
+
 /* CHOOSER */
 
 .chooser {
@@ -355,7 +356,8 @@ input.bright_input {
     .chooser-tabs .tab.active {
         display: block;
     }
-
+    
+    
 /* MISC */
 
 .green, .green:hover, .green:active {
