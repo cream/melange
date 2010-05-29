@@ -68,8 +68,15 @@ class AppIndicators(api.API):
         return items
 
 
-    @api.expose
-    def show_menu(self, id):
+    @api.in_main_thread
+    def _show_menu(self, id):
+        
         item = self.host.get_item_by_id(id)
         # Show the menu.
         item.show_menu()
+
+
+    @api.expose
+    def show_menu(self, id):
+
+        self._show_menu(id)
