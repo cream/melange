@@ -1,0 +1,142 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+    <head>
+        <title>TicTacToe</title>
+        <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+        <link rel="stylesheet" type="text/css" href="/common/ui/melange.css" media="screen" />
+
+        <script type="text/javascript" src="/common/core/mootools.js" />
+        <script type="text/javascript" src="/common/core/events.js" />
+        <script type="text/javascript" src="/common/core/cream.js" />
+        <style type="text/css">
+            #gameboard {
+                align: center;
+
+            }
+        </style>
+
+        <script type="text/javascript">
+            function main() {
+              
+                function game_turn(button, line, column) {
+                    widget.api.tictactoe.player_turn(line, column, function(ret) {
+                        if (ret != false) {
+                            $(button).innerHTML = '<img src="cross.png"/ >';
+
+                            widget.api.tictactoe.game_status(function(status) {
+                                switch (status) {
+                                    case 'player':
+                                        $('status').innerHTML = 'You win';
+                                        break;
+                                    case 'full':
+                                        $('status').innerHTML = 'Board full. no winner';
+                                        break;                                 
+                                }
+                            });
+                        }
+                    });
+                    widget.api.tictactoe.computer_turn(widget.config.get('difficulty'), function(button_comp) {
+                        if (button_comp != false) {
+                            $(button_comp).innerHTML = '<img src="circle.png"/ >';
+
+                            widget.api.tictactoe.game_status(function(status) {
+                                if (status == 'computer') {
+                                    $('status').innerHTML = 'Computer wins';
+                                }                    
+                            });
+                        }                    
+
+                    });
+                }
+
+                $('0|0').onclick = function() {
+                    game_turn('0|0', 0, 0);
+                }
+                $('0|1').onclick = function() {
+                    game_turn('0|1', 0, 1);
+                }
+                $('0|2').onclick = function() {
+                    game_turn('0|2', 0, 2);
+                }
+                $('1|0').onclick = function() {
+                    game_turn('1|0', 1, 0);
+                }
+                $('1|1').onclick = function() {
+                    game_turn('1|1', 1, 1);
+                }
+                $('1|2').onclick = function() {
+                    game_turn('1|2', 1, 2);
+                }
+                $('2|0').onclick = function() {
+                    game_turn('2|0', 2, 0);
+                }
+                $('2|1').onclick = function() {
+                    game_turn('2|1', 2, 1);
+                }
+                $('2|2').onclick = function() {
+                    game_turn('2|2', 2, 2);
+                }
+
+                var buttons = ['0|0','0|1','0|2','1|0','1|1','1|2','2|0','2|1','2|2',]
+        
+                $('reset').onclick = function() {
+                    for (i = 0; i < 9; i++) {
+                        $(buttons[i]).innerHTML = '<img src="none.png"/ >';
+                    }
+                    widget.api.tictactoe.reset();
+                    $('status').innerHTML = '';
+                }
+    
+
+            };
+
+        </script>
+
+
+    </head>
+
+    <body>
+        <div class="widget" style="width: 180px;">
+            <div class="background">
+                <div class="gameboard">
+                    <table id="gameboard" border="0">
+                        <tr>
+                            <td><div class="button" id="0|0">
+                                <img src="none.png"/></div></td>
+                            <td><div class="button" id="0|1">
+                                <img src="none.png"/></div></td>
+                            <td><div class="button" id="0|2">
+                                <img src="none.png"/> </div></td>
+                        </tr>
+                        <tr>
+                            <td><div class="button" id="1|0">
+                                <img src="none.png"/> </div></td>
+                            <td><div class="button" id="1|1">
+                                <img src="none.png"/> </div></td>
+                            <td><div class="button" id="1|2">
+                                <img src="none.png"/> </div></td>
+                        </tr>
+                        <tr>
+                            <td><div class="button" id="2|0">
+                                <img src="none.png"/> </div></td>
+                            <td><div class="button" id="2|1">
+                                <img src="none.png"/> </div></td>
+                            <td><div class="button" id="2|2">
+                                <img src="none.png"/> </div></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3"><div id="status"></div></td>
+                        </tr>
+                    </table> <br />
+                    <div class="button" id="reset">Reset</div>               
+                    <br /><br />
+                </div>
+            </div>
+        </div>
+
+    </body>
+</html>
+
+
+
