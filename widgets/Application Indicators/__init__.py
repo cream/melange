@@ -1,15 +1,18 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+import shutil
+
 import gobject
 
 from cream.contrib.melange import api
 
 from cream_indicator.host import StatusNotifierHost, Status
 
-def construct_js_item(item):
+def construct_js_item(item, icon_filename):
     return {
-        'icon': item.cached_icon_filename,
+        'icon': icon_filename,
         'id': item.id,
     }
 
@@ -17,6 +20,9 @@ def construct_js_item(item):
 class AppIndicators(api.API):
 
     def __init__(self):
+        api.API.__init__(self)
+        self.local_icons_path = self.get_tmp()
+        self.remote_icons_path = '/widget/tmp/'
 
         # Intialize the DBus stuff here...
         self.host = StatusNotifierHost()
@@ -25,17 +31,24 @@ class AppIndicators(api.API):
 
         self.add_initially()
 
+    def store_icon(self, item, filename):
+        basename = os.path.basename(filename)
+        local_path = os.path.join(self.local_icons_path, basename)
+        shutil.copyfile(filename, local_path)
+        return '/'.join((self.remote_icons_path, basename))
+
+    def store_current_icon(self, item):
+        return self.store_icon(item, item.get_current_icon_filename())
+
+    def change_item(self, item):
+        self.emit('item-changed', construct_js_item(item, self.store_current_icon(item)))
+
     def sig_item_added(self, host, item):
-        self.emit('item-added', construct_js_item(item))
+        self.emit('item-added', construct_js_item(item, self.store_current_icon(item)))
         item.connect('status-new', self.sig_status_new)
 
     def sig_status_new(self, item, status):
-        if status == Status.NeedsAttention:
-            print 'Attention icon'
-            # TODO: Show attention icon and BLING BLING
-        else:
-            # TODO: Show normal icon without BLING BLING.
-            pass
+        self.change_item(item)
 
     def sig_item_removed(self, host, item):
         self.emit('item-removed', item.id)
@@ -50,13 +63,20 @@ class AppIndicators(api.API):
         items = []
 
         for item in self.host.items:
-            items.append(construct_js_item(item))
+            items.append(construct_js_item(item, self.store_current_icon(item)))
 
         return items
 
 
-    @api.expose
-    def show_menu(self, id):
+    @api.in_main_thread
+    def _show_menu(self, id):
+        
         item = self.host.get_item_by_id(id)
         # Show the menu.
         item.show_menu()
+
+
+    @api.expose
+    def show_menu(self, id):
+
+        self._show_menu(id)

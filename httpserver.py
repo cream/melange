@@ -32,6 +32,16 @@ class HttpServer(object):
         return send_file(file, path)
 
 
+    @route(r'/widget/tmp/(?P<file>.*)')
+    def tmp_files(file):
+
+        instance = request.GET.get('instance')
+
+        path = _MELANGE.widgets[request.GET['instance']].get_tmp()
+
+        return send_file(file, path)
+
+
     @route(r'/widget/(?P<file>.*)')
     def widget_files(file):
 
