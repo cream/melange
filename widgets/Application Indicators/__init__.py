@@ -7,7 +7,7 @@ import shutil
 import gobject
 
 from cream.contrib.melange import api
-from cream.contrib.appindicator.host import StatusNotifierHost, Status
+from cream.contrib.appindicators.host import StatusNotifierHost, Status
 
 def construct_js_item(item, icon_filename):
     return {
