@@ -7,8 +7,7 @@ import shutil
 import gobject
 
 from cream.contrib.melange import api
-
-from cream_indicator.host import StatusNotifierHost, Status
+from cream.contrib.appindicator.host import StatusNotifierHost, Status
 
 def construct_js_item(item, icon_filename):
     return {
@@ -80,3 +79,4 @@ class AppIndicators(api.API):
     def show_menu(self, id):
 
         self._show_menu(id)
+
