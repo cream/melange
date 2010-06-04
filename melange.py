@@ -523,10 +523,10 @@ class CommonWidgetManager(WidgetManager):
             if center[0] > c_x and center[0] < c_x + c_width and center[1] > c_y and center[1] < c_y + c_height:
                 self.remove(widget)
                 c.add(widget)
-                widget.set_position(new_x, new_y)
+                widget.set_position(int(new_x), int(new_y))
                 return
 
-        widget.set_position(new_x, new_y)
+        widget.set_position(int(new_x), int(new_y))
 
 
     def container_empty_cb(self, container):
