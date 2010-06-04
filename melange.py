@@ -531,6 +531,7 @@ class CommonWidgetManager(WidgetManager):
 
     def container_empty_cb(self, container):
 
+        container.container.destroy()
         self.containers.remove(container)
         del container
 
