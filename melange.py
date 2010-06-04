@@ -30,13 +30,11 @@ import cairo
 import webkit
 import javascriptcore as jscore
 
-import wnck
-
 import cream
 import cream.manifest
 import cream.ipc
 import cream.gui
-import cream.util
+import cream.util, cream.util.pywmctrl
 
 from cream.contrib.melange.dialogs import AddWidgetDialog
 
@@ -551,7 +549,7 @@ class Melange(cream.Module, cream.ipc.Object):
             '/org/cream/Melange'
         )
 
-        self.screen = wnck.screen_get_default()
+        self.screen = cream.util.pywmctrl.Screen()
         self.display = gtk.gdk.display_get_default()
         self._edit_mode = EDIT_MODE_NONE
 
