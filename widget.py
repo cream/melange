@@ -88,10 +88,7 @@ class WidgetConfigurationProxy(object):
             return getattr(self.config_ref(), key)
 
 
-class WidgetWindow(gtk.Window):
-    """
-    The WidgetWindow class is being used for displaying Melange's widget in window mode.
-    """
+class MelangeWindow(gtk.Window):
 
     def __init__(self):
 
@@ -107,9 +104,30 @@ class WidgetWindow(gtk.Window):
         self.set_app_paintable(True)
         self.set_resizable(False)
         self.set_default_size(10, 10)
+        self.set_colormap(self.get_screen().get_rgba_colormap())
+
+
+    def expose_cb(self, source, event):
+        """ Clear the widgets background. """
+
+        ctx = source.window.cairo_create()
+
+        ctx.set_operator(cairo.OPERATOR_SOURCE)
+        ctx.set_source_rgba(0, 0, 0, 0)
+        ctx.paint()
+
+
+class WidgetWindow(MelangeWindow):
+    """
+    The WidgetWindow class is being used for displaying Melange's widget in window mode.
+    """
+
+    def __init__(self):
+
+        MelangeWindow.__init__(self)
+
         self.connect('expose-event', self.expose_cb)
         self.connect('focus-out-event', self.focus_cb)
-        self.set_colormap(self.get_screen().get_rgba_colormap())
 
         self.set_property('accept-focus', False)
 
@@ -305,7 +323,9 @@ class Widget(gobject.GObject, cream.Component):
     __gtype_name__ = 'Widget'
     __gsignals__ = {
         'remove-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT))
+        'move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
+        'begin-move': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'end-move': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
         }
 
     def __init__(self, path, backref):
@@ -338,11 +358,30 @@ class Widget(gobject.GObject, cream.Component):
 
     def begin_move(self):
 
+        def update(source, state):
+            self.window.set_opacity(1 - state * .5)
+
+        t = cream.gui.Timeline(500, cream.gui.CURVE_SINE)
+        t.connect('update', update)
+        t.run()
+
+        self.emit('begin-move')
+
         self.state = WIDGET_STATE_MOVE
         self.move()
 
 
     def end_move(self):
+
+        def update(source, state):
+            self.window.set_opacity(.5 + state * .5)
+
+        t = cream.gui.Timeline(500, cream.gui.CURVE_SINE)
+        t.connect('update', update)
+        t.run()
+
+        self.emit('end-move')
+
         self.state = WIDGET_STATE_VISIBLE
 
 
@@ -464,7 +503,7 @@ class Widget(gobject.GObject, cream.Component):
         :rtype: `tuple`
         """
 
-        return self._size
+        return self.window.get_size()
 
 
     def get_position(self):

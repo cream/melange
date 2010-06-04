@@ -1,0 +1,89 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    
+    <head>
+        <title>Melange Panel</title>
+        <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+    
+        <script type="text/javascript" src="/common/core/mootools.js"></script>
+        <script type="text/javascript" src="/common/core/mootools-more.js"></script>
+
+        <link rel="stylesheet" type="text/css" href="/common/ui/melange.css" media="screen">
+
+        
+        <script type="text/javascript">
+            var row_counter = 2
+            
+            Element.Properties.orientation = {
+                get: function() {
+                    return this.orientation;
+                },
+                
+                set: function(value) {
+                    this.orientation = value;
+                }
+            }
+            
+            function set_orientation(orientation) {
+                if ($('melange-panel').get('orientation') != orientation) {
+                    $('melange-panel').set('orientation', orientation);
+                    
+                    switch (orientation) {
+                        case 'top': $('melange-panel').morph('.top-panel'); break;
+                        case 'left': $('melange-panel').morph('.left-panel'); break;
+                        case 'right': $('melange-panel').morph('.right-panel'); break;
+                        case 'bottom': $('melange-panel').morph('.bottom-panel'); break;
+                        case 'center': $('melange-panel').morph('.free-panel'); break;
+                    }
+                }
+            }
+            
+            function get_orientation() {
+                return $('melange-panel').get('orientation');
+            }
+
+            function resize(width, height) {
+                $('melange-panel').set('morph', {duration: 350});
+                $('melange-panel').morph({
+                    width: width,
+                    height: height
+                });
+            }
+            
+            /*function add_row(orientation, row_id) {
+                row_counter++
+                
+                var row = new Element('div', {class: 'panel-row', id: row_counter});
+                var clear = new Element('div', {style: 'clear: both;'});
+                row.grab(clear);
+                
+                if (orientation == 'begin') {
+                    $('melange-panel').grab(row, 'top');
+                }
+                else if (orientation == 'end') {
+                    $('melange-panel').grab(row);
+                }
+                else if (orientation == 'before') {
+                    row.inject($(row_id), 'before');
+                }
+                else if (orientation == 'after') {
+                    row.inject($(row_id), 'after');
+                }
+            }
+            
+            function add_widget(row_id, widget) {
+                $(row_id).grabs(widget);
+            }*/
+            
+        </script>
+    </head>
+    
+    <body>
+        <!--<a href="javascript:add_row('after', '1');">Add Row</a>-->
+
+        <div class="panel-box">
+            <div class="panel free-panel" id="melange-panel">
+            </div>
+        </div>
+    </body>
+</html>

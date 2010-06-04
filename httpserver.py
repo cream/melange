@@ -32,6 +32,15 @@ class HttpServer(object):
         return send_file(file, path)
 
 
+    @route(r'/chrome/(?P<file>.*)')
+    def chrome_files(file):
+
+        theme = _MELANGE.config.default_theme
+        path = os.path.dirname(_MELANGE.themes.get_by_id(theme)._path)
+
+        return send_file(file, os.path.join(path, 'chrome'))
+
+
     @route(r'/widget/tmp/(?P<file>.*)')
     def tmp_files(file):
 
