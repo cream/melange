@@ -64,11 +64,11 @@ class Background(gobject.GObject):
 
     def draw(self):
 
-        workarea = self.root_window.property_get('_NET_WORKAREA')
-        if workarea:
-            workarea = workarea[-1]
-        else:
-            workarea = (0, 0, self.screen.get_width(), self.screen.get_height())
+        #workarea = self.root_window.property_get('_NET_WORKAREA')
+        #if workarea:
+        #    workarea = workarea[-1]
+        #else:
+        #    workarea = (0, 0, self.screen.get_width(), self.screen.get_height())
 
         ctx = self.window.window.cairo_create()
 
@@ -76,14 +76,14 @@ class Background(gobject.GObject):
         ctx.set_source_rgba(0, 0, 0, .7)
         ctx.paint()
 
-        ctx.rectangle(workarea[0] - 1, workarea[1] - 1, workarea[2] + 2, workarea[3] + 2)
+        #ctx.rectangle(workarea[0] - 1, workarea[1] - 1, workarea[2] + 2, workarea[3] + 2)
 
-        ctx.set_source_rgba(0, 0, 0, .5)
-        ctx.fill_preserve()
+        #ctx.set_source_rgba(0, 0, 0, .5)
+        #ctx.fill_preserve()
 
-        ctx.set_line_width(1)
-        ctx.set_source_rgba(1, 1, 1, .5)
-        ctx.stroke()
+        #ctx.set_line_width(1)
+        #ctx.set_source_rgba(1, 1, 1, .5)
+        #ctx.stroke()
 
 
     def initialize(self):

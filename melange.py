@@ -499,8 +499,9 @@ class Melange(cream.Module, cream.ipc.Object):
         self.background = Background()
         self.background.initialize()
 
-        self.widgets = CommonWidgetManager()
-        self.widgets.connect('widget-added', lambda widget_manager, widget: widget.window.set_transient_for(self.background.window))
+        self.widgets = {}
+        self.widget_manager = CommonWidgetManager()
+        self.widget_manager.connect('widget-added', lambda widget_manager, widget: widget.window.set_transient_for(self.background.window))
 
         self.add_widget_dialog = AddWidgetDialog()
 
@@ -577,7 +578,8 @@ class Melange(cream.Module, cream.ipc.Object):
         self.messages.debug("Loading widget '%s'..." % name)
 
         widget = Widget(self.available_widgets.get_by_name(name)._path, backref=self)
-        self.widgets.add(widget, x, y)
+        self.widget_manager.add(widget, x, y)
+        self.widgets[widget.instance_id] = widget
 
         widget.show()
 
