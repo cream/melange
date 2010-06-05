@@ -20,6 +20,9 @@
 HOST = '127.0.0.1'
 PORT = 8080
 
+# Timestep for moving actions:
+MOVE_TIMESTEP = 30
+
 # Orientation of containers:
 ORIENTATION_HORIZONTAL = 0
 ORIENTATION_VERTICAL = 1

@@ -39,7 +39,7 @@ from widget import Widget
 from container import ContainerWindow
 from chrome import Background, Thingy
 from httpserver import HttpServer
-from common import HOST, PORT, ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL, MODE_NORMAL, MODE_EDIT, STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE
+from common import HOST, PORT, ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL, MODE_NORMAL, MODE_EDIT, STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE, MOVE_TIMESTEP
 
 class WidgetManager(gobject.GObject):
 
@@ -107,8 +107,6 @@ class WidgetManager(gobject.GObject):
 
 
     def move_request_cb(self, widget, x, y):
-
-        print "A"
 
         old_x, old_y = widget.get_position()
         new_x = old_x + x
@@ -197,7 +195,7 @@ class ContainerWidgetManager(WidgetManager):
                 x, y = self.get_position()
                 self.set_position(x + move_x, y + move_y)
                 self.recalculate(animate=False)
-                gobject.timeout_add(30, move_cb, new_x, new_y)
+                gobject.timeout_add(MOVE_TIMESTEP, move_cb, new_x, new_y)
 
         move_cb(*self.display.get_pointer()[1:3])
 

@@ -37,7 +37,7 @@ from cream.config import Configuration, MissingConfigurationDefinitionFile
 from cream.config.backend import CreamXMLBackend, CONFIGURATION_SCHEME_FILE
 from gpyconf.fields import MultiOptionField
 
-from common import HOST, PORT, STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE, MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT
+from common import HOST, PORT, STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE, MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT, MOVE_TIMESTEP
 
 class WidgetAPI(object):
     pass
@@ -386,7 +386,7 @@ class Widget(gobject.GObject, cream.Component):
 
             if self.state == STATE_MOVE:
                 self.emit('move-request', move_x, move_y)
-                gobject.timeout_add(20, move_cb, new_x, new_y)
+                gobject.timeout_add(MOVE_TIMESTEP, move_cb, new_x, new_y)
 
         move_cb(*self.display.get_pointer()[1:3])
 
