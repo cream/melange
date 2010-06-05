@@ -26,9 +26,6 @@ import gobject
 gobject.threads_init()
 
 import gtk
-import cairo
-import webkit
-import javascriptcore as jscore
 
 import cream
 import cream.manifest
@@ -38,27 +35,11 @@ import cream.util, cream.util.pywmctrl
 
 from cream.contrib.melange.dialogs import AddWidgetDialog
 
-from widget import Widget, MelangeWindow
+from widget import Widget
+from container import ContainerWindow
 from chrome import Background, Thingy
-from httpserver import HttpServer, PORT, HOST
-
-ORIENTATION_HORIZONTAL = 0
-ORIENTATION_VERTICAL = 1
-
-EDIT_MODE_NONE = 0
-EDIT_MODE_MOVE = 1
-
-MOUSE_BUTTON_MIDDLE = 2
-MOUSE_BUTTON_RIGHT = 3
-
-MODE_NORMAL = 0
-MODE_EDIT = 1
-
-CONTAINER_STATE_NONE = 0
-CONTAINER_STATE_VISIBLE = 1
-CONTAINER_STATE_HIDDEN = 2
-CONTAINER_STATE_MOVE = 3
-
+from httpserver import HttpServer
+from common import HOST, PORT, ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL, MODE_NORMAL, MODE_EDIT, STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE
 
 class WidgetManager(gobject.GObject):
 
@@ -153,53 +134,6 @@ class WidgetManager(gobject.GObject):
         self.emit('widget-removed', widget)
 
 
-class ContainerWindow(MelangeWindow):
-
-    __gsignals__ = {
-        'begin-move': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'end-move': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-    }
-
-    def __init__(self):
-
-        MelangeWindow.__init__(self)
-
-        self.set_property('accept-focus', False)
-        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
-        self.set_keep_below(True)
-
-        self.view = webkit.WebView()
-        self.view.set_transparent(True)
-
-        self.view.connect('button-press-event', self.button_press_cb)
-        self.view.connect('button-release-event', self.button_release_cb)
-
-        self.add(self.view)
-
-        self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
-
-        url = cream.util.urljoin_multi('http://{0}:{1}'.format(HOST, PORT), 'chrome', 'container.html')
-        self.view.open(url)
-
-
-    def button_press_cb(self, source, event):
-        """ Handle clicking on the widget (e. g. by showing context menu). """
-
-        if event.button == MOUSE_BUTTON_RIGHT:
-            pass
-            return True
-        elif event.button == MOUSE_BUTTON_MIDDLE:
-            self.emit('begin-move')
-            return True
-
-
-    def button_release_cb(self, source, event):
-        
-        if event.button == MOUSE_BUTTON_MIDDLE:
-            self.emit('end-move')
-            return True
-
-
 class ContainerWidgetManager(WidgetManager):
 
     __gtype_name__ = 'ContainerWidgetManager'
@@ -217,7 +151,7 @@ class ContainerWidgetManager(WidgetManager):
         self.position = (x - 10, y - 10)
         self.size = (100, 100)
         self.stack = []
-        self.state = CONTAINER_STATE_NONE
+        self.state = STATE_NONE
 
         self.container = ContainerWindow()
         self.container.move(*self.position)
@@ -236,7 +170,7 @@ class ContainerWidgetManager(WidgetManager):
         #t.connect('update', update)
         #t.run()
 
-        self.state = CONTAINER_STATE_MOVE
+        self.state = STATE_MOVE
         self.move()
 
 
@@ -249,7 +183,7 @@ class ContainerWidgetManager(WidgetManager):
         #t.connect('update', update)
         #t.run()
 
-        self.state = CONTAINER_STATE_VISIBLE
+        self.state = STATE_VISIBLE
 
 
     def move(self):
@@ -259,11 +193,11 @@ class ContainerWidgetManager(WidgetManager):
             move_x = new_x - old_x
             move_y = new_y - old_y
 
-            if self.state == CONTAINER_STATE_MOVE:
+            if self.state == STATE_MOVE:
                 x, y = self.get_position()
                 self.set_position(x + move_x, y + move_y)
                 self.recalculate(animate=False)
-                gobject.timeout_add(20, move_cb, new_x, new_y)
+                gobject.timeout_add(30, move_cb, new_x, new_y)
 
         move_cb(*self.display.get_pointer()[1:3])
 
@@ -552,7 +486,6 @@ class Melange(cream.Module, cream.ipc.Object):
 
         self.screen = cream.util.pywmctrl.Screen()
         self.display = gtk.gdk.display_get_default()
-        self._edit_mode = EDIT_MODE_NONE
 
         # Initialize the HTTP server providing the widget data.
         self.server = HttpServer(self)
@@ -692,7 +625,7 @@ class Melange(cream.Module, cream.ipc.Object):
     def quit(self):
         """ Quit the module. """
 
-        #self.config.widgets = self.widgets.values()
+        self.config.widgets = self.widgets.values()
         cream.Module.quit(self)
 
 

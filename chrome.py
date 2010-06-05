@@ -22,7 +22,8 @@ import cairo
 import webkit
 import javascriptcore as jscore
 import cream.gui
-from httpserver import HOST, PORT
+
+from common import HOST, PORT
 
 class Background(gobject.GObject):
 

@@ -37,15 +37,7 @@ from cream.config import Configuration, MissingConfigurationDefinitionFile
 from cream.config.backend import CreamXMLBackend, CONFIGURATION_SCHEME_FILE
 from gpyconf.fields import MultiOptionField
 
-from httpserver import HOST, PORT
-
-WIDGET_STATE_NONE = 0
-WIDGET_STATE_VISIBLE = 1
-WIDGET_STATE_HIDDEN = 2
-WIDGET_STATE_MOVE = 3
-
-MOUSE_BUTTON_MIDDLE = 2
-MOUSE_BUTTON_RIGHT = 3
+from common import HOST, PORT, STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE, MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT
 
 class WidgetAPI(object):
     pass
@@ -335,7 +327,7 @@ class Widget(gobject.GObject, cream.Component):
         gobject.GObject.__init__(self)
         cream.base.Component.__init__(self, path=path)
 
-        self.state = WIDGET_STATE_NONE
+        self.state = STATE_NONE
 
         self.display = gtk.gdk.display_get_default()
 
@@ -367,7 +359,7 @@ class Widget(gobject.GObject, cream.Component):
 
         self.emit('begin-move')
 
-        self.state = WIDGET_STATE_MOVE
+        self.state = STATE_MOVE
         self.move()
 
 
@@ -382,7 +374,7 @@ class Widget(gobject.GObject, cream.Component):
 
         self.emit('end-move')
 
-        self.state = WIDGET_STATE_VISIBLE
+        self.state = STATE_VISIBLE
 
 
     def move(self):
@@ -392,7 +384,7 @@ class Widget(gobject.GObject, cream.Component):
             move_x = new_x - old_x
             move_y = new_y - old_y
 
-            if self.state == WIDGET_STATE_MOVE:
+            if self.state == STATE_MOVE:
                 self.emit('move-request', move_x, move_y)
                 gobject.timeout_add(20, move_cb, new_x, new_y)
 
