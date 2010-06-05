@@ -39,7 +39,10 @@ from widget import Widget
 from container import ContainerWindow
 from chrome import Background, Thingy
 from httpserver import HttpServer
-from common import HOST, PORT, ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL, MODE_NORMAL, MODE_EDIT, STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE, MOVE_TIMESTEP
+from common import HOST, PORT, ORIENTATION_HORIZONTAL,\
+    ORIENTATION_VERTICAL, MODE_NORMAL, MODE_EDIT,\
+    STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE,\
+    MOVE_TIMESTEP
 
 class WidgetManager(gobject.GObject):
 
