@@ -238,6 +238,7 @@ class WidgetInstance(gobject.GObject):
             for name, value in APIS[custom_api_file].iteritems():
                 c = value
                 c._js_ctx = self.js_context
+                c.context = self.context
                 c = c()
                 self._tmp = c.get_tmp()
                 i = PyToJSInterface(c)
