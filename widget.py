@@ -37,7 +37,10 @@ from cream.config import Configuration, MissingConfigurationDefinitionFile
 from cream.config.backend import CreamXMLBackend, CONFIGURATION_SCHEME_FILE
 from gpyconf.fields import MultiOptionField
 
-from common import HOST, PORT, STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE, MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT, MOVE_TIMESTEP
+from common import HTTPSERVER_BASE_URL, \
+                   STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE, \
+                   MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT, \
+                   MOVE_TIMESTEP
 
 class WidgetAPI(object):
     pass
@@ -206,7 +209,7 @@ class WidgetInstance(gobject.GObject):
         self.js_context._python.init = self.init_api
         self.js_context._python.init_config = self.init_config
 
-        skin_url = urljoin_multi('http://{0}:{1}'.format(HOST, PORT), 'widget', 'index.html')
+        skin_url = HTTPSERVER_BASE_URL + '/widget/index.html'
         self.view.open(skin_url)
 
 
@@ -305,7 +308,8 @@ class WidgetInstance(gobject.GObject):
 
         uri = request.get_uri()
 
-        if not uri.startswith('http://{0}:{1}/'.format(HOST, PORT)):
+        if not uri.startswith(HTTPSERVER_BASE_URL):
+            # external URL, open in browser
             import webbrowser
             webbrowser.open(uri)
             return True

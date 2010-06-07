@@ -41,8 +41,8 @@ from container import ContainerWindow
 from chrome import Background, Thingy
 from httpserver import MelangeResponse, run as httpserver_run
 from common import HTTPSERVER_HOST, HTTPSERVER_PORT, \
-                   ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL,
-                   MODE_NORMAL, MODE_EDIT,\
+                   ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL, \
+                   MODE_NORMAL, MODE_EDIT, \
                    STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE,\
                    MOVE_TIMESTEP
 
@@ -278,7 +278,7 @@ class ContainerWidgetManager(WidgetManager):
                 height += widget.get_size()[1]
 
         self.set_size(width, height)
-                
+
 
         for c, widget in enumerate(self.stack):
             if widget in exclude:

@@ -16,9 +16,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
 
-# Host and port of the HTTP server:
-HOST = '127.0.0.1'
-PORT = 8080
+HTTPSERVER_HOST = '127.0.0.1'
+HTTPSERVER_PORT = 8080
+HTTPSERVER_BASE_URL = 'http://{host}:{port}'.format(host=HTTPSERVER_HOST,
+                                                    port=HTTPSERVER_PORT)
 
 # Timestep for moving actions:
 MOVE_TIMESTEP = 30

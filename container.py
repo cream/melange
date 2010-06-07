@@ -4,10 +4,9 @@ import gtk
 import webkit
 import javascriptcore as jscore
 
-import cream.util
-
 from widget import MelangeWindow
-from common import HOST, PORT, MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT
+from common import HTTPSERVER_BASE_URL, \
+                   MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT
 
 class ContainerWindow(MelangeWindow):
 
@@ -34,7 +33,7 @@ class ContainerWindow(MelangeWindow):
 
         self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
 
-        url = cream.util.urljoin_multi('http://{0}:{1}'.format(HOST, PORT), 'chrome', 'container.html')
+        url = HTTPSERVER_BASE_URL + '/chrome/container.html'
         self.view.open(url)
 
 
@@ -50,7 +49,7 @@ class ContainerWindow(MelangeWindow):
 
 
     def button_release_cb(self, source, event):
-        
+
         if event.button == MOUSE_BUTTON_MIDDLE:
             self.emit('end-move')
             return True
