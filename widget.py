@@ -48,7 +48,7 @@ class WidgetAPI(object):
 
 class WidgetConfiguration(Configuration):
 
-    def __init__(self, path, skins={}, themes={'aaa':{'name':"Foo"}}):
+    def __init__(self, path, skins, themes):
 
         Configuration.__init__(self, path, read=False)
 
@@ -341,7 +341,9 @@ class Widget(gobject.GObject, cream.Component):
         skin_dir = os.path.join(self.context.working_directory, 'skins')
         self.skins = cream.manifest.ManifestDB(skin_dir, type='org.cream.melange.Skin')
 
-        self.config = WidgetConfiguration(self.context.working_directory, skins=self.skins.by_id, themes=self.__melange_ref__().themes.by_id)
+        self.config = WidgetConfiguration(self.context.working_directory,
+                                          skins=self.skins.by_id,
+                                          themes=self.__melange_ref__().themes.by_id)
         self.config.connect('field-value-changed', self.configuration_value_changed_cb)
 
         self.window = WidgetWindow()
@@ -357,6 +359,12 @@ class Widget(gobject.GObject, cream.Component):
             'skins',
             os.path.dirname(self.skins.get_by_id(skin_id)._path)
         )
+
+    def get_current_theme(self):
+        theme_id = self.config.widget_theme
+        if theme_id == 'use.the.fucking.global.settings.and.suck.my.Dick':
+            theme_id = self.__melange_ref__().config.default_theme
+        return self.__melange_ref__().themes.get_by_id(theme_id)
 
 
     def get_tmp(self):
@@ -451,9 +459,9 @@ class Widget(gobject.GObject, cream.Component):
         def go_on():
             view = self.instance.get_view()
             self.window.remove(view)
-    
+
             del self.instance
-    
+
             self.load()
             self.show()
 

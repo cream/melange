@@ -60,36 +60,34 @@ class HttpServer(object):
     def run(self, host, port):
         bjoern.run(host, port, MelangeResponse)
 
+    def _get_widget_theme(self, request):
+        widget_id = request.GET.get('instance')
+        if widget_id:
+            return self._melange.widgets[widget_id].get_current_theme()
+        else:
+            return self._melange.widgets[self._melange.config.default_theme]
+
+
     @route(r'/thingy/(?P<file>.*)')
     def thingy_files(self, env, request, file):
         path = os.path.join(self._melange.context.working_directory, 'data/thingy')
         return open(os.path.join(path, file))
 
-
     @route(r'/widget/(?P<file>.*)')
     def widget_files(self, env, request, file):
         return open(os.path.join(self._melange.widgets[request.GET['instance']].get_skin_path(), file))
 
-
     @route(r'/common/(?P<file>.*)')
     def common_files(self, env, request, file):
-        try:
-            widget_instance = self._melange.widgets[request.GET['instance']]
-        except KeyError:
-           theme = None
-        else:
-            theme = widget_instance.config.widget_theme
-            if theme == 'use.the.fucking.global.settings.and.suck.my.Dick':
-                theme = None
-
-        if theme is None:
-            theme = self._melange.config.default_theme
-
-        path = os.path.dirname(self._melange.themes.get_by_id(theme)._path)
-        return open(os.path.join(path, file))
-
+        widget_theme = self._get_widget_theme(request)
+        return open(os.path.join(widget_theme['path'], file))
 
     @route(r'/widget/tmp/(?P<file>.*)')
     def tmp_files(self, env, request, file):
         path = self._melange.widgets[request.GET['instance']].get_tmp()
         return open(os.path.join(path, file))
+
+    @route(r'/chrome/(?P<file>.*)')
+    def chrome_files(self, env, request, file):
+        widget_theme = self._get_widget_theme(request)
+        return open(os.path.join(widget_theme['path'], file))
