@@ -39,7 +39,7 @@ from cream.contrib.melange.dialogs import AddWidgetDialog
 from widget import Widget
 from container import ContainerWindow
 from chrome import Background, Thingy
-from httpserver import MelangeResponse, run as httpserver_run
+from httpserver import HttpServer
 from common import HTTPSERVER_HOST, HTTPSERVER_PORT, \
                    ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL, \
                    MODE_NORMAL, MODE_EDIT, \
@@ -537,12 +537,8 @@ class Melange(cream.Module, cream.ipc.Object):
 
 
     def run_server(self):
-        class _MelangeResponse(MelangeResponse):
-            _melange = self
-        self._server_thread = thread.start_new_thread(
-            httpserver_run,
-            (HTTPSERVER_HOST, HTTPSERVER_PORT, _MelangeResponse)
-        )
+        server = HttpServer(self)
+        thread.start_new_thread(server.run, (HTTPSERVER_HOST, HTTPSERVER_PORT))
 
 
     def add_widget(self):

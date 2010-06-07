@@ -33,41 +33,63 @@ class MelangeResponse(bjoern.Response):
 
     @cached_property
     def GET(self):
-        return urlparse.parse_qs(urlparse.urlparse(self.environ['PATH_INFO']).query)
-
-    def get_widget_instance(self):
-        return self._melange.widgets[self.GET['instance']]
+        return dict((header_name, header_values[0]) for header_name, header_values in
+                    urlparse.parse_qs(self.environ['QUERY_STRING']).iteritems())
 
 
-@bjoern.route(r'/thingy/(?P<file>.*)')
-def thingy_files(env, response, file=None):
-    path = os.path.join(response._melange.context.working_directory, 'data/thingy')
-    return open(os.path.join(path, file))
+def route(url_regex):
+    def decorator(func):
+        if not hasattr(func, '__bjoern_routes__'):
+            func.__bjoern_routes__ = list()
+        func.__bjoern_routes__.append(url_regex)
+        return func
+    return decorator
 
 
-@bjoern.route(r'/widget/(?P<file>.*)')
-def widget_files(env, response, file=None):
-    return open(os.path.join(response.get_widget_instance().get_skin_path(), file))
+class HttpServer(object):
+    def __init__(self, melange):
+        self._melange = melange
+        self._setup_routes()
+
+    def _setup_routes(self):
+        for name, attr in ((name, getattr(self, name)) for name in dir(self)):
+            if hasattr(attr, '__bjoern_routes__'):
+                for route in attr.__bjoern_routes__:
+                    bjoern.route(route)(attr)
+
+    def run(self, host, port):
+        bjoern.run(host, port, MelangeResponse)
+
+    @route(r'/thingy/(?P<file>.*)')
+    def thingy_files(self, env, request, file):
+        path = os.path.join(self._melange.context.working_directory, 'data/thingy')
+        return open(os.path.join(path, file))
 
 
-@bjoern.route(r'/common/(?P<file>.*)')
-def common_files(env, response, file=None):
-    try:
-        widget_instance = response.get_widget_instance()
-    except KeyError:
-       theme = None
-    else:
-        theme = response._melange.widgets[instance].config.widget_theme
-        if theme == 'use.the.fucking.global.settings.and.suck.my.Dick':
-            theme = None
+    @route(r'/widget/(?P<file>.*)')
+    def widget_files(self, env, request, file):
+        return open(os.path.join(self._melange.widgets[request.GET['instance']].get_skin_path(), file))
 
-    if theme is None:
-        theme = response._melange.config.default_theme
 
-    path = os.path.dirname(response._melange.themes.get_by_id(theme)._path)
-    return open(os.path.join(path, file))
+    @route(r'/common/(?P<file>.*)')
+    def common_files(self, env, request, file):
+        try:
+            widget_instance = self._melange.widgets[request.GET['instance']]
+        except KeyError:
+           theme = None
+        else:
+            theme = widget_instance.config.widget_theme
+            if theme == 'use.the.fucking.global.settings.and.suck.my.Dick':
+                theme = None
 
-@bjoern.route(r'/widget/tmp/(?P<file>.*)')
-def tmp_files(env, response, file=None):
-    path = response.get_widget_instance().get_tmp()
-    return open(os.path.join(path, file))
+        if theme is None:
+            theme = self._melange.config.default_theme
+
+        path = os.path.dirname(self._melange.themes.get_by_id(theme)._path)
+        return open(os.path.join(path, file))
+
+
+    @route(r'/widget/tmp/(?P<file>.*)')
+    def tmp_files(self, env, request, file):
+        path = self._melange.widgets[request.GET['instance']].get_tmp()
+        return open(os.path.join(path, file))
