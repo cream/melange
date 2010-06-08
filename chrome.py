@@ -23,7 +23,7 @@ import webkit
 import javascriptcore as jscore
 import cream.gui
 
-from common import HOST, PORT
+from common import HTTPSERVER_BASE_URL
 
 class Background(gobject.GObject):
 
@@ -185,7 +185,7 @@ class Thingy(gobject.GObject):
         self.screen = self.thingy_window.get_screen()
         self.thingy_window.move(self.screen.get_width() - 35, 0)
 
-        self.thingy_window.load('http://{0}:{1}/thingy/thingy.html'.format(HOST, PORT))
+        self.thingy_window.load(HTTPSERVER_BASE_URL + '/thingy/thingy.html')
         self.thingy_window.show_all()
 
         self.thingy_window.js_context.toggle_overlay = self.toggle_overlay
@@ -198,7 +198,7 @@ class Thingy(gobject.GObject):
         self.screen = self.control_window.get_screen()
         self.control_window.move(self.screen.get_width() - 70 - 40, -35)
 
-        self.control_window.load('http://{0}:{1}/thingy/control.html'.format(HOST, PORT))
+        self.control_window.load(HTTPSERVER_BASE_URL + '/thingy/control.html')
         self.control_window.show_all()
 
         self.control_window.js_context.show_settings = self.show_settings

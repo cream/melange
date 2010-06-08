@@ -17,6 +17,7 @@
 # MA 02110-1301, USA.
 
 import os.path
+import thread
 from operator import itemgetter
 
 import time
@@ -39,10 +40,12 @@ from widget import Widget
 from container import ContainerWindow
 from chrome import Background, Thingy
 from httpserver import HttpServer
-from common import HOST, PORT, ORIENTATION_HORIZONTAL,\
-    ORIENTATION_VERTICAL, MODE_NORMAL, MODE_EDIT,\
-    STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE,\
-    MOVE_TIMESTEP
+from common import HTTPSERVER_HOST, HTTPSERVER_PORT, \
+                   ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL, \
+                   MODE_NORMAL, MODE_EDIT, \
+                   STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE,\
+                   MOVE_TIMESTEP
+
 
 class WidgetManager(gobject.GObject):
 
@@ -275,7 +278,7 @@ class ContainerWidgetManager(WidgetManager):
                 height += widget.get_size()[1]
 
         self.set_size(width, height)
-                
+
 
         for c, widget in enumerate(self.stack):
             if widget in exclude:
@@ -485,12 +488,10 @@ class Melange(cream.Module, cream.ipc.Object):
             '/org/cream/Melange'
         )
 
+        self.run_server()
+
         self.screen = cream.util.pywmctrl.Screen()
         self.display = gtk.gdk.display_get_default()
-
-        # Initialize the HTTP server providing the widget data.
-        self.server = HttpServer(self)
-        self.server.run()
 
         # Scan for themes...
         theme_dir = os.path.join(self.context.working_directory, 'themes')
@@ -533,6 +534,11 @@ class Melange(cream.Module, cream.ipc.Object):
             self.add_widget_dialog.liststore.append((widget['id'], widget['id'], widget['name'], str(widget['description']), pixbuf, label))
 
         self.hotkeys.connect('hotkey-activated', self.hotkey_activated_cb)
+
+
+    def run_server(self):
+        server = HttpServer(self)
+        thread.start_new_thread(server.run, (HTTPSERVER_HOST, HTTPSERVER_PORT))
 
 
     def add_widget(self):
