@@ -65,7 +65,7 @@ class HttpServer(object):
         if widget_id:
             return self._melange.widgets[widget_id].get_current_theme()
         else:
-            return self._melange.widgets[self._melange.config.default_theme]
+            return self._melange.themes.get_by_id(self._melange.config.default_theme)
 
 
     @route(r'/thingy/(?P<file>.*)')
