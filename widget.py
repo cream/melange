@@ -209,6 +209,9 @@ class WidgetInstance(gobject.GObject):
         self.js_context._python.init = self.init_api
         self.js_context._python.init_config = self.init_config
 
+        self.js_context.melange = WidgetAPI()
+        self.js_context.melange.toggle_overlay = self.widget_ref().__melange_ref__()
+
         skin_url = HTTPSERVER_BASE_URL + '/widget/index.html'
         self.view.open(skin_url)
 
