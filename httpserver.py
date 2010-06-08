@@ -17,83 +17,77 @@
 # MA 02110-1301, USA.
 
 import os
-import thread
-from bottle import route, send_file, abort, run, request
+import urlparse
+import bjoern
+from bjoern import run
+from cream.util import cached_property
 
-from common import HOST, PORT
+# no file support in bjoern yet
+_open = open
+def open(*a, **k):
+    return _open(*a, **k).read()
 
-_OBJECT_CACHE = {}
-_MELANGE = None
+class MelangeResponse(bjoern.Response):
+    response_headers = ()
+    response_status = '200 Alles super'
+
+    @cached_property
+    def GET(self):
+        return dict((header_name, header_values[0]) for header_name, header_values in
+                    urlparse.parse_qs(self.environ['QUERY_STRING']).iteritems())
+
+
+def route(url_regex):
+    def decorator(func):
+        if not hasattr(func, '__bjoern_routes__'):
+            func.__bjoern_routes__ = list()
+        func.__bjoern_routes__.append(url_regex)
+        return func
+    return decorator
+
 
 class HttpServer(object):
-    """
-    HttpServer for serving static (HTML|JS|CSS) files and proxying DBus for
-    javascript.
-
-    Instantiated by the `melange.Melange` class.
-
-    TODO: It's all an ugly hack. We need routing functions with `self`
-    references, proper route-resolving, a non-global Melange reference, ...
-    """
     def __init__(self, melange):
+        self._melange = melange
+        self._setup_routes()
 
-        global _MELANGE
-        _MELANGE = melange
+    def _setup_routes(self):
+        for name, attr in ((name, getattr(self, name)) for name in dir(self)):
+            if hasattr(attr, '__bjoern_routes__'):
+                for route in attr.__bjoern_routes__:
+                    bjoern.route(route)(attr)
+
+    def run(self, host, port):
+        bjoern.run(host, port, MelangeResponse)
+
+    def _get_widget_theme(self, request):
+        widget_id = request.GET.get('instance')
+        if widget_id:
+            return self._melange.widgets[widget_id].get_current_theme()
+        else:
+            return self._melange.themes.get_by_id(self._melange.config.default_theme)
 
 
     @route(r'/thingy/(?P<file>.*)')
-    def thingy_files(file):
-
-        path = os.path.join(_MELANGE.context.working_directory, 'data/thingy')
-        return send_file(file, path)
-
-
-    @route(r'/chrome/(?P<file>.*)')
-    def chrome_files(file):
-
-        theme = _MELANGE.config.default_theme
-        path = os.path.dirname(_MELANGE.themes.get_by_id(theme)._path)
-
-        return send_file(file, os.path.join(path, 'chrome'))
-
-
-    @route(r'/widget/tmp/(?P<file>.*)')
-    def tmp_files(file):
-
-        instance = request.GET.get('instance')
-
-        path = _MELANGE.widgets[request.GET['instance']].get_tmp()
-
-        return send_file(file, path)
-
+    def thingy_files(self, env, request, file):
+        path = os.path.join(self._melange.context.working_directory, 'data/thingy')
+        return open(os.path.join(path, file))
 
     @route(r'/widget/(?P<file>.*)')
-    def widget_files(file):
-
-        instance = request.GET.get('instance')
-
-        skin = _MELANGE.widgets[request.GET['instance']].config.widget_skin
-
-        w = _MELANGE.widgets[instance]
-        path = os.path.join(w.context.working_directory, 'skins', os.path.dirname(w.skins.get_by_id(skin)._path))
-        return send_file(file, path)
-
+    def widget_files(self, env, request, file):
+        return open(os.path.join(self._melange.widgets[request.GET['instance']].get_skin_path(), file))
 
     @route(r'/common/(?P<file>.*)')
-    def common_files(file):
+    def common_files(self, env, request, file):
+        widget_theme = self._get_widget_theme(request)
+        return open(os.path.join(widget_theme['path'], file))
 
-        instance = request.GET.get('instance')
-        if instance:
-            widget = _MELANGE.widgets[instance]
-            theme = widget.config.widget_theme
-            if theme == 'use.the.fucking.global.settings.and.suck.my.Dick':
-                theme =  _MELANGE.config.default_theme
-            path = os.path.dirname(_MELANGE.themes.get_by_id(theme)._path)
-        else:
-            theme = _MELANGE.config.default_theme
-            path = os.path.dirname(_MELANGE.themes.get_by_id(theme)._path)
+    @route(r'/widget/tmp/(?P<file>.*)')
+    def tmp_files(self, env, request, file):
+        path = self._melange.widgets[request.GET['instance']].get_tmp()
+        return open(os.path.join(path, file))
 
-        return send_file(file, path)
-
-    def run(self):
-        thread.start_new_thread(run, (), dict(host=HOST, port=PORT, quiet=True))
+    @route(r'/chrome/(?P<file>.*)')
+    def chrome_files(self, env, request, file):
+        widget_theme = self._get_widget_theme(request)
+        return open(os.path.join(widget_theme['path'], 'chrome', file))
