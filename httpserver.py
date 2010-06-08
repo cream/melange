@@ -90,4 +90,4 @@ class HttpServer(object):
     @route(r'/chrome/(?P<file>.*)')
     def chrome_files(self, env, request, file):
         widget_theme = self._get_widget_theme(request)
-        return open(os.path.join(widget_theme['path'], file))
+        return open(os.path.join(widget_theme['path'], 'chrome', file))
