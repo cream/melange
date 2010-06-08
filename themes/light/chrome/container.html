@@ -44,11 +44,23 @@
 
             function resize(width, height) {
                 $('melange-panel').set('morph', {duration: 350});
+                
+                switch ($('melange-panel').get('orientation')) {
+                    case 'top': height += 5; break;
+                    case 'bottom': height += 5; break;
+                    case 'left': width += 5; break;
+                    case 'right': width += 5; break;
+                }
+                
                 $('melange-panel').morph({
                     width: width,
                     height: height
                 });
             }
+            
+            window.addEvent('domready', function() {
+                $('melange-panel').set('orientation', 'center');
+            });
             
             /*function add_row(orientation, row_id) {
                 row_counter++

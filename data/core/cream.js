@@ -1,3 +1,5 @@
+var DEBUG = false;
+
 var API = new Class({
     Implements: Events
 });

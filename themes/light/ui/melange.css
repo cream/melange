@@ -166,26 +166,14 @@ div.background {
     border-bottom-left-radius: 7px;
     border-bottom-right-radius: 7px;
 
-    /*background: -webkit-gradient(
-        linear,
-        left -75%,
-        left 90%,
-        color-stop(0, rgba(0, 0, 0, .2)),
-        color-stop(1, rgba(0, 0, 0, .8))
-    );*/
+    margin-top: -5px;
 }
 
 .bottom-panel {
     border-top-left-radius: 7px;
     border-top-right-radius: 7px;
 
-    /*background: -webkit-gradient(
-        linear,
-        left -75%,
-        left 90%,
-        color-stop(0, rgba(0, 0, 0, .2)),
-        color-stop(1, rgba(0, 0, 0, .8))
-    );*/
+    margin-bottom: -5px;
 }
 
 .left-panel {
@@ -193,8 +181,8 @@ div.background {
     border-bottom-right-radius: 7px;
     
     background: -webkit-gradient(linear, right top, left top, from(rgba(250, 250, 250, .7)), to(rgba(230, 230, 230, .45)));
-    position: relative;
-    left: -5px;
+    
+    margin-left: -5px;
 }
 
 .right-panel {
@@ -203,9 +191,9 @@ div.background {
 
     
     background: -webkit-gradient(linear, right top, left top, from(rgba(250, 250, 250, .7)), to(rgba(230, 230, 230, .45)));
-    position: relative;
-    right: -5px;
 }
+
+
 /* BUTTONS */
 
 input[type=button], input[type=submit], input[type=reset], button, .button {
