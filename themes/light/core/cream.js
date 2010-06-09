@@ -41,9 +41,15 @@ var Widget = new Class({
 var widget = new Widget();
 _python.init_config();
 
+/* reduce background intensity when widget is on a container */
+function blend_widget_backgrounds() {
+    $$('.background').set('class', 'background-on-container');
+}
+
 window.addEvent('domready', function() {
     if(window.main !== undefined) {
         widget.init();
         main();
+        blend_widget_backgrounds();
     }
 });
