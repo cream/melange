@@ -50,6 +50,6 @@ window.addEvent('domready', function() {
     if(window.main !== undefined) {
         widget.init();
         main();
-        blend_widget_backgrounds();
+        //blend_widget_backgrounds();
     }
 });
