@@ -22,10 +22,6 @@ import bjoern
 from bjoern import run
 from cream.util import cached_property
 
-# no file support in bjoern yet
-_open = open
-def open(*a, **k):
-    return _open(*a, **k).read()
 
 class MelangeResponse(bjoern.Response):
     response_headers = ()
