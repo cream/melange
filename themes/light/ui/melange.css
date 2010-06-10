@@ -110,9 +110,26 @@ div.background {
 
     outline-right: 5px solid red;
 
-    background: -webkit-gradient(linear, left -18%, left 20%, from(rgba(250, 250, 250, .7)), to(rgba(230, 230, 230, .48)));
+    background: -webkit-gradient(linear, left -18%, left 20%, from(rgba(250, 250, 250, .7)), 
+    to(rgba(230, 230, 230, .48)));
 
     -webkit-box-shadow: 0px 0px 5px rgba(1, 1, 1, .55);
+}
+
+div.background-on-container {
+    padding: 10px;
+
+    color: #0a0a0a;
+
+    border-radius: 10px;
+
+    outline-right: 5px solid red;
+    
+    background: rgba(255, 255, 255, .13);
+
+    -webkit-box-shadow: none;
+    
+    border: 1px solid rgba(255, 255, 255, .2);
 }
 
 .section, .bright_section, .scrolled, .chooser, .scroll {
@@ -338,7 +355,7 @@ input.bright_input {
     border-width: 1px;
     border-style: solid;
     border-color: rgba(256, 256, 256, .25);
-    background-color: rgba(40, 40, 40, .075);
+    background-color: rgba(80, 80, 80, .07);
     border-radius: 7px;
     display: table;
     width: 100%;
@@ -449,4 +466,33 @@ input.bright_input {
     right: 5px;
     bottom: 5px;
     border-radius: 10px;
+}
+
+
+/* SIMPLE DIALOG */
+
+.simple-dialog {
+    text-align: center;
+    
+    width: 100%;
+    
+    margin: auto;
+    border-radius: 5px;
+    
+    padding-top: 20px;
+}
+
+.simple-dialog-text {
+    color: #ffffff;
+    text-shadow: 0px -1px 0px #000;
+}
+
+.simple-dialog-buttons {
+    text-align: center;
+    padding-top: 20px;
+}
+
+.simple-dialog-buttons .button {
+    float: none;
+    display: inline;
 }

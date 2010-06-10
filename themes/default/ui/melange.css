@@ -478,3 +478,32 @@ input.bright_input {
     bottom: 5px;
     border-radius: 10px;
 }
+
+
+/* SIMPLE DIALOG */
+
+.simple-dialog {
+    text-align: center;
+    
+    width: 100%;
+    
+    margin: auto;
+    border-radius: 5px;
+    
+    padding-top: 20px;
+}
+
+.simple-dialog-text {
+    color: #ffffff;
+    text-shadow: 0px -1px 0px #000;
+}
+
+.simple-dialog-buttons {
+    text-align: center;
+    padding-top: 20px;
+}
+
+.simple-dialog-buttons .button {
+    float: none;
+    display: inline;
+}
