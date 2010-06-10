@@ -29,11 +29,11 @@
                     $('melange-panel').set('orientation', orientation);
                     
                     switch (orientation) {
-                        case 'top': $('melange-panel').morph('.top-panel'); break;
-                        case 'left': $('melange-panel').morph('.left-panel'); break;
-                        case 'right': $('melange-panel').morph('.right-panel'); break;
-                        case 'bottom': $('melange-panel').morph('.bottom-panel'); break;
-                        case 'center': $('melange-panel').morph('.free-panel'); break;
+                        case 'top': $('melange-panel').className = 'panel top-panel'; break;
+                        case 'left': $('melange-panel').className = 'panel left-panel'; break;
+                        case 'right': $('melange-panel').className = 'panel right-panel'; break;
+                        case 'bottom': $('melange-panel').className = 'panel bottom-panel'; break;
+                        case 'center': $('melange-panel').className = 'panel free-panel'; break;
                     }
                 }
             }

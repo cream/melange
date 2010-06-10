@@ -46,6 +46,7 @@ from common import HTTPSERVER_HOST, HTTPSERVER_PORT, \
                    STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE,\
                    MOVE_TIMESTEP
 
+from container import ORIENTATION_TOP, ORIENTATION_BOTTOM, ORIENTATION_LEFT, ORIENTATION_RIGHT, ORIENTATION_CENTER
 
 class WidgetManager(gobject.GObject):
 
@@ -58,6 +59,8 @@ class WidgetManager(gobject.GObject):
     def __init__(self):
 
         gobject.GObject.__init__(self)
+
+        self.screen_width, self.screen_height = gtk.gdk.screen_width(), gtk.gdk.screen_height()
 
         self._signal_handlers = {}
         self._widgets = {}
@@ -199,7 +202,19 @@ class ContainerWidgetManager(WidgetManager):
 
             if self.state == STATE_MOVE:
                 x, y = self.get_position()
-                self.set_position(x + move_x, y + move_y)
+                res_x = max(10, min(self.screen_width - self.get_size()[0] - 10, x + move_x))
+                res_y = max(10, min(self.screen_height - self.get_size()[1] - 10, y + move_y))
+                self.set_position(res_x, res_y)
+                if res_x == 10:
+                    self.container.set_orientation(ORIENTATION_LEFT)
+                elif res_y == 10:
+                    self.container.set_orientation(ORIENTATION_TOP)
+                elif res_x == self.screen_width - self.get_size()[0] - 10:
+                    self.container.set_orientation(ORIENTATION_RIGHT)
+                elif res_y == self.screen_height - self.get_size()[1] - 10:
+                    self.container.set_orientation(ORIENTATION_BOTTOM)
+                else:
+                    self.container.set_orientation(ORIENTATION_CENTER)
                 self.recalculate(animate=False)
                 gobject.timeout_add(MOVE_TIMESTEP, move_cb, new_x, new_y)
 

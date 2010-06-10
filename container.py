@@ -8,6 +8,12 @@ from widget import MelangeWindow
 from common import HTTPSERVER_BASE_URL, \
                    MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT
 
+ORIENTATION_TOP = 'top'
+ORIENTATION_BOTTOM = 'bottom'
+ORIENTATION_LEFT = 'left'
+ORIENTATION_RIGHT = 'right'
+ORIENTATION_CENTER = 'center'
+
 class ContainerWindow(MelangeWindow):
 
     __gsignals__ = {
@@ -35,6 +41,10 @@ class ContainerWindow(MelangeWindow):
 
         url = HTTPSERVER_BASE_URL + '/chrome/container.html'
         self.view.open(url)
+
+
+    def set_orientation(self, orientation):
+        self.js_context.set_orientation(orientation)
 
 
     def button_press_cb(self, source, event):
