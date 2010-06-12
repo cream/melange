@@ -110,8 +110,10 @@ div.background {
 
     outline-right: 5px solid red;
 
-    background: -webkit-gradient(linear, left -18%, left 20%, from(rgba(250, 250, 250, .7)), 
-    to(rgba(230, 230, 230, .48)));
+/*    background: -webkit-gradient(linear, left -18%, left 20%, from(rgba(250, 250, 250, .7)), 
+    to(rgba(230, 230, 230, .48)));*/
+    
+    background: -webkit-gradient(linear, left top, left bottom, from(rgba(255, 255, 255, .55)), to(rgba(255,255,255,.35)));
 
     -webkit-box-shadow: 0px 0px 5px rgba(1, 1, 1, .55);
 }
