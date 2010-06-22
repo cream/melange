@@ -24,70 +24,46 @@ a {
 .thingy-area {
     height: 35px;
     padding: 0px 0px 3px 3px;
-    }
+}
 
 .control-area {
     height: 35px;
     padding: 0px 3px 3px 3px;
-    }
+}
 
-.thingy {
-    width: 32px;
+.thingy-control {
+    width: 64px;
     height: 32px;
-    
-    border-bottom-left-radius: 10px;
+    border-radius: 6px;
 
     background: -webkit-gradient(
         linear,
-        right top,
-        left bottom,
-        color-stop(0, rgba(256, 256, 256, .74)),
-        color-stop(1, rgba(256, 256, 256, .11))
+        left -75%,
+        left 90%,
+        color-stop(0, rgba(256, 256, 256, .64)),
+        color-stop(1, rgba(256, 256, 256, .12))
     );
 
-    -webkit-box-shadow: 0px 0px 8px rgba(1, 1, 1, .3);
+    -webkit-box-shadow: 0px 0px 6px rgba(1, 1, 1, .3);
 
     display: table-cell;
     vertical-align: middle;
     text-align: center;
 }
-
-    .thingy-control {
-        width: 64px;
-        height: 32px;
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
-
-        background: -webkit-gradient(
-            linear,
-            left -75%,
-            left 90%,
-            color-stop(0, rgba(256, 256, 256, .64)),
-            color-stop(1, rgba(256, 256, 256, .12))
-        );
-
-        -webkit-box-shadow: 0px 0px 8px rgba(1, 1, 1, .3);
-
-        display: table-cell;
-        vertical-align: middle;
-        text-align: center;
-    }
         
-.thingy img, .thingy-control img {
+.thingy-control img {
     position: relative;
+    top: 2px;
     opacity: 0.8;
 }
 
-.thingy img:hover, .thingy-control img:hover {
+.thingy-control img:hover {
     opacity: 1.0;
 }
 
-.thingy img {
-    top: 0px;
-}
-
-.thingy-control img {
-    top: 2px;
+.thingy-control img:active {
+    top: 3px;
+    left: 1px;
 }
 
 .thingy-control img#add-icon {
