@@ -538,16 +538,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
         widgets = sorted(self.available_widgets.by_id.itervalues(), key=itemgetter('name'))
         for widget in widgets:
-            if widget.has_key('icon'):
-                icon_path = os.path.join(widget['path'], widget['icon'])
-                pixbuf = gtk.gdk.pixbuf_new_from_file(icon_path).scale_simple(28, 28, gtk.gdk.INTERP_HYPER)
-            else:
-                pixbuf = gtk.gdk.pixbuf_new_from_file(os.path.join(self.context.working_directory, 'melange.png')).scale_simple(28, 28, gtk.gdk.INTERP_HYPER)
-            #label = "<b>{0}</b>\n{1}".format(w['name'], w['description'])
-            label = "<b>{0}</b>\n{1}".format(widget['name'], '')
-            #self.liststore.append((w['id'], w['id'], w['name'], w['description'], pb, label))
-            self.add_widget_dialog.liststore.append((widget['id'], widget['id'], widget['name'], str(widget['description']), pixbuf, label))
-
+            self.add_widget_dialog.add(widget, self.context.working_directory)
         self.hotkeys.connect('hotkey-activated', self.hotkey_activated_cb)
 
 
@@ -558,15 +549,15 @@ class Melange(cream.Module, cream.ipc.Object):
 
     def add_widget(self):
 
-        self.add_widget_dialog.show_all()
+        self.add_widget_dialog.dialog.show_all()
 
-        if self.add_widget_dialog.run() == 1:
+        if self.add_widget_dialog.dialog.run() == 0:
             selection = self.add_widget_dialog.treeview.get_selection()
             model, iter = selection.get_selected()
 
             id = model.get_value(iter, 2)
             self.load_widget(id, False, False)
-        self.add_widget_dialog.hide()
+        self.add_widget_dialog.dialog.hide()
 
 
     def hotkey_activated_cb(self, source, action):
