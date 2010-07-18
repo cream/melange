@@ -551,7 +551,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
         self.add_widget_dialog.dialog.show_all()
 
-        if self.add_widget_dialog.dialog.run() == 0:
+        if self.add_widget_dialog.dialog.run() == 1:
             selection = self.add_widget_dialog.treeview.get_selection()
             model, iter = selection.get_selected()
 
