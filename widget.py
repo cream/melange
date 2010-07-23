@@ -562,9 +562,18 @@ class Widget(gobject.GObject, cream.Component):
         about_dialog.connect('delete-event', lambda *x: True)
 
         about_dialog.set_name(self.context.manifest['name'])
-        about_dialog.set_authors(self.context.manifest['authors'])
-        if self.context.manifest.get('icon'):
-            icon_path = os.path.join(self.context.working_directory, self.context.manifest['icon'])
+
+        developers, designers = [], []
+        for author in self.context.manifest['authors']:
+            if author['type'] == 'developer':
+                developers.append('{0} <{1}>'.format(author['name'], author['mail']))
+            elif author['type'] == 'designer':
+                designers.append('{0} <{1}>'.format(author['name'], author['mail']))
+        about_dialog.set_authors(developers)
+        about_dialog.set_artists(designers)
+
+        if 'icon' in self.context.manifest:
+            icon_path = self.context.manifest['icon']
             icon_pb = gtk.gdk.pixbuf_new_from_file(icon_path).scale_simple(64, 64, gtk.gdk.INTERP_HYPER)
             about_dialog.set_logo(icon_pb)
         about_dialog.set_comments(self.context.manifest['description'])
