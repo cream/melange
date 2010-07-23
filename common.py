@@ -17,7 +17,7 @@
 # MA 02110-1301, USA.
 
 HTTPSERVER_HOST = '127.0.0.1'
-HTTPSERVER_PORT = 8080
+HTTPSERVER_PORT = 8081
 HTTPSERVER_BASE_URL = 'http://{host}:{port}'.format(host=HTTPSERVER_HOST,
                                                     port=HTTPSERVER_PORT)
 

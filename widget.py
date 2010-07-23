@@ -210,7 +210,8 @@ class WidgetInstance(gobject.GObject):
         self.js_context._python.init_config = self.init_config
 
         self.js_context.melange = WidgetAPI()
-        self.js_context.melange.toggle_overlay = self.widget_ref().__melange_ref__().toggle_overlay
+        self.js_context.melange.show_add_widget_dialog = self.widget_ref().__melange_ref__().add_widget
+        self.js_context.melange.show_settings_dialog = self.widget_ref().__melange_ref__().config.show_dialog
 
         skin_url = HTTPSERVER_BASE_URL + '/widget/index.html'
         self.view.open(skin_url)
@@ -337,6 +338,8 @@ class Widget(gobject.GObject, cream.Component):
 
         self.state = STATE_NONE
 
+        self._position = (0, 0)
+
         self.display = gtk.gdk.display_get_default()
 
         self.instance_id = '%s' % random_hash(bits=100)[0:32]
@@ -349,7 +352,7 @@ class Widget(gobject.GObject, cream.Component):
                                           themes=self.__melange_ref__().themes.by_id)
         self.config.connect('field-value-changed', self.configuration_value_changed_cb)
 
-        self.window = WidgetWindow()
+        #self.window = WidgetWindow()
 
         self.load()
 
@@ -381,7 +384,7 @@ class Widget(gobject.GObject, cream.Component):
 
         t = cream.gui.Timeline(500, cream.gui.CURVE_SINE)
         t.connect('update', update)
-        t.run()
+        #t.run()
 
         self.emit('begin-move')
 
@@ -396,7 +399,7 @@ class Widget(gobject.GObject, cream.Component):
 
         t = cream.gui.Timeline(500, cream.gui.CURVE_SINE)
         t.connect('update', update)
-        t.run()
+        #t.run()
 
         self.emit('end-move')
 
@@ -431,7 +434,6 @@ class Widget(gobject.GObject, cream.Component):
         self.instance.connect('end-move-request', self.end_move_request_cb)
 
         view = self.instance.get_view()
-        self.window.add(view)
 
 
     def begin_move_request_cb(self, source):
@@ -445,15 +447,11 @@ class Widget(gobject.GObject, cream.Component):
 
 
     def resize_request_cb(self, widget_instance, width, height):
-
-        self.window.set_size_request(width, height)
-        self.window.resize(width, height)
+        pass
 
 
     def focus_request_cb(self, source):
-
-        self.window.set_property('accept-focus', True)
-        self.window.present()
+        pass
 
 
     def reload(self):
@@ -474,14 +472,14 @@ class Widget(gobject.GObject, cream.Component):
     def show(self):
         """ Show the widget. """
 
-        self.window.set_opacity(0)
-        self.window.show_all()
+        #self.window.set_opacity(0)
+        #self.window.show_all()
 
-        def update(source, state):
-            self.window.set_opacity(state)
+        #def update(source, state):
+        #    self.window.set_opacity(state)
 
         t = cream.gui.Timeline(500, cream.gui.CURVE_SINE)
-        t.connect('update', update)
+        #t.connect('update', update)
         t.run()
 
         return t
@@ -532,7 +530,7 @@ class Widget(gobject.GObject, cream.Component):
         :rtype: `tuple`
         """
 
-        return self.window.get_position()
+        return self._position
 
 
     def set_position(self, x, y):
@@ -546,7 +544,7 @@ class Widget(gobject.GObject, cream.Component):
         :type y: `int`
         """
 
-        self.window.move(x, y)
+        self._position = (x, y)
 
 
     def configuration_value_changed_cb(self, source, key, value):
