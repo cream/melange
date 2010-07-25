@@ -104,6 +104,12 @@ class WidgetLayer(TransparentWindow):
         self.layout.remove(view)
 
 
+    def raise_widget(self, widget):
+
+        view = widget.instance.get_view()
+        self.layout.raise_child(view)
+
+
     def move_widget(self, widget, x, y):
 
         view = widget.instance.get_view()
@@ -174,6 +180,7 @@ class WidgetManager(gobject.GObject):
         self.signal_handlers[widget] = {}
 
         #self._signal_handlers[widget]['begin-move'] = widget.connect('move-request', self.begin_move_cb)
+        self.signal_handlers[widget]['raise-request'] = widget.connect('raise-request', self.raise_request_cb)
         self.signal_handlers[widget]['end-move'] = widget.connect('end-move', self.end_move_cb)
         self.signal_handlers[widget]['move-request'] = widget.connect('move-request', self.move_request_cb)
         self.signal_handlers[widget]['remove-request'] = widget.connect('remove-request', self.remove_request_cb)
@@ -186,6 +193,11 @@ class WidgetManager(gobject.GObject):
         self.emit('widget-added', widget)
 
 
+    def raise_request_cb(self, widget):
+
+        self.primary_widget_layer.raise_widget(widget)
+
+
     def end_move_cb(self, widget):
         pass
 
@@ -193,8 +205,8 @@ class WidgetManager(gobject.GObject):
     def move_request_cb(self, widget, x, y):
 
         old_x, old_y = widget.get_position()
-        new_x = old_x + x
-        new_y = old_y + y
+        new_x = max(0, min(old_x + x, self.screen_width - widget.instance.get_view().allocation.width))
+        new_y = max(0, min(old_y + y, self.screen_height - widget.instance.get_view().allocation.height))
 
         self.primary_widget_layer.move_widget(widget, new_x, new_y)
         widget.set_position(new_x, new_y)
@@ -210,6 +222,7 @@ class WidgetManager(gobject.GObject):
 
         del self[widget.instance_id]
 
+        widget.disconnect(self.signal_handlers[widget]['raise-request'])
         widget.disconnect(self.signal_handlers[widget]['end-move'])
         widget.disconnect(self.signal_handlers[widget]['move-request'])
         widget.disconnect(self.signal_handlers[widget]['remove-request'])

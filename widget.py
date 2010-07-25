@@ -145,6 +145,7 @@ class WidgetInstance(gobject.GObject):
 
     __gtype_name__ = 'WidgetInstance'
     __gsignals__ = {
+        'raise-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'remove-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'reload-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'resize-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
@@ -291,6 +292,7 @@ class WidgetInstance(gobject.GObject):
         """ Handle clicking on the widget (e. g. by showing context menu). """
 
         self.emit('focus-request')
+        self.emit('raise-request')
 
         if event.button == MOUSE_BUTTON_RIGHT:
             self.menu.popup(None, None, None, event.button, event.get_time())
@@ -323,6 +325,7 @@ class Widget(gobject.GObject, cream.Component):
 
     __gtype_name__ = 'Widget'
     __gsignals__ = {
+        'raise-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'remove-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
         'begin-move': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
@@ -355,6 +358,11 @@ class Widget(gobject.GObject, cream.Component):
         #self.window = WidgetWindow()
 
         self.load()
+
+
+    def fade_out(self):
+        print self.instance.js_context.fade_out
+
 
     def get_skin_path(self):
         return self.get_skin_path_by_id(self.config.widget_skin)
@@ -428,6 +436,7 @@ class Widget(gobject.GObject, cream.Component):
         self.instance.connect('show-about-dialog-request', lambda *args: self.about_dialog.show_all())
         self.instance.connect('resize-request', self.resize_request_cb)
         self.instance.connect('remove-request', lambda *args: self.emit('remove-request'))
+        self.instance.connect('raise-request', lambda *args: self.emit('raise-request'))
         self.instance.connect('reload-request', lambda *args: self.reload())
         self.instance.connect('focus-request', self.focus_request_cb)
         self.instance.connect('begin-move-request', self.begin_move_request_cb)
@@ -466,7 +475,8 @@ class Widget(gobject.GObject, cream.Component):
             self.load()
             self.show()
 
-        self.hide().connect('completed', lambda *args: go_on())
+        #self.hide().connect('completed', lambda *args: go_on())
+        self.fade_out()
 
 
     def show(self):
@@ -562,18 +572,9 @@ class Widget(gobject.GObject, cream.Component):
         about_dialog.connect('delete-event', lambda *x: True)
 
         about_dialog.set_name(self.context.manifest['name'])
-
-        developers, designers = [], []
-        for author in self.context.manifest['authors']:
-            if author['type'] == 'developer':
-                developers.append('{0} <{1}>'.format(author['name'], author['mail']))
-            elif author['type'] == 'designer':
-                designers.append('{0} <{1}>'.format(author['name'], author['mail']))
-        about_dialog.set_authors(developers)
-        about_dialog.set_artists(designers)
-
-        if 'icon' in self.context.manifest:
-            icon_path = self.context.manifest['icon']
+        about_dialog.set_authors(self.context.manifest['authors'])
+        if self.context.manifest.get('icon'):
+            icon_path = os.path.join(self.context.working_directory, self.context.manifest['icon'])
             icon_pb = gtk.gdk.pixbuf_new_from_file(icon_path).scale_simple(64, 64, gtk.gdk.INTERP_HYPER)
             about_dialog.set_logo(icon_pb)
         about_dialog.set_comments(self.context.manifest['description'])
