@@ -327,6 +327,7 @@ class Widget(gobject.GObject, cream.Component):
     __gsignals__ = {
         'raise-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'remove-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'reload-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
         'begin-move': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         'end-move': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
@@ -466,17 +467,7 @@ class Widget(gobject.GObject, cream.Component):
     def reload(self):
         """ Reload the widget. Really? Yeah. """
 
-        def go_on():
-            view = self.instance.get_view()
-            self.window.remove(view)
-
-            del self.instance
-
-            self.load()
-            self.show()
-
-        #self.hide().connect('completed', lambda *args: go_on())
-        self.fade_out()
+        self.emit('reload-request')
 
 
     def show(self):
@@ -513,11 +504,10 @@ class Widget(gobject.GObject, cream.Component):
     def remove(self):
         """ Close the widget window and emit 'remove' signal. """
 
-        self.hide()
-
+        #self.hide()
         self.config.save()
 
-        self.window.destroy()
+        self.instance.get_view().hide()
         del self
 
 

@@ -116,12 +116,34 @@ class WidgetLayer(TransparentWindow):
         self.layout.move(view, x, y)
 
 
+class WidgetLayerCanvas(object):
+
+    def __init__(self, widget_layer):
+
+        self.widget_layer = widget_layer
+        self.widget_layer.connect('expose-event', self.expose_cb)
+
+
+    def expose_cb(self, widget_layer, event):
+        self._draw()
+
+
+    def draw(self):
+        self.widget_layer.window.invalidate_rect(self.widget_layer.allocation, True)
+
+
+    def _draw(self):
+        pass
+
+
 class PrimaryWidgetLayer(WidgetLayer):
 
     def __init__(self):
 
         WidgetLayer.__init__(self)
         self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DESKTOP)
+
+        self.background = WidgetLayerCanvas(self)
 
 
 class WidgetManager(gobject.GObject):
@@ -184,6 +206,7 @@ class WidgetManager(gobject.GObject):
         self.signal_handlers[widget]['end-move'] = widget.connect('end-move', self.end_move_cb)
         self.signal_handlers[widget]['move-request'] = widget.connect('move-request', self.move_request_cb)
         self.signal_handlers[widget]['remove-request'] = widget.connect('remove-request', self.remove_request_cb)
+        self.signal_handlers[widget]['reload-request'] = widget.connect('reload-request', self.reload_request_cb)
 
         if x and y:
             widget.set_position(x, y) # TODO: Use own moving algorithms.
@@ -214,8 +237,16 @@ class WidgetManager(gobject.GObject):
 
     def remove_request_cb(self, widget):
 
-        widget.remove()
         self.remove(widget)
+        self.primary_widget_layer.remove_widget(widget)
+        widget.remove()
+
+
+    def reload_request_cb(self, widget):
+
+        self.primary_widget_layer.remove_widget(widget)
+        widget.load()
+        self.primary_widget_layer.add_widget(widget)
 
 
     def remove(self, widget):
