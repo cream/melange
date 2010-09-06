@@ -17,7 +17,7 @@
 # MA 02110-1301, USA.
 
 import sys
-import os.path
+import os
 import imp
 import weakref
 
@@ -504,6 +504,10 @@ class Widget(gobject.GObject, cream.Component):
     def remove(self):
         """ Close the widget window and emit 'remove' signal. """
 
+        #remove tmp directory
+        if self.get_tmp() is not None:
+            os.rmdir(self.get_tmp())
+            
         #self.hide()
         self.config.save()
 

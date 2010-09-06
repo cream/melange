@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
 
-import os.path
+import os
 import thread
 from operator import itemgetter
 
@@ -384,6 +384,12 @@ class Melange(cream.Module, cream.ipc.Object):
 
     def quit(self):
         """ Quit the module. """
+
+        #remove the tmp directories
+        for widget in self.widgets.values():
+            tmp = widget.get_tmp()
+            if tmp is not None:
+                os.rmdir(tmp)
 
         self.config.widgets = self.widgets.values()
         cream.Module.quit(self)
