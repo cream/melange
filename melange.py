@@ -35,6 +35,8 @@ import cream.ipc
 import cream.gui
 import cream.util, cream.util.pywmctrl
 
+from gpyconf.fields import MultiOptionField
+
 from cream.contrib.melange.dialogs import AddWidgetDialog
 
 from widget import Widget
@@ -46,7 +48,8 @@ from common import HTTPSERVER_HOST, HTTPSERVER_PORT, \
                    STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE,\
                    MOVE_TIMESTEP
 
-from container import ORIENTATION_TOP, ORIENTATION_BOTTOM, ORIENTATION_LEFT, ORIENTATION_RIGHT, ORIENTATION_CENTER
+from container import ORIENTATION_TOP, ORIENTATION_BOTTOM, ORIENTATION_LEFT, \
+                      ORIENTATION_RIGHT, ORIENTATION_CENTER
 
 
 class TransparentWindow(gtk.Window):
@@ -280,10 +283,17 @@ class Melange(cream.Module, cream.ipc.Object):
 
         self.widgets = WidgetManager()
 
-        # Scan for themes...
+        # Scan for themes and add them to config...
         theme_dir = os.path.join(self.context.working_directory, 'themes')
         self.themes = cream.manifest.ManifestDB(theme_dir, type='org.cream.melange.Theme')
 
+        self.config._add_field(
+            'default_theme',
+            MultiOptionField('Default Theme',
+                options=((k, v['name']) for k, v in self.themes.by_id.items())
+            )
+        )
+        
         # Scan for widgets...
         self.available_widgets = cream.manifest.ManifestDB('widgets', type='org.cream.melange.Widget')
 
