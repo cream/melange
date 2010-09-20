@@ -553,7 +553,7 @@ class Widget(gobject.GObject, cream.Component):
 
     def configuration_value_changed_cb(self, source, key, value):
 
-        if key == 'widget_theme':
+        if key == 'widget_theme' or key == 'widget_skin':
             self.reload()
 
 
