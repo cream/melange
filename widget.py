@@ -247,6 +247,7 @@ class WidgetInstance(gobject.GObject):
                 c = value
                 c._js_ctx = self.js_context
                 c.context = self.widget_ref().context
+                c.config = self.config.config_ref()
                 c = c()
                 self._tmp = c.get_tmp()
                 i = PyToJSInterface(c)
@@ -507,7 +508,7 @@ class Widget(gobject.GObject, cream.Component):
         #remove tmp directory
         if self.get_tmp() is not None:
             os.rmdir(self.get_tmp())
-            
+
         #self.hide()
         self.config.save()
 
@@ -566,11 +567,11 @@ class Widget(gobject.GObject, cream.Component):
         about_dialog.connect('delete-event', lambda *x: True)
 
         about_dialog.set_name(self.context.manifest['name'])
-        
-        authors = ['{0} <{1}>'.format(author.get('name'),author.get('mail')) 
+
+        authors = ['{0} <{1}>'.format(author.get('name'),author.get('mail'))
                             for author in self.context.manifest['authors']]
         about_dialog.set_authors(authors)
-        
+
         if self.context.manifest.get('icon'):
             icon = gtk.gdk.pixbuf_new_from_file(self.context.manifest['icon'])
             icon = icon.scale_simple(64, 64, gtk.gdk.INTERP_HYPER)
