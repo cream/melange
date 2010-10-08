@@ -17,6 +17,7 @@
 # MA 02110-1301, USA.
 
 import os
+import re
 import sys
 import urlparse
 from bjoern import run
@@ -42,7 +43,7 @@ class SmallWebFramework(object):
         routed = []
         for attr in dir(self):
             func = getattr(self, attr)
-            if hasattr(func, '__bjoern__routes__'):
+            if hasattr(func, '__bjoern_routes__'):
                 routed.append(func)
         return routed
 
@@ -71,9 +72,9 @@ class SmallWebFramework(object):
 
     def dispatch(self, environ):
         path = environ.get('PATH_INFO', '')
-        for func in self.routed:
+        for func in self.routed_methods:
             for route in func.__bjoern_routes__:
-                match = route.match(path)
+                match = re.match(route, path)
                 if match is not None:
                     return func, match.groupdict()
         return None, None
