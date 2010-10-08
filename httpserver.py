@@ -17,6 +17,7 @@
 # MA 02110-1301, USA.
 
 import os
+import sys
 import urlparse
 from bjoern import run
 from cream.util import cached_property
