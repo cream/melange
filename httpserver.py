@@ -21,7 +21,6 @@ import re
 import sys
 import urlparse
 from bjoern import run
-from cream.util import cached_property
 
 def route(url_regex):
     def decorator(func):
