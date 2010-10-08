@@ -63,7 +63,7 @@ class SmallWebFramework(object):
             return 'Internal Server Error'
         else:
             if isinstance(response, file):
-                headers = [('Content-Length', str(os.path.getsize(file.name)))]
+                headers = [('Content-Length', str(os.path.getsize(response.name)))]
             else:
                 headers = []
             start_response('200 Alles in Butter', headers)
