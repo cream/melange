@@ -293,11 +293,15 @@ class Melange(cream.Module, cream.ipc.Object):
                 options=((k, v['name']) for k, v in self.themes.by_id.items())
             )
         )
-        
-        # Scan for widgets...
-        self.available_widgets = cream.manifest.ManifestDB('widgets', type='org.cream.melange.Widget')
 
-        self.add_widget_dialog = AddWidgetDialog()
+        # Scan for widgets...
+        self.available_widgets = cream.manifest.ManifestDB('widgets',
+                                            type='org.cream.melange.Widget'
+        )
+        widgets = sorted(self.available_widgets.by_id.itervalues(),
+                          key=itemgetter('name')
+        )
+        self.add_widget_dialog = AddWidgetDialog(widgets)
 
         # Load widgets stored in configuration.
         for widget in self.config.widgets:
@@ -409,4 +413,3 @@ if __name__ == '__main__':
     cream.util.set_process_name('melange')
     melange = Melange()
     melange.main()
-
