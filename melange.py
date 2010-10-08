@@ -307,9 +307,6 @@ class Melange(cream.Module, cream.ipc.Object):
         for widget in self.config.widgets:
             self.load_widget(**widget)
 
-        widgets = sorted(self.available_widgets.by_id.itervalues(), key=itemgetter('name'))
-        for widget in widgets:
-            self.add_widget_dialog.add(widget, self.context.working_directory)
         self.hotkeys.connect('hotkey-activated', self.hotkey_activated_cb)
 
 
