@@ -26,8 +26,8 @@ from cream.util import cached_property
 def route(url_regex):
     def decorator(func):
         if not hasattr(func, '__bjoern_routes__'):
-            func.__bjoern_routes__ = list()
-        func.__bjoern_routes__.append(url_regex)
+            func.__bjoern_routes__ = []
+        func.__bjoern_routes__.append(re.compile(url_regex))
         return func
     return decorator
 
@@ -74,7 +74,7 @@ class SmallWebFramework(object):
         path = environ.get('PATH_INFO', '')
         for func in self.routed_methods:
             for route in func.__bjoern_routes__:
-                match = re.match(route, path)
+                match = route.match(path)
                 if match is not None:
                     return func, match.groupdict()
         return None, None
