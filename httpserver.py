@@ -18,20 +18,8 @@
 
 import os
 import urlparse
-import bjoern
 from bjoern import run
 from cream.util import cached_property
-
-
-class MelangeResponse(bjoern.Response):
-    response_headers = ()
-    response_status = '200 Alles super'
-
-    @cached_property
-    def GET(self):
-        return dict((header_name, header_values[0]) for header_name, header_values in
-                    urlparse.parse_qs(self.environ['QUERY_STRING']).iteritems())
-
 
 def route(url_regex):
     def decorator(func):
@@ -41,49 +29,87 @@ def route(url_regex):
         return func
     return decorator
 
+def query_string_to_dict(query_string):
+    return dict((header_name, header_values[0]) for header_name, header_values in
+                urlparse.parse_qs(query_string).iteritems())
 
-class HttpServer(object):
-    def __init__(self, melange):
-        self._melange = melange
-        self._setup_routes()
+class SmallWebFramework(object):
+    def __init__(self):
+        self.routed_methods = self._get_routed()
 
-    def _setup_routes(self):
-        for name, attr in ((name, getattr(self, name)) for name in dir(self)):
-            if hasattr(attr, '__bjoern_routes__'):
-                for route in attr.__bjoern_routes__:
-                    bjoern.route(route)(attr)
+    def _get_routed(self):
+        routed = []
+        for attr in dir(self):
+            func = getattr(self, attr)
+            if hasattr(func, '__bjoern__routes__'):
+                routed.append(func)
+        return routed
 
     def run(self, host, port):
-        bjoern.run(host, port, MelangeResponse)
+        run(self, host, port)
 
-    def _get_widget_theme(self, request):
-        widget_id = request.GET.get('instance')
+    def __call__(self, environ, start_response):
+        """ The WSGI application called by bjoern """
+        GET = query_string_to_dict(environ.get('QUERY_STRING', ''))
+        func, kwargs = self.dispatch(environ)
+        if func is None:
+            start_response('404 Not Found', [('Content-Length', '13')])
+            return 'Not Found'
+        try:
+            response = func(GET, **kwargs)
+        except:
+            start_response('500 Python Error :(', [('Content-Length', '21')], sys.exc_info())
+            return 'Internal Server Error'
+        else:
+            if isinstance(response, file):
+                headers = [('Content-Length', str(os.path.getsize(file.name)))]
+            else:
+                headers = []
+            start_response('200 Alles in Butter', headers)
+            return response
+
+    def dispatch(self, environ):
+        path = environ.get('PATH_INFO', '')
+        for func in self.routed:
+            for route in func.__bjoern_routes__:
+                match = route.match(path)
+                if match is not None:
+                    return func, match.groupdict()
+        return None, None
+
+
+class HttpServer(SmallWebFramework):
+    def __init__(self, melange):
+        SmallWebFramework.__init__(self)
+        self._melange = melange
+
+    def _get_widget_theme(self, GET):
+        widget_id = GET.get('instance')
         if widget_id:
             return self._melange.widgets[widget_id].get_current_theme()
         else:
             return self._melange.themes.get_by_id(self._melange.config.default_theme)
 
-
     @route(r'/thingy/(?P<file>.*)')
-    def thingy_files(self, env, request, file):
+    def thingy_files(self, GET, file):
         path = os.path.join(self._melange.context.working_directory, 'data/thingy')
         return open(os.path.join(path, file))
 
     @route(r'/widget/(?P<file>.*)')
-    def widget_files(self, env, request, file):
-        return open(os.path.join(self._melange.widgets[request.GET['instance']].get_skin_path(), file))
+    def widget_files(self, GET, file):
+        return open(os.path.join(self._melange.widgets[GET['instance']].get_skin_path(), file))
 
     @route(r'/common/(?P<file>.*)')
-    def common_files(self, env, request, file):
-        widget_theme = self._get_widget_theme(request)
+    def common_files(self, GET, file):
+        widget_theme = self._get_widget_theme(GET)
         return open(os.path.join(widget_theme['path'], file))
 
     @route(r'/widget/tmp/(?P<file>.*)')
-    def tmp_files(self, env, request, file):
-        path = self._melange.widgets[request.GET['instance']].get_tmp()
+    def tmp_files(self, GET, file):
+        path = self._melange.widgets[GET['instance']].get_tmp()
         return open(os.path.join(path, file))
 
     @route(r'/chrome/(?P<file>.*)')
-    def chrome_files(self, env, request, file):
-        widget_theme = self._get_widget_theme(request)
+    def chrome_files(self, GET, file):
+        widget_theme = self._get_widget_theme(GET)
         return open(os.path.join(widget_theme['path'], 'chrome', file))
