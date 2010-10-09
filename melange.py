@@ -320,11 +320,8 @@ class Melange(cream.Module, cream.ipc.Object):
         self.add_widget_dialog.dialog.show_all()
 
         if self.add_widget_dialog.dialog.run() == 1:
-            selection = self.add_widget_dialog.treeview.get_selection()
-            model, iter = selection.get_selected()
-
-            id = model.get_value(iter, 2)
-            self.load_widget(id, False, False)
+            widget = self.add_widget_dialog.selected_widget
+            self.load_widget(widget, False, False)
         self.add_widget_dialog.dialog.hide()
 
 
