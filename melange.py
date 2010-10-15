@@ -294,6 +294,8 @@ class Melange(cream.Module, cream.ipc.Object):
             )
         )
 
+        self.config.read()
+
         # Scan for widgets...
         self.available_widgets = cream.manifest.ManifestDB('widgets',
                                             type='org.cream.melange.Widget'
