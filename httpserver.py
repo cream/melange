@@ -72,7 +72,7 @@ class SmallWebFramework(object):
             return 'Internal Server Error'
         else:
             if isinstance(response, file):
-                mimetype = make_stupid_mimetype_guess(file.name)
+                mimetype = make_stupid_mimetype_guess(response.name)
                 headers = [('Content-Length', str(os.path.getsize(response.name)))]
                 if mimetype is not None:
                     headers.append(('Content-Type', mimetype))
