@@ -34,6 +34,15 @@ def query_string_to_dict(query_string):
     return dict((header_name, header_values[0]) for header_name, header_values in
                 urlparse.parse_qs(query_string).iteritems())
 
+def make_stupid_mimetype_guess(filename):
+    for extension, mimetype in [
+        ('html', 'text/html'),
+        ('css', 'text/css'), ('js', 'text/javascript'),
+        ('png', 'image/png'), ('svg', 'application/svg'),
+    ]:
+        if filename.endswith(extension):
+            return mimetype
+
 class SmallWebFramework(object):
     def __init__(self):
         self.routed_methods = self._get_routed()
@@ -63,7 +72,10 @@ class SmallWebFramework(object):
             return 'Internal Server Error'
         else:
             if isinstance(response, file):
+                mimetype = make_stupid_mimetype_guess(file.name)
                 headers = [('Content-Length', str(os.path.getsize(response.name)))]
+                if mimetype is not None:
+                    headers.append(('Content-Type', mimetype))
             else:
                 headers = []
             start_response('200 Alles in Butter', headers)
