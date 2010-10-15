@@ -262,15 +262,12 @@ class WidgetInstance(gobject.GObject):
 
     @cached_property
     def widget_element(self):
-        # TODO: Can we eliminate that ugly indices-iterating-loop and use
-        #       something similar to Javascript's `for each`?
         if not self.js_context.document.body:
             # we don't have any body yet
-            return
+            return False
 
-        for i in xrange(0, int(self.js_context.document.body.childNodes.length)):
+        for element in self.js_context.document.body.childNodes.values():
             try:
-                element = self.js_context.document.body.childNodes[i]
                 if element.className == 'widget':
                     return element
             except:
