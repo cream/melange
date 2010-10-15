@@ -269,7 +269,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
     def __init__(self):
 
-        cream.Module.__init__(self)
+        cream.Module.__init__(self, features=[('org.cream.config', {'read' : False})])
 
         cream.ipc.Object.__init__(self,
             'org.cream.Melange',
