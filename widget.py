@@ -217,6 +217,18 @@ class WidgetInstance(gobject.GObject):
         skin_url = HTTPSERVER_BASE_URL + '/widget/index.html'
         self.view.open(skin_url)
 
+        gobject.timeout_add(50, self.apply_hack_to_avoid_problems_with_caching)
+
+    # evil black magic, but it fixes caching problems
+    # adds some randomness to each link, style, script, whatsoever
+    def apply_hack_to_avoid_problems_with_caching(self):
+        if hasattr(self.js_context.document.head, 'childNodes'):
+            for element in self.js_context.document.head.childNodes.values():
+                if hasattr(element, 'src'):
+                    element.src += '?query_id={0}'.format(random_hash(bits=100)[:5])
+                elif hasattr(element, 'href'):
+                    element.href += '?query_id={0}'.format(random_hash(bits=100)[:5])
+            return False
 
     def get_tmp(self):
         return self._tmp
@@ -257,7 +269,11 @@ class WidgetInstance(gobject.GObject):
 
     def resource_request_cb(self, view, frame, resource, request, response):
         uri = request.get_property('uri')
-        request.set_property('uri', uri + '?instance={0}'.format(self.widget_ref().instance_id))
+        if '?query_id' in uri:
+            uri += '&instance={0}'.format(self.widget_ref().instance_id)
+        else:
+            uri += '?instance={0}'.format(self.widget_ref().instance_id)
+        request.set_property('uri', uri)
 
 
     @cached_property
