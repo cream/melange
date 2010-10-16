@@ -267,11 +267,8 @@ class WidgetInstance(gobject.GObject):
             return False
 
         for element in self.js_context.document.body.childNodes.values():
-            try:
-                if element.className == 'widget':
-                    return element
-            except:
-                pass
+            if getattr(element, 'className', None) == 'widget':
+                return element
     widget_element.not_none = True
 
 
