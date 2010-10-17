@@ -395,11 +395,13 @@ class Melange(cream.Module, cream.ipc.Object):
     def quit(self):
         """ Quit the module. """
 
-        #remove the tmp directories
+        #remove the tmp directories and save config
         for widget in self.widgets.values():
             tmp = widget.get_tmp()
             if tmp is not None:
                 os.rmdir(tmp)
+            widget.config.save()
+
 
         self.config.widgets = self.widgets.values()
         cream.Module.quit(self)
