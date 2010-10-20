@@ -3,6 +3,7 @@
     <component name="Melange" id=".Melange" version="0.1" type=".Module" entry="./melange.py">
         <license title="GPL" version="3+" />
 
+        <use-feature id=".config" read="false" />
         <use-feature id=".hotkeys" />
         <!--<use-feature id=".config" />-->
         <dependency required="false" type=".Module" id=".Hotkeys" />
