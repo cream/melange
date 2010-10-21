@@ -21,6 +21,7 @@ import re
 import sys
 import urlparse
 from bjoern import run
+import time
 
 def route(url_regex):
     def decorator(func):
@@ -60,6 +61,9 @@ class SmallWebFramework(object):
 
     def __call__(self, environ, start_response):
         """ The WSGI application called by bjoern """
+
+        time.sleep(.001) # ARGH. HACK.
+
         GET = query_string_to_dict(environ.get('QUERY_STRING', ''))
         func, kwargs = self.dispatch(environ)
         if func is None:
