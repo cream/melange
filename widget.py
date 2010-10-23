@@ -180,6 +180,12 @@ class WidgetInstance(gobject.GObject):
         self.view.connect('navigation-policy-decision-requested', self.navigation_request_cb)
         self.view.connect('resource-request-starting', self.resource_request_cb)
 
+        # Initialize drag and drop...
+        self.view.drag_dest_set(0, [], 0)
+        self.view.connect('drag_motion', self.drag_motion_cb)
+        self.view.connect('drag_drop', self.drag_drop_cb)
+        self.view.connect('drag_data_received', self.drag_data_cb)
+
         # Building context menu:
         item_configure = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
         item_configure.get_children()[0].set_label("Configure")
@@ -218,6 +224,23 @@ class WidgetInstance(gobject.GObject):
         self.view.open(skin_url)
 
         gobject.timeout_add(50, self.apply_hack_to_avoid_problems_with_caching)
+
+
+    def drag_motion_cb(self, wid, context, x, y, time):
+        context.drag_status(gtk.gdk.ACTION_MOVE, time)
+        return True
+
+
+    def drag_drop_cb(self, wid, context, x, y, time):
+        wid.drag_get_data(context, context.targets[0], time)
+        return True
+
+
+    def drag_data_cb(self, wid, context, x, y, data, info, time):
+        e = self.js_context.document.elementFromPoint(x, y)
+        e.fireEvent('drop', data.get_uris())
+        context.finish(True, False, time)
+
 
     # evil black magic, but it fixes caching problems
     # adds some randomness to each link, style, script, whatsoever
