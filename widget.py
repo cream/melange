@@ -238,9 +238,21 @@ class WidgetInstance(gobject.GObject):
 
 
     def drag_data_cb(self, widget, context, x, y, data, info, time):
+
+        def check_for_drop_handlers(e):
+            if not isinstance(e.retrieve('events'), jscore.JSObject) or not 'drop' in e.retrieve('events'):
+                return False
+            return True
+
         e = self.js_context.document.elementFromPoint(x, y)
-        e.fireEvent('drop', data.get_uris())
-        context.finish(True, False, time)
+
+        while not check_for_drop_handlers(e):
+            e = e.getParent()
+            if isinstance(e, jscore.NullType):
+                break
+        else:
+            e.fireEvent('drop', data.get_uris())
+            context.finish(True, False, time)
 
 
     # evil black magic, but it fixes caching problems
