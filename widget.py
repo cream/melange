@@ -226,17 +226,18 @@ class WidgetInstance(gobject.GObject):
         gobject.timeout_add(50, self.apply_hack_to_avoid_problems_with_caching)
 
 
-    def drag_motion_cb(self, wid, context, x, y, time):
+    def drag_motion_cb(self, widget, context, x, y, time):
         context.drag_status(gtk.gdk.ACTION_MOVE, time)
         return True
 
 
-    def drag_drop_cb(self, wid, context, x, y, time):
-        wid.drag_get_data(context, context.targets[0], time)
+    def drag_drop_cb(self, widget, context, x, y, time):
+        if 'text/uri-list' in context.targets:
+            widget.drag_get_data(context, 'text/uri-list', time)
         return True
 
 
-    def drag_data_cb(self, wid, context, x, y, data, info, time):
+    def drag_data_cb(self, widget, context, x, y, data, info, time):
         e = self.js_context.document.elementFromPoint(x, y)
         e.fireEvent('drop', data.get_uris())
         context.finish(True, False, time)
