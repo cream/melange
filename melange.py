@@ -20,9 +20,6 @@ import os
 import thread
 from operator import itemgetter
 
-import time
-import math
-
 import gobject
 gobject.threads_init()
 
@@ -40,16 +37,8 @@ from gpyconf.fields import MultiOptionField
 from cream.contrib.melange.dialogs import AddWidgetDialog
 
 from widget import Widget
-from container import ContainerWindow
 from httpserver import HttpServer
-from common import HTTPSERVER_HOST, HTTPSERVER_PORT, \
-                   ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL, \
-                   MODE_NORMAL, MODE_EDIT, \
-                   STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE,\
-                   MOVE_TIMESTEP
-
-from container import ORIENTATION_TOP, ORIENTATION_BOTTOM, ORIENTATION_LEFT, \
-                      ORIENTATION_RIGHT, ORIENTATION_CENTER
+from common import HTTPSERVER_HOST, HTTPSERVER_PORT
 
 
 class TransparentWindow(gtk.Window):
@@ -269,7 +258,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
     def __init__(self):
 
-        cream.Module.__init__(self)  	
+        cream.Module.__init__(self)
 
         cream.ipc.Object.__init__(self,
             'org.cream.Melange',
