@@ -346,20 +346,12 @@ class WidgetInstance(gobject.GObject):
         elif event.button == MOUSE_BUTTON_MIDDLE:
             self.emit('begin-move-request')
             return True
-        elif event.button == MOUSE_BUTTON_LEFT and event.x < 50 and event.y < 50:
-            self.emit('begin-move-request')
-            return False
-
 
     def button_release_cb(self, source, event):
 
         if event.button == MOUSE_BUTTON_MIDDLE:
             self.emit('end-move-request')
             return True
-        elif event.button == MOUSE_BUTTON_LEFT:
-            self.emit('end-move-request')
-            return False
-
 
     def navigation_request_cb(self, view, frame, request, action, decision):
         """ Handle clicks on links, etc. """
