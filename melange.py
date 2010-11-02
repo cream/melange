@@ -298,8 +298,6 @@ class Melange(cream.Module, cream.ipc.Object):
         for widget in self.config.widgets:
             self.load_widget(**widget)
 
-        self.hotkeys.connect('hotkey-activated', self.hotkey_activated_cb)
-
 
     def run_server(self):
         server = HttpServer(self)
@@ -314,12 +312,6 @@ class Melange(cream.Module, cream.ipc.Object):
             widget = self.add_widget_dialog.selected_widget
             self.load_widget(widget, False, False)
         self.add_widget_dialog.dialog.hide()
-
-
-    def hotkey_activated_cb(self, source, action):
-
-        if action == 'toggle_overlay':
-            pass
 
 
     @cream.ipc.method('', '')
