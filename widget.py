@@ -30,11 +30,10 @@ import webbrowser
 
 import cream.base
 import cream.gui
-from cream.util import urljoin_multi, cached_property, random_hash
+from cream.util import cached_property, random_hash
 from cream.contrib.melange.api import APIS, PyToJSInterface
 
-from cream.config import Configuration, MissingConfigurationDefinitionFile
-from cream.config.backend import CreamXMLBackend, CONFIGURATION_SCHEME_FILE
+from cream.config import Configuration
 from gpyconf.fields import MultiOptionField
 
 from common import HTTPSERVER_BASE_URL, \
@@ -348,13 +347,11 @@ class WidgetInstance(gobject.GObject):
             self.emit('begin-move-request')
             return True
 
-
     def button_release_cb(self, source, event):
 
         if event.button == MOUSE_BUTTON_MIDDLE:
             self.emit('end-move-request')
             return True
-
 
     def navigation_request_cb(self, view, frame, request, action, decision):
         """ Handle clicks on links, etc. """
@@ -363,7 +360,6 @@ class WidgetInstance(gobject.GObject):
 
         if not uri.startswith(HTTPSERVER_BASE_URL):
             # external URL, open in browser
-            import webbrowser
             webbrowser.open(uri)
             return True
 
@@ -489,8 +485,6 @@ class Widget(gobject.GObject, cream.Component):
         self.instance.connect('focus-request', self.focus_request_cb)
         self.instance.connect('begin-move-request', self.begin_move_request_cb)
         self.instance.connect('end-move-request', self.end_move_request_cb)
-
-        view = self.instance.get_view()
 
 
     def begin_move_request_cb(self, source):

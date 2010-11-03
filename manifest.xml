@@ -4,8 +4,7 @@
         <license title="GPL" version="3+" />
 
         <use-feature id=".config" read="false" />
-        <use-feature id=".hotkeys" />
-        <!--<use-feature id=".config" />-->
+
         <dependency required="false" type=".Module" id=".Hotkeys" />
         <provide-component type=".melange.Widget" />
         <provide-component type=".melange.Theme" />
