@@ -79,6 +79,8 @@ class WidgetLayer(TransparentWindow):
 
         TransparentWindow.__init__(self)
 
+        self.connect('leave-notify-event', self.leave_notify_cb)
+
         self.widgets = []
 
         self.display = self.get_display()
@@ -88,6 +90,18 @@ class WidgetLayer(TransparentWindow):
 
         self.layout = cream.gui.CompositeBin()
         self.add(self.layout)
+
+
+    def leave_notify_cb(self, widget, event):
+
+        for widget in self.widgets:
+            try:
+                for i in xrange(widget.instance.js_context._mootools_entered.length):
+                    e = widget.instance.js_context._mootools_entered[i]
+                    e.fireEvent('mouseleave')
+                widget.instance.js_context._mootools_entered.erase()
+            except:
+                pass
 
 
     def add_widget(self, widget):
