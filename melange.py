@@ -89,7 +89,7 @@ class WidgetLayer(TransparentWindow):
                     e = widget.instance.js_context._mootools_entered[i]
                     e.fireEvent('mouseleave')
                 widget.instance.js_context._mootools_entered.erase()
-            except:
+            except AttributeError:
                 pass
 
 
