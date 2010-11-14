@@ -1,4 +1,3 @@
 <configuration>
     <widgets type="list" static="true" hidden="true"></widgets>
-    <foo type="integer" static="true" hidden="true" max="2">1</foo>
 </configuration>
