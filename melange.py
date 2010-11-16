@@ -89,7 +89,7 @@ class WidgetLayer(TransparentWindow):
                     e = widget.instance.js_context._mootools_entered[i]
                     e.fireEvent('mouseleave')
                 widget.instance.js_context._mootools_entered.erase()
-            except:
+            except AttributeError:
                 pass
 
 
@@ -164,7 +164,8 @@ class WidgetManager(gobject.GObject):
 
         gobject.GObject.__init__(self)
 
-        self.screen_width, self.screen_height = gtk.gdk.screen_width(), gtk.gdk.screen_height()
+        self.screen_width = gtk.gdk.screen_width()
+        self.screen_height = gtk.gdk.screen_height()
 
         self.signal_handlers = {}
         self.widgets = {}
@@ -281,9 +282,6 @@ class Melange(cream.Module, cream.ipc.Object):
 
         self.run_server()
 
-        self.screen = cream.util.pywmctrl.Screen()
-        self.display = gtk.gdk.display_get_default()
-
         self.widgets = WidgetManager()
 
         # Scan for themes and add them to config...
@@ -361,8 +359,6 @@ class Melange(cream.Module, cream.ipc.Object):
 
         # Add the widget to the list of currently active widgets:
         self.widgets.add(widget, x, y)
-
-        widget.show()
 
 
     @cream.ipc.method('', 'a{sa{ss}}')

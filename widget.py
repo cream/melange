@@ -23,7 +23,6 @@ import weakref
 
 import gobject
 import gtk
-import cairo
 import webkit
 import javascriptcore as jscore
 import webbrowser
@@ -37,7 +36,7 @@ from cream.config import Configuration
 from gpyconf.fields import MultiOptionField
 
 from common import HTTPSERVER_BASE_URL, \
-                   STATE_HIDDEN, STATE_MOVE, STATE_NONE, STATE_VISIBLE, \
+                   STATE_MOVE, STATE_NONE, STATE_VISIBLE, \
                    MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT, \
                    MOVE_TIMESTEP
 
@@ -81,63 +80,6 @@ class WidgetConfigurationProxy(object):
         except AttributeError:
             return getattr(self.config_ref(), key)
 
-
-class MelangeWindow(gtk.Window):
-
-    def __init__(self):
-
-        gtk.Window.__init__(self)
-
-        # Setting up the Widget's window...
-        self.stick()
-        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
-        self.set_keep_below(True)
-        self.set_skip_pager_hint(True)
-        self.set_skip_taskbar_hint(True)
-        self.set_decorated(False)
-        self.set_app_paintable(True)
-        self.set_resizable(False)
-        self.set_default_size(10, 10)
-        self.set_colormap(self.get_screen().get_rgba_colormap())
-
-
-    def expose_cb(self, source, event):
-        """ Clear the widgets background. """
-
-        ctx = source.window.cairo_create()
-
-        ctx.set_operator(cairo.OPERATOR_SOURCE)
-        ctx.set_source_rgba(0, 0, 0, 0)
-        ctx.paint()
-
-
-class WidgetWindow(MelangeWindow):
-    """
-    The WidgetWindow class is being used for displaying Melange's widget in window mode.
-    """
-
-    def __init__(self):
-
-        MelangeWindow.__init__(self)
-
-        self.connect('expose-event', self.expose_cb)
-        self.connect('focus-out-event', self.focus_cb)
-
-        self.set_property('accept-focus', False)
-
-
-    def focus_cb(self, source, event):
-        self.set_property('accept-focus', False)
-
-
-    def expose_cb(self, source, event):
-        """ Clear the widgets background. """
-
-        ctx = source.window.cairo_create()
-
-        ctx.set_operator(cairo.OPERATOR_SOURCE)
-        ctx.set_source_rgba(0, 0, 0, 0)
-        ctx.paint()
 
 
 class WidgetInstance(gobject.GObject):
@@ -399,13 +341,7 @@ class Widget(gobject.GObject, cream.Component):
                                           themes=self.__melange_ref__().themes.by_id)
         self.config.connect('field-value-changed', self.configuration_value_changed_cb)
 
-        #self.window = WidgetWindow()
-
         self.load()
-
-
-    def fade_out(self):
-        print self.instance.js_context.fade_out
 
 
     def get_skin_path(self):
@@ -431,13 +367,6 @@ class Widget(gobject.GObject, cream.Component):
 
     def begin_move(self):
 
-        def update(source, state):
-            self.window.set_opacity(1 - state * .5)
-
-        t = cream.gui.Timeline(500, cream.gui.CURVE_SINE)
-        t.connect('update', update)
-        #t.run()
-
         self.emit('begin-move')
 
         self.state = STATE_MOVE
@@ -445,13 +374,6 @@ class Widget(gobject.GObject, cream.Component):
 
 
     def end_move(self):
-
-        def update(source, state):
-            self.window.set_opacity(.5 + state * .5)
-
-        t = cream.gui.Timeline(500, cream.gui.CURVE_SINE)
-        t.connect('update', update)
-        #t.run()
 
         self.emit('end-move')
 
@@ -511,37 +433,6 @@ class Widget(gobject.GObject, cream.Component):
         self.emit('reload-request')
 
 
-    def show(self):
-        """ Show the widget. """
-
-        #self.window.set_opacity(0)
-        #self.window.show_all()
-
-        #def update(source, state):
-        #    self.window.set_opacity(state)
-
-        t = cream.gui.Timeline(500, cream.gui.CURVE_SINE)
-        #t.connect('update', update)
-        t.run()
-
-        return t
-
-
-    def hide(self):
-        """ Hide the widget. """
-
-        def update(source, state):
-            self.window.set_opacity(1 - state)
-            if state == 1:
-                self.window.hide()
-
-        t = cream.gui.Timeline(500, cream.gui.CURVE_SINE)
-        t.connect('update', update)
-        t.run()
-
-        return t
-
-
     def remove(self):
         """ Close the widget window and emit 'remove' signal. """
 
@@ -549,7 +440,6 @@ class Widget(gobject.GObject, cream.Component):
         if self.get_tmp() is not None:
             os.rmdir(self.get_tmp())
 
-        #self.hide()
         self.config.save()
 
         self.instance.get_view().hide()
