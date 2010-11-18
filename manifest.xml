@@ -5,7 +5,6 @@
 
         <use-feature id=".config" read="false" />
 
-        <dependency required="false" type=".Module" id=".Hotkeys" />
         <provide-component type=".melange.Widget" />
         <provide-component type=".melange.Theme" />
         <provide-component type=".melange.Skin" />
