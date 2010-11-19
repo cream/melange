@@ -14,7 +14,7 @@ var Spinner = new Class({
         this.container = new Element('div', {
             })
         this.container.grab(this.canvas, 'top')
-    
+
         elm.grab(this.container, 'top');
 
         this.ctx = this.canvas.getContext('2d');
@@ -26,7 +26,7 @@ var Spinner = new Class({
         this.interval_id = this.draw.periodical(100, this);
     },
     stop: function() {
-        $clear(this.interval_id);
+        this.interval_id = $clear(this.interval_id);
     },
     draw: function() {
         this.ctx.clearRect(-15, -15, 30, 30);		// Clear the image
