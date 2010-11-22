@@ -223,6 +223,7 @@ class WidgetInstance(gobject.GObject):
 
 
     def init_api(self):
+
         custom_api_file = os.path.join(self.widget_ref().context.working_directory, '__init__.py')
         if os.path.isfile(custom_api_file):
             sys.path.insert(0, self.widget_ref().context.working_directory)
@@ -235,6 +236,7 @@ class WidgetInstance(gobject.GObject):
             for name, value in APIS[custom_api_file].iteritems():
                 c = value
                 c._js_ctx = self.js_context
+                c._data_path = self.widget_ref().get_data_path()
                 c.context = self.widget_ref().context
                 c.config = self.config.config_ref()
                 c = c()
@@ -344,8 +346,18 @@ class Widget(gobject.GObject, cream.Component):
         self.load()
 
 
+    def get_data_path(self):
+
+        data_path = os.path.join('/tmp', self.instance_id)
+        if not os.path.isdir(data_path):
+            os.mkdir(data_path)
+
+        return data_path
+
+
     def get_skin_path(self):
         return self.get_skin_path_by_id(self.config.widget_skin)
+
 
     def get_skin_path_by_id(self, skin_id):
         return os.path.join(

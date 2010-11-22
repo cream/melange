@@ -62,7 +62,7 @@ class SmallWebFramework(object):
     def __call__(self, environ, start_response):
         """ The WSGI application called by bjoern """
 
-        time.sleep(.001) # ARGH. HACK.
+        time.sleep(.01) # ARGH. HACK.
 
         GET = query_string_to_dict(environ.get('QUERY_STRING', ''))
         func, kwargs = self.dispatch(environ)
@@ -112,12 +112,17 @@ class HttpServer(SmallWebFramework):
         path = os.path.join(self._melange.context.working_directory, 'data/thingy')
         return open(os.path.join(path, file))
 
+    @route(r'/data/(?P<file>.*)')
+    def widget_files(self, GET, file):
+        return open(os.path.join(self._melange.widgets[GET['instance']].get_data_path(), file))
+
     @route(r'/widget/(?P<file>.*)')
     def widget_files(self, GET, file):
         return open(os.path.join(self._melange.widgets[GET['instance']].get_skin_path(), file))
 
     @route(r'/common/(?P<file>.*)')
     def common_files(self, GET, file):
+        print file
         widget_theme = self._get_widget_theme(GET)
         return open(os.path.join(widget_theme['path'], file))
 
