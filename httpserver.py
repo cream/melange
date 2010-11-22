@@ -122,7 +122,6 @@ class HttpServer(SmallWebFramework):
 
     @route(r'/common/(?P<file>.*)')
     def common_files(self, GET, file):
-        print file
         widget_theme = self._get_widget_theme(GET)
         return open(os.path.join(widget_theme['path'], file))
 
