@@ -113,7 +113,7 @@ class HttpServer(SmallWebFramework):
         return open(os.path.join(path, file))
 
     @route(r'/data/(?P<file>.*)')
-    def widget_files(self, GET, file):
+    def data_files(self, GET, file):
         return open(os.path.join(self._melange.widgets[GET['instance']].get_data_path(), file))
 
     @route(r'/widget/(?P<file>.*)')
