@@ -29,7 +29,7 @@ import webbrowser
 
 import cream.base
 import cream.gui
-from cream.util import cached_property, random_hash
+from cream.util import cached_property, random_hash, extend_querystring
 from cream.contrib.melange.api import APIS, PyToJSInterface
 
 from cream.config import Configuration
@@ -201,10 +201,12 @@ class WidgetInstance(gobject.GObject):
     def apply_hack_to_avoid_problems_with_caching(self):
         if hasattr(self.js_context.document.head, 'childNodes'):
             for element in self.js_context.document.head.childNodes.values():
-                if hasattr(element, 'src'):
-                    element.src += '?query_id={0}'.format(random_hash(bits=100)[:5])
-                elif hasattr(element, 'href'):
-                    element.href += '?query_id={0}'.format(random_hash(bits=100)[:5])
+                if hasattr(element, 'src') and element.src:
+                    url = extend_querystring(element.src, {'query_id': random_hash()[:5]})
+                    element.src = url
+                elif hasattr(element, 'href') and element.href:
+                    url = extend_querystring(element.href, {'query_id': random_hash()[:5]})
+                    element.href = url
             return False
 
     def get_tmp(self):
@@ -248,10 +250,7 @@ class WidgetInstance(gobject.GObject):
 
     def resource_request_cb(self, view, frame, resource, request, response):
         uri = request.get_property('uri')
-        if '?query_id' in uri:
-            uri += '&instance={0}'.format(self.widget_ref().instance_id)
-        else:
-            uri += '?instance={0}'.format(self.widget_ref().instance_id)
+        uri = extend_querystring(uri, {'instance': self.widget_ref().instance_id})
         request.set_property('uri', uri)
 
 
