@@ -321,7 +321,6 @@ class Widget(gobject.GObject, cream.Component):
         }
 
     def __init__(self, path, backref):
-
         self.__melange_ref__ = weakref.ref(backref)
 
         gobject.GObject.__init__(self)
@@ -335,7 +334,7 @@ class Widget(gobject.GObject, cream.Component):
 
         self.instance_id = '%s' % random_hash(bits=100)[0:32]
 
-        skin_dir = os.path.join(self.context.working_directory, 'skins')
+        skin_dir = self.context.expand_path('data/skins')
         self.skins = cream.manifest.ManifestDB(skin_dir, type='org.cream.melange.Skin')
 
         self.config = WidgetConfiguration(self.context.working_directory,
@@ -361,8 +360,7 @@ class Widget(gobject.GObject, cream.Component):
 
     def get_skin_path_by_id(self, skin_id):
         return os.path.join(
-            self.context.working_directory,
-            'skins',
+            self.context.expand_path('data/skins'),
             os.path.dirname(self.skins.get_by_id(skin_id)._path)
         )
 
