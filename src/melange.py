@@ -36,9 +36,9 @@ from gpyconf.fields import MultiOptionField
 
 from cream.contrib.melange.dialogs import AddWidgetDialog
 
-from widget import Widget
-from httpserver import HttpServer
-from common import HTTPSERVER_HOST, HTTPSERVER_PORT
+from melange.widget import Widget
+from melange.httpserver import HttpServer
+from melange.common import HTTPSERVER_HOST, HTTPSERVER_PORT
 
 
 class TransparentWindow(gtk.Window):
@@ -273,7 +273,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
     def __init__(self):
 
-        cream.Module.__init__(self)
+        cream.Module.__init__(self, 'org.cream.Melange')
 
         cream.ipc.Object.__init__(self,
             'org.cream.Melange',
@@ -285,7 +285,7 @@ class Melange(cream.Module, cream.ipc.Object):
         self.widgets = WidgetManager()
 
         # Scan for themes and add them to config...
-        theme_dir = os.path.join(self.context.working_directory, 'themes')
+        theme_dir = self.context.expand_path('data/themes')
         self.themes = cream.manifest.ManifestDB(theme_dir, type='org.cream.melange.Theme')
 
         self.config._add_field(
@@ -298,7 +298,8 @@ class Melange(cream.Module, cream.ipc.Object):
         self.config.read()
 
         # Scan for widgets...
-        self.available_widgets = cream.manifest.ManifestDB('widgets',
+        widget_dir = self.context.expand_path('data/widgets')
+        self.available_widgets = cream.manifest.ManifestDB(widget_dir,
                                             type='org.cream.melange.Widget'
         )
         widgets = sorted(self.available_widgets.by_id.itervalues(),
