@@ -40,6 +40,7 @@ def make_stupid_mimetype_guess(filename):
         ('html', 'text/html'),
         ('css', 'text/css'), ('js', 'text/javascript'),
         ('png', 'image/png'), ('svg', 'application/svg'),
+        ('ogg', 'audio/ogg '), ('ttf', 'application/octet-stream ')
     ]:
         if filename.endswith(extension):
             return mimetype
