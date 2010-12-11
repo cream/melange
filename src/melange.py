@@ -34,7 +34,7 @@ import cream.util, cream.util.pywmctrl
 
 from gpyconf.fields import MultiOptionField
 
-from cream.contrib.melange.dialogs import AddWidgetDialog
+from melange.dialogs import AddWidgetDialog
 
 from melange.widget import Widget
 from melange.httpserver import HttpServer
