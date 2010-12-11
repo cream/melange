@@ -1,3 +1,9 @@
 <configuration>
-    <widgets type="list" static="true" hidden="true"></widgets>
+    <widgets type="list" static="true" hidden="true">
+        <item type="dict">
+            <y type="int">20</y>
+            <x type="int">0</x>
+            <name type="str">Control Area</name>
+        </item>
+    </widgets>
 </configuration>
