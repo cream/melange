@@ -348,7 +348,7 @@ class Widget(gobject.GObject, cream.Component):
 
     def get_data_path(self):
 
-        data_path = os.path.join('/tmp', self.instance_id)
+        data_path = self.context.expand_path('data/shared')
         if not os.path.isdir(data_path):
             os.mkdir(data_path)
 
