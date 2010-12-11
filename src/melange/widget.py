@@ -30,7 +30,7 @@ import webbrowser
 import cream.base
 import cream.gui
 from cream.util import cached_property, random_hash, extend_querystring
-from cream.contrib.melange.api import APIS, PyToJSInterface
+from melange.api import APIS, PyToJSInterface
 
 from cream.config import Configuration
 from gpyconf.fields import MultiOptionField
