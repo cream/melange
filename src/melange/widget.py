@@ -322,9 +322,10 @@ class Widget(gobject.GObject, cream.Component):
 
     def __init__(self, path, backref):
         self.__melange_ref__ = weakref.ref(backref)
+        exec_mode = self.__melange_ref__().context.execution_mode
 
         gobject.GObject.__init__(self)
-        cream.base.Component.__init__(self, path=path)
+        cream.base.Component.__init__(self, path=path, exec_mode=exec_mode)
 
         self.state = STATE_NONE
 
