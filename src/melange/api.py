@@ -109,7 +109,7 @@ class PyToJSInterface(object):
 class Thread(threading.Thread, gobject.GObject):
     """ An advanced threading class emitting a GObject signal after running. """
 
-    __gtype_name__ = 'Thread'
+    __gtype_name__ = 'MelangeThread'
     __gsignals__ = {
         'finished': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
         }
