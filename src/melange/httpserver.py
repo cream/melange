@@ -8,7 +8,7 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -40,6 +40,7 @@ def make_stupid_mimetype_guess(filename):
         ('html', 'text/html'),
         ('css', 'text/css'), ('js', 'text/javascript'),
         ('png', 'image/png'), ('svg', 'application/svg'),
+        ('ogg', 'audio/ogg '), ('ttf', 'application/octet-stream ')
     ]:
         if filename.endswith(extension):
             return mimetype

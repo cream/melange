@@ -8,7 +8,7 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -322,9 +322,10 @@ class Widget(gobject.GObject, cream.Component):
 
     def __init__(self, path, backref):
         self.__melange_ref__ = weakref.ref(backref)
+        exec_mode = self.__melange_ref__().context.execution_mode
 
         gobject.GObject.__init__(self)
-        cream.base.Component.__init__(self, path=path)
+        cream.base.Component.__init__(self, path=path, exec_mode=exec_mode)
 
         self.state = STATE_NONE
 
@@ -347,7 +348,7 @@ class Widget(gobject.GObject, cream.Component):
 
     def get_data_path(self):
 
-        data_path = os.path.join('/tmp', self.instance_id)
+        data_path = self.context.expand_path('data/shared')
         if not os.path.isdir(data_path):
             os.mkdir(data_path)
 
