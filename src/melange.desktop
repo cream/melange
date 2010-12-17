@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=Melange
+Icon=/usr/share/cream/org.cream.Melange/data/melange.png
+Comment=Widgets for your desktop
+Exec=/usr/bin/melange
+Terminal=false
+Type=Application
+Categories=Utility;GNOME;GTK

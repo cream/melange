@@ -42,7 +42,9 @@ data_files.extend(
     ('share/cream/{0}/configuration'.format(ID),
         ['src/configuration/scheme.xml']),
     ('share/icons',
-        ['src/melange.png'])
+        ['src/melange.png']),
+    ('share/applications',
+        ['src/melange.desktop'])
     ])
 
 
