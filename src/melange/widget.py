@@ -164,7 +164,7 @@ class WidgetInstance(gobject.GObject):
         skin_url = HTTPSERVER_BASE_URL + '/widget/index.html'
         self.view.open(skin_url)
 
-        gobject.timeout_add(50, self.apply_hack_to_avoid_problems_with_caching)
+        gobject.timeout_add(250, self.apply_hack_to_avoid_problems_with_caching)
 
 
     def drag_motion_cb(self, widget, context, x, y, time):
