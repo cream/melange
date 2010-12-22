@@ -338,7 +338,7 @@ class Widget(gobject.GObject, cream.Component):
         skin_dir = os.path.join(self.context.working_directory, 'data', 'skins')
         self.skins = cream.manifest.ManifestDB(skin_dir, type='org.cream.melange.Skin')
 
-        self.config = WidgetConfiguration(self.context.working_directory,
+        self.config = WidgetConfiguration(self.context.expand_path,
                                           skins=self.skins.by_id,
                                           themes=self.__melange_ref__().themes.by_id)
         self.config.connect('field-value-changed', self.configuration_value_changed_cb)
