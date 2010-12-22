@@ -364,7 +364,7 @@ this.timer=a.delay(this.lastDelay,this);};return this.addEvent("complete",this.c
 var _mootools_entered = new Array();
 
 Element.Events.mouseenter = {
-    base: "mouseout",
+    base: "mouseover",
     condition: function(event){
         _mootools_entered.include(this);
         return true;
