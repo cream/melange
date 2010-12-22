@@ -46,9 +46,9 @@ class WidgetAPI(object):
 
 class WidgetConfiguration(Configuration):
 
-    def __init__(self, path, skins, themes):
+    def __init__(self, scheme_path, path, skins, themes):
 
-        Configuration.__init__(self, path, read=False)
+        Configuration.__init__(self, scheme_path, path, read=False)
 
         self._add_field(
             'widget_skin',
@@ -226,9 +226,9 @@ class WidgetInstance(gobject.GObject):
 
     def init_api(self):
 
-        custom_api_file = os.path.join(self.widget_ref().context.working_directory, '__init__.py')
+        custom_api_file = os.path.join(self.widget_ref().context.get_path(), '__init__.py')
         if os.path.isfile(custom_api_file):
-            sys.path.insert(0, self.widget_ref().context.working_directory)
+            sys.path.insert(0, self.widget_ref().context.get_path())
             imp.load_module(
                 'custom_api_{0}'.format(self.widget_ref().instance_id),
                 open(custom_api_file),
@@ -325,7 +325,7 @@ class Widget(gobject.GObject, cream.Component):
         exec_mode = self.__melange_ref__().context.execution_mode
 
         gobject.GObject.__init__(self)
-        cream.base.Component.__init__(self, path=path, exec_mode=exec_mode)
+        cream.base.Component.__init__(self, path=path, user_path_prefix='org.cream.Melange/data/widgets', exec_mode=exec_mode)
 
         self.state = STATE_NONE
 
@@ -335,10 +335,15 @@ class Widget(gobject.GObject, cream.Component):
 
         self.instance_id = '%s' % random_hash(bits=100)[0:32]
 
+        # TODO: User self.context.get(_user)_path()
         skin_dir = os.path.join(self.context.working_directory, 'data', 'skins')
         self.skins = cream.manifest.ManifestDB(skin_dir, type='org.cream.melange.Skin')
 
-        self.config = WidgetConfiguration(self.context.expand_path,
+        scheme_path = os.path.join(self.context.get_path(), 'configuration/scheme.xml')
+        path = os.path.join(self.context.get_user_path(), 'configuration/')
+
+        self.config = WidgetConfiguration(scheme_path,
+                                          path,
                                           skins=self.skins.by_id,
                                           themes=self.__melange_ref__().themes.by_id)
         self.config.connect('field-value-changed', self.configuration_value_changed_cb)
@@ -348,9 +353,9 @@ class Widget(gobject.GObject, cream.Component):
 
     def get_data_path(self):
 
-        data_path = self.context.expand_path('data/shared')
+        data_path = os.path.join(self.context.get_user_path(), 'data/shared')
         if not os.path.isdir(data_path):
-            os.mkdir(data_path)
+            os.makedirs(data_path)
 
         return data_path
 

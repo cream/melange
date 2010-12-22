@@ -285,8 +285,11 @@ class Melange(cream.Module, cream.ipc.Object):
         self.widgets = WidgetManager()
 
         # Scan for themes and add them to config...
-        theme_dir = self.context.expand_path('data/themes')
-        self.themes = cream.manifest.ManifestDB(theme_dir, type='org.cream.melange.Theme')
+        theme_dirs = [
+            os.path.join(self.context.get_path(), 'data/themes'),
+            os.path.join(self.context.get_user_path(), 'data/themes')
+            ]
+        self.themes = cream.manifest.ManifestDB(theme_dirs, type='org.cream.melange.Theme')
 
         self.config._add_field(
             'default_theme',
@@ -298,8 +301,11 @@ class Melange(cream.Module, cream.ipc.Object):
         self.config.read()
 
         # Scan for widgets...
-        widget_dir = self.context.expand_path('data/widgets')
-        self.available_widgets = cream.manifest.ManifestDB(widget_dir,
+        widget_dirs = [
+            os.path.join(self.context.get_path(), 'data/widgets'),
+            os.path.join(self.context.get_user_path(), 'data/widgets')
+            ]
+        self.available_widgets = cream.manifest.ManifestDB(widget_dirs,
                                             type='org.cream.melange.Widget'
         )
         widgets = sorted(self.available_widgets.by_id.itervalues(),
