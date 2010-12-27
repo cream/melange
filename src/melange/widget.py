@@ -19,6 +19,7 @@
 import sys
 import os
 import imp
+import shutil
 import weakref
 
 import gobject
@@ -350,7 +351,12 @@ class Widget(gobject.GObject, cream.Component):
 
         data_path = os.path.join(self.context.get_user_path(), 'data/shared')
         if not os.path.isdir(data_path):
-            os.makedirs(data_path)
+            orig_data_path = os.path.join(self.context.get_path(), 'data/shared')
+
+            if os.path.isdir(orig_data_path):
+                shutil.copytree(orig_data_path, data_path)
+            else:
+                os.makedirs(data_path)
 
         return data_path
 
