@@ -138,11 +138,6 @@ class Thread(threading.Thread, gobject.GObject):
 class API(object):
     """ The API object to subclass when writing a Python API for JS widgets. """
 
-    def __init__(self):
-
-        self._tmp = tempfile.mkdtemp()
-
-
     def emit(self, event, *args):
         """
         Emit an event with the given name and params.
@@ -152,10 +147,6 @@ class API(object):
         """
 
         self._js_ctx.widget.api.fireEvent(event, *args)
-
-
-    def get_tmp(self):
-        return self._tmp
 
 
     def get_data_path(self):

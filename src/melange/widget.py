@@ -107,7 +107,6 @@ class WidgetInstance(gobject.GObject):
 
         self._size = (0, 0)
         self._position = (0, 0)
-        self._tmp = None
 
         # Initializing the WebView...
         self.view = webkit.WebView()
@@ -209,9 +208,6 @@ class WidgetInstance(gobject.GObject):
                     element.href = url
             return False
 
-    def get_tmp(self):
-        return self._tmp
-
 
     def get_view(self):
         return self.view
@@ -242,7 +238,6 @@ class WidgetInstance(gobject.GObject):
                 c.context = self.widget_ref().context
                 c.config = self.config.config_ref()
                 c = c()
-                self._tmp = c.get_tmp()
                 i = PyToJSInterface(c)
                 self.js_context.widget.api.__setattr__(name, i)
             del sys.path[0]
@@ -378,10 +373,6 @@ class Widget(gobject.GObject, cream.Component):
         return self.__melange_ref__().themes.get_by_id(theme_id)
 
 
-    def get_tmp(self):
-        return self.instance.get_tmp()
-
-
     def begin_move(self):
 
         self.emit('begin-move')
@@ -452,10 +443,6 @@ class Widget(gobject.GObject, cream.Component):
 
     def remove(self):
         """ Close the widget window and emit 'remove' signal. """
-
-        #remove tmp directory
-        if self.get_tmp() is not None:
-            os.rmdir(self.get_tmp())
 
         self.config.save()
 
