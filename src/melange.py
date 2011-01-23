@@ -329,7 +329,8 @@ class Melange(cream.Module, cream.ipc.Object):
 
         if self.add_widget_dialog.dialog.run() == 1:
             widget = self.add_widget_dialog.selected_widget
-            self.load_widget(widget, False, False)
+            if widget:
+                self.load_widget(widget, False, False)
         self.add_widget_dialog.dialog.hide()
 
 

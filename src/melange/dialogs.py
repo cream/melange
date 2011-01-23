@@ -93,7 +93,8 @@ class AddWidgetDialog(object):
     def selected_widget(self):
         selection = self.widget_view.get_selection()
         model, iter = selection.get_selected()
-        return model.get_value(iter, 2)
+        if iter:
+            return model.get_value(iter, 2)
 
     @property
     def selected_category(self):
