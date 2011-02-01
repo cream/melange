@@ -112,6 +112,10 @@ class WidgetInstance(gobject.GObject):
         # Initializing the WebView...
         self.view = webkit.WebView()
         self.view.set_transparent(True)
+        
+        settings = self.view.get_settings()
+        settings.set_property('enable-plugins', False)
+        self.view.set_settings(settings)
 
         # Connecting to signals:
         self.view.connect('expose-event', self.resize_cb)

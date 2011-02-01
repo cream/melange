@@ -63,7 +63,7 @@ class SmallWebFramework(object):
     def __call__(self, environ, start_response):
         """ The WSGI application called by bjoern """
 
-        time.sleep(.01) # ARGH. HACK.
+        time.sleep(.02) # ARGH. HACK.
 
         GET = query_string_to_dict(environ.get('QUERY_STRING', ''))
         func, kwargs = self.dispatch(environ)
