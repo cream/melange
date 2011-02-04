@@ -109,10 +109,12 @@ class WidgetInstance(gobject.GObject):
         self._size = (0, 0)
         self._position = (0, 0)
 
+        self.messages = cream.log.Messages()
+
         # Initializing the WebView...
         self.view = webkit.WebView()
         self.view.set_transparent(True)
-        
+
         settings = self.view.get_settings()
         settings.set_property('enable-plugins', False)
         self.view.set_settings(settings)
@@ -155,6 +157,8 @@ class WidgetInstance(gobject.GObject):
 
         # Create JavaScript context...
         self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
+
+        self.js_context.log = self.log
 
         # Set up JavaScript API...
         self.js_context._python = WidgetAPI()
@@ -212,6 +216,9 @@ class WidgetInstance(gobject.GObject):
                     url = extend_querystring(element.href, {'query_id': random_hash()[:5]})
                     element.href = url
             return False
+
+    def log(self, msg):
+        self.messages.debug(msg)
 
 
     def get_view(self):
