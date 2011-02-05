@@ -358,12 +358,15 @@ class Melange(cream.Module, cream.ipc.Object):
         :type y: `int`
         """
 
-        x, y = int(x), int(y)
-
         self.messages.debug("Loading widget '%s'..." % name)
 
         # Initialize the widget...
         widget = Widget(self.available_widgets.get_by_name(name)._path, backref=self)
+
+        if x and y:
+            x, y = int(x), int(y)
+        else:
+            x, y = widget.get_position()
 
         widget.set_position(x, y)
 

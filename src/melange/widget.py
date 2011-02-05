@@ -107,7 +107,6 @@ class WidgetInstance(gobject.GObject):
         self.config = WidgetConfigurationProxy(self.widget_ref().config)
 
         self._size = (0, 0)
-        self._position = (0, 0)
 
         self.messages = cream.log.Messages()
 
@@ -336,7 +335,9 @@ class Widget(gobject.GObject, cream.Component):
 
         self.state = STATE_NONE
 
-        self._position = (0, 0)
+        width = gtk.gdk.screen_width()
+        height = gtk.gdk.screen_height()
+        self._position = (int(width/2), int(height/2))
 
         self.display = gtk.gdk.display_get_default()
 
