@@ -38,7 +38,7 @@ from melange.dialogs import AddWidgetDialog
 
 from melange.widget import Widget
 from melange.httpserver import HttpServer
-from melange.common import HTTPSERVER_HOST, HTTPSERVER_PORT
+from melange.common import HTTPSERVER_HOST, HTTPSERVER_PORT, OVERLAY_FADE_DURATION
 
 
 class TransparentWindow(gtk.Window):
@@ -46,6 +46,8 @@ class TransparentWindow(gtk.Window):
     def __init__(self):
 
         gtk.Window.__init__(self)
+
+        self.alpha = 0
 
         self.set_colormap(self.get_screen().get_rgba_colormap())
         self.set_app_paintable(True)
@@ -58,7 +60,7 @@ class TransparentWindow(gtk.Window):
         ctx = source.window.cairo_create()
 
         ctx.set_operator(cairo.OPERATOR_SOURCE)
-        ctx.set_source_rgba(0, 0, 0, 0)
+        ctx.set_source_rgba(0, 0, 0, self.alpha)
         ctx.paint()
 
 
@@ -389,6 +391,61 @@ class Melange(cream.Module, cream.ipc.Object):
                 }
 
         return res
+
+
+    @cream.ipc.method('','')
+    def toggle_overlay(self):
+
+        layer = self.widgets.primary_widget_layer
+        width, height = layer.get_size()[0],layer.get_size()[1]
+
+        if layer.get_type_hint() == gtk.gdk.WINDOW_TYPE_HINT_DESKTOP:
+            def fade_out_widgets(t, state):
+                layer.set_opacity(1 - state)
+
+            def fade_in_overlay(t):
+                layer.hide()
+
+                def fade_in(t, state):
+                    layer.alpha = state * 0.8
+                    layer.set_opacity(state)
+                    layer.window.invalidate_rect(gtk.gdk.Rectangle(0, 0, width, height), True)
+
+                t = cream.gui.Timeline(OVERLAY_FADE_DURATION, cream.gui.CURVE_SINE)
+                t.connect('update', fade_in)
+                t.run()
+
+                layer.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
+                layer.show_all()
+
+            t = cream.gui.Timeline(OVERLAY_FADE_DURATION/2, cream.gui.CURVE_SINE)
+            t.connect('update', fade_out_widgets)
+            t.connect('completed', fade_in_overlay)
+            t.run()
+
+
+        else:
+            def fade_out_overlay(t, state):
+                layer.alpha = 0.8 - state * 0.8
+                layer.set_opacity(1 - state)
+                layer.window.invalidate_rect(gtk.gdk.Rectangle(0, 0, width, height), True)
+
+            def fade_in_widgets(t):
+                layer.hide()
+
+                def fade_in(t, state):
+                    layer.set_opacity(state)
+                t = cream.gui.Timeline(OVERLAY_FADE_DURATION/2, cream.gui.CURVE_SINE)
+                t.connect('update', fade_in)
+                t.run()
+
+                layer.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DESKTOP)
+                layer.show_all()
+
+            t = cream.gui.Timeline(OVERLAY_FADE_DURATION, cream.gui.CURVE_SINE)
+            t.connect('update', fade_out_overlay)
+            t.connect('completed', fade_in_widgets)
+            t.run()
 
 
     def quit(self):
