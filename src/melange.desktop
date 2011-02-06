@@ -5,5 +5,7 @@ Icon=/usr/share/cream/org.cream.Melange/data/melange.png
 Comment=Widgets for your desktop
 Exec=/usr/bin/melange
 Terminal=false
+NoDisplay=true
+StartupNotify=true
 Type=Application
 Categories=Utility;GNOME;GTK
