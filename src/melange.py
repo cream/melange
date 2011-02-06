@@ -301,6 +301,8 @@ class Melange(cream.Module, cream.ipc.Object):
         )
 
         self.config.read()
+        
+        self.hotkeys.connect('hotkey-activated', self.hotkey_activated_cb)
 
         # Scan for widgets...
         widget_dirs = [
@@ -318,6 +320,12 @@ class Melange(cream.Module, cream.ipc.Object):
         # Load widgets stored in configuration.
         for widget in self.config.widgets:
             self.load_widget(**widget)
+            
+            
+    def hotkey_activated_cb(self, source, action):
+        
+        if action == 'toggle-overlay':
+            self.toggle_overlay()
 
 
     def run_server(self):

@@ -6,4 +6,5 @@
             <name type="str">Control Area</name>
         </item>
     </widgets>
+    <hotkey action="toggle-overlay" type="hotkey" label="Hotkey toggling the overlay mode">F12</hotkey>
 </configuration>
