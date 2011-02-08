@@ -301,7 +301,8 @@ class Melange(cream.Module, cream.ipc.Object):
         )
 
         self.config.read()
-        
+        self.config.connect('field-value-changed', self.configuration_value_changed_cb)
+
         self.hotkeys.connect('hotkey-activated', self.hotkey_activated_cb)
 
         # Scan for widgets...
@@ -326,6 +327,12 @@ class Melange(cream.Module, cream.ipc.Object):
         
         if action == 'toggle-overlay':
             self.toggle_overlay()
+
+
+    def configuration_value_changed_cb(self, source, key, value):
+        if key == 'default_theme':
+            for widget in self.widgets.values():
+                widget.reload()
 
 
     def run_server(self):
