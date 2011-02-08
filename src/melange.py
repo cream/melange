@@ -321,10 +321,10 @@ class Melange(cream.Module, cream.ipc.Object):
         # Load widgets stored in configuration.
         for widget in self.config.widgets:
             self.load_widget(**widget)
-            
-            
+
+
     def hotkey_activated_cb(self, source, action):
-        
+
         if action == 'toggle-overlay':
             self.toggle_overlay()
 
