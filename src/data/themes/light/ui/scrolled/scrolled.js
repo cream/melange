@@ -19,12 +19,12 @@ window.addEvent('domready', function() {
         container.appendChild(content);
 
         var control_up = document.createElement("div");
-        control_up.innerHTML = '<img src="/common/ui/scrolled/images/up.png" />';
+        control_up.innerHTML = '<img src="/theme/ui/scrolled/images/up.png" />';
         control_up.id = 'control_up';
         control_up.className = 'control_up';
 
         var control_down = document.createElement("div");
-        control_down.innerHTML = '<img src="/common/ui/scrolled/images/down.png" />';
+        control_down.innerHTML = '<img src="/theme/ui/scrolled/images/down.png" />';
         control_down.id = 'control_down';
         control_down.className = 'control_down';
 
