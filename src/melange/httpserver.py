@@ -108,11 +108,6 @@ class HttpServer(SmallWebFramework):
         else:
             return self._melange.themes.get_by_id(self._melange.config.default_theme)
 
-    @route(r'/thingy/(?P<file>.*)')
-    def thingy_files(self, GET, file):
-        path = os.path.join(self._melange.context.working_directory, 'data/thingy')
-        return open(os.path.join(path, file))
-
     @route(r'/data/(?P<file>.*)')
     def data_files(self, GET, file):
         return open(os.path.join(self._melange.widgets[GET['instance']].get_data_path(), file))
@@ -123,15 +118,10 @@ class HttpServer(SmallWebFramework):
 
     @route(r'/common/(?P<file>.*)')
     def common_files(self, GET, file):
-        widget_theme = self._get_widget_theme(GET)
-        return open(os.path.join(widget_theme['path'], file))
-
-    @route(r'/widget/tmp/(?P<file>.*)')
-    def tmp_files(self, GET, file):
-        path = self._melange.widgets[GET['instance']].get_tmp()
+        path = os.path.join(self._melange.context.get_path(), 'data/common')
         return open(os.path.join(path, file))
 
-    @route(r'/chrome/(?P<file>.*)')
-    def chrome_files(self, GET, file):
+    @route(r'/theme/(?P<file>.*)')
+    def theme_files(self, GET, file):
         widget_theme = self._get_widget_theme(GET)
-        return open(os.path.join(widget_theme['path'], 'chrome', file))
+        return open(os.path.join(widget_theme['path'], file))
