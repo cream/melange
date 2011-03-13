@@ -546,4 +546,5 @@ class Widget(gobject.GObject, cream.Component):
             'name' : self.context.manifest['name'],
             'x'    : self.get_position()[0],
             'y'    : self.get_position()[1],
+            'profile': self.config.profiles.active.name
         }

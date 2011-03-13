@@ -359,8 +359,8 @@ class Melange(cream.Module, cream.ipc.Object):
         print h.heap()
 
 
-    @cream.ipc.method('svv', '')
-    def load_widget(self, name, x=None, y=None):
+    @cream.ipc.method('svvs', '')
+    def load_widget(self, name, x=None, y=None, profile=None):
         """
         Load a widget with the given name at the specified coordinates (optional).
 
@@ -377,6 +377,11 @@ class Melange(cream.Module, cream.ipc.Object):
 
         # Initialize the widget...
         widget = Widget(self.available_widgets.get_by_name(name)._path, backref=self)
+        
+        if profile:
+            for c, p in enumerate(widget.config.profiles):
+                if p.name == profile:
+                    widget.config.use_profile(c)
 
         if x and y:
             x, y = int(x), int(y)
