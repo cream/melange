@@ -5,6 +5,9 @@ from os.path import join, dirname
 
 from categories import categories
 
+ICON_SIZE_SMALL = 24
+ICON_SIZE_BIG = 48
+
 class AddWidgetDialog(object):
 
     def __init__(self, widgets):
@@ -31,8 +34,13 @@ class AddWidgetDialog(object):
         categories_ = sorted(categories.iteritems(),
                              key=lambda c: c[1]['name']
         )
+
+        theme = gtk.icon_theme_get_default()
         for id, category in categories_:
-            icon = gtk.gdk.pixbuf_new_from_file_at_size(category['icon'], 25, 25)
+            icon_info = theme.lookup_icon(category['icon'], ICON_SIZE_SMALL, 0)
+            icon = gtk.gdk.pixbuf_new_from_file_at_size(icon_info.get_filename(),
+                                                        ICON_SIZE_SMALL, ICON_SIZE_SMALL)
+
             self.category_liststore.append((category['name'], id, icon))
 
         # group widgets into categories
@@ -58,9 +66,12 @@ class AddWidgetDialog(object):
         """
 
         category = categories[self.selected_category]
-        if 'icon' in category:
-            icon = gtk.gdk.pixbuf_new_from_file_at_size(category['icon'], 35, 35)
-            self.category_image.set_from_pixbuf(icon)
+        theme = gtk.icon_theme_get_default()
+        icon_info = theme.lookup_icon(category['icon'], ICON_SIZE_BIG, 0)
+        icon = gtk.gdk.pixbuf_new_from_file_at_size(icon_info.get_filename(),
+                                                    ICON_SIZE_BIG, ICON_SIZE_BIG)
+
+        self.category_image.set_from_pixbuf(icon)
 
         description = split_string(category['description'])
         self.category_description.set_text(description)
