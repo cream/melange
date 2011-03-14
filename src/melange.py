@@ -377,11 +377,10 @@ class Melange(cream.Module, cream.ipc.Object):
 
         # Initialize the widget...
         widget = Widget(self.available_widgets.get_by_name(name)._path, backref=self)
-        
+
         if profile:
-            for c, p in enumerate(widget.config.profiles):
-                if p.name == profile:
-                    widget.config.use_profile(c)
+            index, _ = widget.config.profiles.find_by_name(profile)
+            widget.config.use_profile(index)
 
         if x and y:
             x, y = int(x), int(y)
