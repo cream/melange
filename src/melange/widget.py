@@ -464,7 +464,7 @@ class Widget(gobject.GObject, cream.Component):
 
         self.config.save()
 
-        self.instance.get_view().hide()
+        self.instance.get_view().destroy()
         del self
 
 
