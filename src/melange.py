@@ -333,14 +333,12 @@ class Melange(cream.Module, cream.ipc.Object):
         gobject.timeout_add(100, _load_widgets)
 
 
+    @cream.util.cached_property
+    def add_widget_dialog(self):
         widgets = sorted(self.available_widgets.by_id.itervalues(),
                           key=itemgetter('name')
         )
-        self.add_widget_dialog = AddWidgetDialog(widgets)
-
-        # Load widgets stored in configuration.
-        for widget in self.config.widgets:
-            self.load_widget(**widget)
+        return AddWidgetDialog(widgets)
 
 
     def hotkey_activated_cb(self, source, action):
@@ -492,11 +490,6 @@ class Melange(cream.Module, cream.ipc.Object):
 
     def quit(self):
         """ Quit the module. """
-
-        # save config
-        for widget in self.widgets.values():
-            widget.config.save()
-
 
         self.config.widgets = self.widgets.values()
         cream.Module.quit(self)
