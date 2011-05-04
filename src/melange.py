@@ -318,7 +318,6 @@ class Melange(cream.Module, cream.ipc.Object):
 
         self.hotkeys.connect('hotkey-activated', self.hotkey_activated_cb)
 
-        # Scan for widgets...
         widget_dirs = [
             os.path.join(self.context.get_path(), 'data/widgets'),
             os.path.join(self.context.get_user_path(), 'data/widgets')
@@ -326,6 +325,14 @@ class Melange(cream.Module, cream.ipc.Object):
         self.available_widgets = cream.manifest.ManifestDB(widget_dirs,
                                             type='org.cream.melange.Widget'
         )
+
+        def _load_widgets():
+            for widget in self.config.widgets:
+               self.load_widget(**widget)
+
+        gobject.timeout_add(100, _load_widgets)
+
+
         widgets = sorted(self.available_widgets.by_id.itervalues(),
                           key=itemgetter('name')
         )
