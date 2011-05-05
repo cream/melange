@@ -72,6 +72,8 @@ class WidgetLayer(TransparentWindow):
 
         self.connect('leave-notify-event', self.leave_notify_cb)
         self.connect('enter-notify-event', self.enter_notify_cb)
+        self.connect('key-press-event', self.key_press_cb)
+        self.connect('key-release-event', self.key_release_cb)
 
         self.widgets = []
 
@@ -106,6 +108,32 @@ class WidgetLayer(TransparentWindow):
                 widget.instance.js_context._mootools_entered.erase()
             except AttributeError:
                 pass
+
+    def key_press_cb(self, window, event):
+
+        if gtk.gdk.keyval_name(event.keyval) == 'Control_L':
+            for widget in self.widgets:
+                widget.instance.begin_move()
+
+            def fade(t, state):
+                self.set_opacity(1 - 0.3*state)
+
+            t = cream.gui.Timeline(200, cream.gui.CURVE_SINE)
+            t.connect('update', fade)
+            t.run()
+
+
+    def key_release_cb(self, window, event):
+
+        if gtk.gdk.keyval_name(event.keyval) == 'Control_L':
+            for widget in self.widgets:
+                widget.instance.end_move()
+
+            def fade(t, state):
+                self.set_opacity(0.7 + 0.3*state)
+            t = cream.gui.Timeline(200, cream.gui.CURVE_SINE)
+            t.connect('update', fade)
+            t.run()
 
 
     def add_widget(self, widget):

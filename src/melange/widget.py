@@ -107,6 +107,7 @@ class WidgetInstance(gobject.GObject):
         self.config = WidgetConfigurationProxy(self.widget_ref().config)
 
         self._size = (0, 0)
+        self.state = STATE_NONE
 
         self.messages = cream.log.Messages()
 
@@ -296,12 +297,20 @@ class WidgetInstance(gobject.GObject):
         elif event.button == MOUSE_BUTTON_MIDDLE:
             self.emit('begin-move-request')
             return True
+        elif event.button == MOUSE_BUTTON_LEFT and self.state == STATE_MOVE:
+            self.emit('begin-move-request')
+            return True
+
 
     def button_release_cb(self, source, event):
 
         if event.button == MOUSE_BUTTON_MIDDLE:
             self.emit('end-move-request')
             return True
+        if event.button == MOUSE_BUTTON_LEFT and self.state == STATE_MOVE:
+            self.emit('end-move-request')
+            return True
+
 
     def navigation_request_cb(self, view, frame, request, action, decision):
         """ Handle clicks on links, etc. """
@@ -312,6 +321,14 @@ class WidgetInstance(gobject.GObject):
             # external URL, open in browser
             webbrowser.open(uri)
             return True
+
+    def begin_move(self):
+        self.state = STATE_MOVE
+
+
+    def end_move(self):
+        self.emit('end-move-request')
+        self.state = STATE_NONE
 
 
 class Widget(gobject.GObject, cream.Component):
