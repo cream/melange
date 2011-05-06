@@ -38,7 +38,8 @@ from melange.dialogs import AddWidgetDialog
 
 from melange.widget import Widget
 from melange.httpserver import HttpServer
-from melange.common import HTTPSERVER_HOST, HTTPSERVER_PORT, OVERLAY_FADE_DURATION
+from melange.common import HTTPSERVER_HOST, HTTPSERVER_PORT, OVERLAY_FADE_DURATION, \
+                            STATE_NONE, STATE_MOVE, STATE_MOVING, MOUSE_BUTTON_LEFT
 
 
 class TransparentWindow(gtk.Window):
@@ -69,6 +70,8 @@ class WidgetLayer(TransparentWindow):
     def __init__(self):
 
         TransparentWindow.__init__(self)
+
+        self.mode = STATE_NONE
 
         self.connect('leave-notify-event', self.leave_notify_cb)
         self.connect('enter-notify-event', self.enter_notify_cb)
@@ -112,28 +115,46 @@ class WidgetLayer(TransparentWindow):
     def key_press_cb(self, window, event):
 
         if gtk.gdk.keyval_name(event.keyval) == 'Control_L':
+            self.mode = STATE_MOVE
+            cursor = gtk.gdk.Cursor(gtk.gdk.FLEUR)
             for widget in self.widgets:
                 widget.instance.begin_move()
-
-            def fade(t, state):
-                self.set_opacity(1 - 0.3*state)
-
-            t = cream.gui.Timeline(200, cream.gui.CURVE_SINE)
-            t.connect('update', fade)
-            t.run()
+                widget.instance.view.get_window().set_cursor(cursor)
 
 
     def key_release_cb(self, window, event):
 
         if gtk.gdk.keyval_name(event.keyval) == 'Control_L':
+            if self.mode == STATE_MOVE:
+                for widget in self.widgets:
+                    widget.instance.end_move()
+                    widget.instance.view.get_window().set_cursor(None)
+                self.mode = STATE_NONE
+            elif self.mode == STATE_MOVING:
+                self.mode = STATE_MOVE
+
+
+    def button_press_cb(self, window, event):
+
+        if self.mode == STATE_MOVE:
+            self.mode = STATE_MOVING
+
+            return True
+
+
+
+    def button_release_cb(self, window, event):
+
+        if self.mode == STATE_MOVE:
             for widget in self.widgets:
                 widget.instance.end_move()
+                widget.instance.view.get_window().set_cursor(None)
+            self.mode = STATE_NONE
+        elif self.mode == STATE_MOVING:
+            self.mode = STATE_MOVE
 
-            def fade(t, state):
-                self.set_opacity(0.7 + 0.3*state)
-            t = cream.gui.Timeline(200, cream.gui.CURVE_SINE)
-            t.connect('update', fade)
-            t.run()
+            return True
+
 
 
     def add_widget(self, widget):
@@ -141,6 +162,8 @@ class WidgetLayer(TransparentWindow):
         self.widgets.append(widget)
 
         view = widget.instance.get_view()
+        view.connect('button-press-event', self.button_press_cb)
+        view.connect('button-release-event', self.button_release_cb)
         self.layout.add(view, *widget.get_position())
         view.show_all()
 
