@@ -43,6 +43,8 @@ data_files.extend(
         ['src/configuration/scheme.xml']),
     ('share/icons',
         ['src/melange.png']),
+    ('share/man/man1/',
+        ['doc/melange.1']),
     ('share/applications',
         ['src/melange.desktop'])
     ])
