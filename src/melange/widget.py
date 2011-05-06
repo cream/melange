@@ -299,7 +299,7 @@ class WidgetInstance(gobject.GObject):
             return True
         elif event.button == MOUSE_BUTTON_LEFT and self.state == STATE_MOVE:
             self.emit('begin-move-request')
-            return True
+            return False
 
 
     def button_release_cb(self, source, event):
@@ -309,7 +309,7 @@ class WidgetInstance(gobject.GObject):
             return True
         if event.button == MOUSE_BUTTON_LEFT and self.state == STATE_MOVE:
             self.emit('end-move-request')
-            return True
+            return False
 
 
     def navigation_request_cb(self, view, frame, request, action, decision):
@@ -322,13 +322,31 @@ class WidgetInstance(gobject.GObject):
             webbrowser.open(uri)
             return True
 
+
     def begin_move(self):
+
         self.state = STATE_MOVE
+
+        def fade(t, state):
+            self.widget_element.style.opacity = 1 - 0.3*state
+
+        t = cream.gui.Timeline(200, cream.gui.CURVE_SINE)
+        t.connect('update', fade)
+        t.run()
 
 
     def end_move(self):
+
         self.emit('end-move-request')
         self.state = STATE_NONE
+
+        def fade(t, state):
+            self.widget_element.style.opacity = 0.7 + 0.3*state
+
+        t = cream.gui.Timeline(200, cream.gui.CURVE_SINE)
+        t.connect('update', fade)
+        t.run()
+
 
 
 class Widget(gobject.GObject, cream.Component):
