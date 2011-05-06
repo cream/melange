@@ -39,7 +39,7 @@ from gpyconf.fields import MultiOptionField
 from common import HTTPSERVER_BASE_URL, \
                    STATE_MOVE, STATE_NONE, STATE_VISIBLE, \
                    MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT, \
-                   MOVE_TIMESTEP
+                   MOVE_TIMESTEP, OPACITY_MOVE
 
 class WidgetAPI(object):
     pass
@@ -296,6 +296,7 @@ class WidgetInstance(gobject.GObject):
             return True
         elif event.button == MOUSE_BUTTON_MIDDLE:
             self.emit('begin-move-request')
+            self.fade_out()
             return True
         elif event.button == MOUSE_BUTTON_LEFT and self.state == STATE_MOVE:
             self.emit('begin-move-request')
@@ -306,6 +307,7 @@ class WidgetInstance(gobject.GObject):
 
         if event.button == MOUSE_BUTTON_MIDDLE:
             self.emit('end-move-request')
+            self.fade_in()
             return True
         if event.button == MOUSE_BUTTON_LEFT and self.state == STATE_MOVE:
             self.emit('end-move-request')
@@ -327,12 +329,7 @@ class WidgetInstance(gobject.GObject):
 
         self.state = STATE_MOVE
 
-        def fade(t, state):
-            self.widget_element.style.opacity = 1 - 0.3*state
-
-        t = cream.gui.Timeline(200, cream.gui.CURVE_SINE)
-        t.connect('update', fade)
-        t.run()
+        self.fade_out()
 
 
     def end_move(self):
@@ -340,8 +337,23 @@ class WidgetInstance(gobject.GObject):
         self.emit('end-move-request')
         self.state = STATE_NONE
 
+        self.fade_in()
+
+
+    def fade_out(self):
+
         def fade(t, state):
-            self.widget_element.style.opacity = 0.7 + 0.3*state
+            self.widget_element.style.opacity = 1 - (1-OPACITY_MOVE)*state
+
+        t = cream.gui.Timeline(200, cream.gui.CURVE_SINE)
+        t.connect('update', fade)
+        t.run()
+
+
+    def fade_in(self):
+
+        def fade(t, state):
+            self.widget_element.style.opacity = OPACITY_MOVE + (1-OPACITY_MOVE)*state
 
         t = cream.gui.Timeline(200, cream.gui.CURVE_SINE)
         t.connect('update', fade)
