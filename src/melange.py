@@ -77,6 +77,7 @@ class WidgetLayer(TransparentWindow):
         self.connect('enter-notify-event', self.enter_notify_cb)
         self.connect('key-press-event', self.key_press_cb)
         self.connect('key-release-event', self.key_release_cb)
+        self.connect('focus-out-event', self.focus_out_cb)
 
         self.widgets = []
 
@@ -112,6 +113,7 @@ class WidgetLayer(TransparentWindow):
             except AttributeError:
                 pass
 
+
     def key_press_cb(self, window, event):
 
         if gtk.gdk.keyval_name(event.keyval) == 'Control_L':
@@ -140,6 +142,17 @@ class WidgetLayer(TransparentWindow):
             self.mode = STATE_MOVING
 
             return True
+
+
+    def focus_out_cb(self, window, event):
+
+        if self.mode == STATE_MOVE:
+            for widget in self.widgets:
+                widget.instance.end_move()
+                widget.instance.view.get_window().set_cursor(None)
+            self.mode = STATE_NONE
+        elif self.mode == STATE_MOVING:
+            self.mode = STATE_MOVE
 
 
 
