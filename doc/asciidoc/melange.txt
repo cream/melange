@@ -1,0 +1,52 @@
+melange(1)
+==========
+Paul Tagliamonte <paultag@ubuntu.com>
+v1.3.1, 5 May 2011
+:man source:   melange.txt
+:man version:  {revision}
+:man manual:   Cream Manual  
+
+NAME
+----
+melange - Start the melange DE engine.
+
+SYNOPSIS
+--------
+*melange*
+
+DESCRIPTION
+-----------
+Blah blah blah.
+Blah blah.
+Blah blah.
+
+OPTIONS
+-------
+No options.
+
+FILES
+-----
+No files.
+
+
+EXAMPLES
+--------
+Just start up the melange engine. You literally have to be
+brain dead to screw this up.
+
+	$ melange
+
+BUGS
+----
+*melange(1)* is alpha. There are more bugs then in my college dorm (a lot).
+
+AUTHORS
+-------
+The Cream Hackers. http://cream-project.org
+
+This manpage was converted to asciidoc format by Paul Tagliamonte
+<paultag@ubuntu.com> because Debian demands it.
+
+SEE ALSO
+--------
+melange(1)
