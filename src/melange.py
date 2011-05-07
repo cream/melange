@@ -40,7 +40,8 @@ from melange.widget import Widget
 from melange.httpserver import HttpServer
 from melange.hotkeys import HotkeyRecorder
 from melange.common import HTTPSERVER_HOST, HTTPSERVER_PORT, OVERLAY_FADE_DURATION, \
-                            STATE_NONE, STATE_MOVE, STATE_MOVING, MOUSE_BUTTON_LEFT
+                            STATE_NONE, STATE_MOVE, STATE_MOVING, MOUSE_BUTTON_LEFT, \
+                            MOUSE_BUTTON_RIGHT
 
 
 class TransparentWindow(gtk.Window):
@@ -71,6 +72,8 @@ class WidgetLayer(TransparentWindow):
     def __init__(self):
 
         TransparentWindow.__init__(self)
+
+        self.set_events(gtk.gdk.BUTTON_RELEASE_MASK)
 
         self.mode = STATE_NONE
 
@@ -356,6 +359,8 @@ class Melange(cream.Module, cream.ipc.Object):
 
         self.widgets = WidgetManager()
 
+        self.widgets.primary_widget_layer.connect('button-release-event', self.button_release_cb)
+
         # Scan for themes and add them to config...
         theme_dirs = [
             os.path.join(self.context.get_path(), 'data/themes'),
@@ -398,6 +403,25 @@ class Melange(cream.Module, cream.ipc.Object):
         return AddWidgetDialog(widgets)
 
 
+    @cream.util.cached_property
+    def menu(self):
+
+        item_add = gtk.ImageMenuItem(gtk.STOCK_ADD)
+        item_add.get_children()[0].set_label('Add widgets')
+        item_add.connect('activate', lambda *x: self.add_widget())
+
+        item_settings = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
+        item_settings.get_children()[0].set_label('Settings')
+        item_settings.connect('activate', lambda *x: self.config.show_dialog())
+
+        menu = gtk.Menu()
+        menu.append(item_add)
+        menu.append(item_settings)
+        menu.show_all()
+
+        return menu
+
+
     def hotkey_activated_cb(self, source, action):
 
         if action == 'toggle-overlay':
@@ -408,6 +432,12 @@ class Melange(cream.Module, cream.ipc.Object):
         if key == 'default_theme':
             for widget in self.widgets.values():
                 widget.reload()
+
+
+    def button_release_cb(self, window, event):
+
+        if event.button == MOUSE_BUTTON_RIGHT:
+            self.menu.popup(None, None, None, event.button, event.get_time())
 
 
     def run_server(self):
