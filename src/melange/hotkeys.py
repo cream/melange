@@ -48,8 +48,10 @@ class HotkeyRecorder(gobject.GObject):
 
 
     def _ooxcb_callback(self, source, condition):
-
-        reply = self.cookie.reply()
+        try:
+            reply = self.cookie.reply()
+        except ctypes.ArgumentError:
+            return True
         if reply is not None and reply.category == record.Category.FromServer:
             opcode = reply.data[0]
             event_type = self.connection.events[opcode]
