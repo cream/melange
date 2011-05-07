@@ -578,6 +578,9 @@ class Melange(cream.Module, cream.ipc.Object):
     def quit(self):
         """ Quit the module. """
 
+        for widget in self.widgets.values():
+            widget.config.save()
+
         self.config.widgets = self.widgets.values()
         cream.Module.quit(self)
 
