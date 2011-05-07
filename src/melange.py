@@ -38,6 +38,7 @@ from melange.dialogs import AddWidgetDialog
 
 from melange.widget import Widget
 from melange.httpserver import HttpServer
+from melange.hotkeys import HotkeyRecorder
 from melange.common import HTTPSERVER_HOST, HTTPSERVER_PORT, OVERLAY_FADE_DURATION, \
                             STATE_NONE, STATE_MOVE, STATE_MOVING, MOUSE_BUTTON_LEFT
 
@@ -75,9 +76,6 @@ class WidgetLayer(TransparentWindow):
 
         self.connect('leave-notify-event', self.leave_notify_cb)
         self.connect('enter-notify-event', self.enter_notify_cb)
-        self.connect('key-press-event', self.key_press_cb)
-        self.connect('key-release-event', self.key_release_cb)
-        self.connect('focus-out-event', self.focus_out_cb)
 
         self.widgets = []
 
@@ -88,6 +86,13 @@ class WidgetLayer(TransparentWindow):
 
         self.layout = cream.gui.CompositeBin()
         self.add(self.layout)
+
+        keysym, modifier_mask = gtk.accelerator_parse('Super_L')
+        self.ctrl_l_keysym = keysym
+
+        self.hotkey_recorder = HotkeyRecorder([(keysym, modifier_mask), (keysym, 64), (keysym, 320)])
+        self.hotkey_recorder.connect('key-press', self.key_press_cb)
+        self.hotkey_recorder.connect('key-release', self.key_release_cb)
 
 
     def enter_notify_cb(self, widget, event):
@@ -114,9 +119,9 @@ class WidgetLayer(TransparentWindow):
                 pass
 
 
-    def key_press_cb(self, window, event):
+    def key_press_cb(self, source, keysym, modifier_mask):
 
-        if gtk.gdk.keyval_name(event.keyval) == 'Control_L':
+        if keysym == self.ctrl_l_keysym and modifier_mask in [0, 64, 320]:
             self.mode = STATE_MOVE
             cursor = gtk.gdk.Cursor(gtk.gdk.FLEUR)
             for widget in self.widgets:
@@ -124,9 +129,9 @@ class WidgetLayer(TransparentWindow):
                 widget.instance.view.get_window().set_cursor(cursor)
 
 
-    def key_release_cb(self, window, event):
+    def key_release_cb(self, source, keysym, modifier_mask):
 
-        if gtk.gdk.keyval_name(event.keyval) == 'Control_L':
+        if keysym == self.ctrl_l_keysym and modifier_mask in [0, 64, 320]:
             if self.mode == STATE_MOVE:
                 for widget in self.widgets:
                     widget.instance.end_move()
@@ -142,18 +147,6 @@ class WidgetLayer(TransparentWindow):
             self.mode = STATE_MOVING
 
             return True
-
-
-    def focus_out_cb(self, window, event):
-
-        if self.mode == STATE_MOVE:
-            for widget in self.widgets:
-                widget.instance.end_move()
-                widget.instance.view.get_window().set_cursor(None)
-            self.mode = STATE_NONE
-        elif self.mode == STATE_MOVING:
-            self.mode = STATE_MOVE
-
 
 
     def button_release_cb(self, window, event):
