@@ -360,14 +360,3 @@ MooTools.More={version:"1.2.4.2",build:"bd5a93c0913cce25917c48cbdacde568e15e02ef
 }};this.timer=a.delay(this.options.initialDelay,this);this.lastDelay=this.options.initialDelay;this.completeCheck=function(c){$clear(this.timer);this.lastDelay=(c)?this.options.delay:(this.lastDelay+this.options.delay).min(this.options.limit);
 this.timer=a.delay(this.lastDelay,this);};return this.addEvent("complete",this.completeCheck);},stopTimer:function(){$clear(this.timer);return this.removeEvent("complete",this.completeCheck);
 }});
-
-var _mootools_entered = new Array();
-
-Element.Events.mouseenter = {
-    base: "mouseover",
-    condition: function(event){
-        _mootools_entered.include(this);
-        return true;
-    }
-
-};

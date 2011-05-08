@@ -1,5 +1,16 @@
 var DEBUG = false;
 
+var _mootools_entered = new Array();
+
+Element.Events.mouseenter = {
+    base: "mouseover",
+    condition: function(event){
+        _mootools_entered.include(this);
+        return true;
+    }
+
+};
+
 var API = new Class({
     Implements: Events
 });
