@@ -1,5 +1,5 @@
 import gobject
-import gtk
+from gi.repository import Gtk as gtk
 import ctypes
 
 import ooxcb

@@ -23,8 +23,7 @@ import shutil
 import weakref
 
 import gobject
-import gtk
-import webkit
+from gi.repository import Gtk as gtk, Gdk as gdk, WebKit as webkit
 import javascriptcore as jscore
 import webbrowser
 
@@ -120,7 +119,7 @@ class WidgetInstance(gobject.GObject):
         self.view.set_settings(settings)
 
         # Connecting to signals:
-        self.view.connect('expose-event', self.resize_cb)
+        self.view.connect('draw', self.resize_cb)
         self.view.connect('button-press-event', self.button_press_cb)
         self.view.connect('button-release-event', self.button_release_cb)
         self.view.connect('new-window-policy-decision-requested', self.navigation_request_cb)
@@ -134,18 +133,18 @@ class WidgetInstance(gobject.GObject):
         self.view.connect('drag_data_received', self.drag_data_cb)
 
         # Building context menu:
-        item_configure = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
+        item_configure = gtk.ImageMenuItem.new_from_stock(gtk.STOCK_PREFERENCES, None)
         item_configure.get_children()[0].set_label("Configure")
         item_configure.connect('activate', lambda *x: self.emit('show-config-dialog-request'))
 
-        item_reload = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
+        item_reload = gtk.ImageMenuItem.new_from_stock(gtk.STOCK_REFRESH, None)
         item_reload.get_children()[0].set_label("Reload")
         item_reload.connect('activate', lambda *x: self.emit('reload-request'))
 
-        item_remove = gtk.ImageMenuItem(gtk.STOCK_REMOVE)
+        item_remove = gtk.ImageMenuItem.new_from_stock(gtk.STOCK_REMOVE, None)
         item_remove.connect('activate', lambda *x: self.emit('remove-request'))
 
-        item_about = gtk.ImageMenuItem(gtk.STOCK_ABOUT)
+        item_about = gtk.ImageMenuItem.new_from_stock(gtk.STOCK_ABOUT, None)
         item_about.connect('activate', lambda *x: self.emit('show-about-dialog-request'))
 
         self.menu = gtk.Menu()
@@ -382,11 +381,12 @@ class Widget(gobject.GObject, cream.Component):
 
         self.state = STATE_NONE
 
-        width = gtk.gdk.screen_width()
-        height = gtk.gdk.screen_height()
+        screen = gdk.Screen.get_default()
+        width = screen.get_width()
+        height = screen.get_height()
         self._position = (int(width/2), int(height/2))
 
-        self.display = gtk.gdk.display_get_default()
+        self.display = gdk.Display.get_default()
 
         self.instance_id = '%s' % random_hash(bits=100)[0:32]
 

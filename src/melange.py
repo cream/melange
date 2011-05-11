@@ -23,7 +23,7 @@ from operator import itemgetter
 import gobject
 gobject.threads_init()
 
-import gtk
+from gi.repository import Gtk as gtk, Gdk as gdk
 import cairo
 
 import cream
@@ -52,15 +52,13 @@ class TransparentWindow(gtk.Window):
 
         self.alpha = 0
 
-        self.set_colormap(self.get_screen().get_rgba_colormap())
+        #self.set_colormap(self.get_screen().get_rgba_colormap())
         self.set_app_paintable(True)
-        self.connect('expose-event', self.expose_cb)
+        self.connect('draw', self.draw_cb)
 
 
-    def expose_cb(self, source, event):
+    def draw_cb(self, window, ctx):
         """ Clear the widgets background. """
-
-        ctx = source.window.cairo_create()
 
         ctx.set_operator(cairo.OPERATOR_SOURCE)
         ctx.set_source_rgba(0, 0, 0, self.alpha)
@@ -73,7 +71,7 @@ class WidgetLayer(TransparentWindow):
 
         TransparentWindow.__init__(self)
 
-        self.set_events(gtk.gdk.BUTTON_RELEASE_MASK)
+        self.set_events(gdk.EventMask.BUTTON_RELEASE_MASK)
 
         self.mode = STATE_NONE
 
@@ -202,10 +200,10 @@ class WidgetLayerCanvas(object):
     def __init__(self, widget_layer):
 
         self.widget_layer = widget_layer
-        self.widget_layer.connect('expose-event', self.expose_cb)
+        self.widget_layer.connect('draw', self.draw_cb)
 
 
-    def expose_cb(self, widget_layer, event):
+    def draw_cb(self, widget_layer, event):
         self._draw()
 
 
@@ -222,7 +220,7 @@ class PrimaryWidgetLayer(WidgetLayer):
     def __init__(self):
 
         WidgetLayer.__init__(self)
-        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DESKTOP)
+        self.set_type_hint(gdk.WindowTypeHint.DESKTOP)
 
         self.background = WidgetLayerCanvas(self)
 
@@ -239,8 +237,9 @@ class WidgetManager(gobject.GObject):
 
         gobject.GObject.__init__(self)
 
-        self.screen_width = gtk.gdk.screen_width()
-        self.screen_height = gtk.gdk.screen_height()
+        screen = gdk.Screen.get_default()
+        self.screen_width = screen.get_width()
+        self.screen_height = screen.get_height()
 
         self.signal_handlers = {}
         self.widgets = {}

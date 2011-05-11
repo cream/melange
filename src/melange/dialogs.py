@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import gtk
+from gi.repository import Gtk as gtk
 from os.path import join, dirname
 
 from categories import categories
