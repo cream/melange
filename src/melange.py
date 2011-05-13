@@ -398,6 +398,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
     @cream.util.cached_property
     def add_widget_dialog(self):
+
         widgets = sorted(self.available_widgets.get(),
                           key=itemgetter('name')
         )
@@ -430,6 +431,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
 
     def configuration_value_changed_cb(self, source, key, value):
+
         if key == 'default_theme':
             for widget in self.widgets.values():
                 widget.reload()
