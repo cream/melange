@@ -17,7 +17,6 @@
 # MA 02110-1301, USA.
 
 import os
-import time
 import thread
 from operator import itemgetter
 
@@ -31,7 +30,7 @@ import cream
 import cream.manifest
 import cream.ipc
 import cream.gui
-import cream.util, cream.util.pywmctrl
+import cream.util
 
 from gpyconf.fields import MultiOptionField
 
