@@ -386,12 +386,9 @@ class Melange(cream.Module, cream.ipc.Object):
             os.path.join(self.context.get_user_path(), 'data/widgets')
             ]
             
-        s = time.time()
         self.available_widgets = cream.manifest.ManifestDB(widget_dirs,
                                             type='org.cream.melange.Widget'
         )
-        
-        self.messages.debug("Loading widget manifests took {0} seconds.".format(time.time() - s))
 
         def _load_widgets():
             for widget in self.config.widgets:
