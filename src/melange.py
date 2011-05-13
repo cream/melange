@@ -17,6 +17,7 @@
 # MA 02110-1301, USA.
 
 import os
+import time
 import thread
 from operator import itemgetter
 
@@ -371,7 +372,7 @@ class Melange(cream.Module, cream.ipc.Object):
         self.config._add_field(
             'default_theme',
             MultiOptionField('Default Theme',
-                options=((k, v['name']) for k, v in self.themes.by_id.items())
+                options=((t['id'], t['name']) for t in self.themes.get())
             )
         )
 
@@ -384,9 +385,13 @@ class Melange(cream.Module, cream.ipc.Object):
             os.path.join(self.context.get_path(), 'data/widgets'),
             os.path.join(self.context.get_user_path(), 'data/widgets')
             ]
+            
+        s = time.time()
         self.available_widgets = cream.manifest.ManifestDB(widget_dirs,
                                             type='org.cream.melange.Widget'
         )
+        
+        self.messages.debug("Loading widget manifests took {0} seconds.".format(time.time() - s))
 
         def _load_widgets():
             for widget in self.config.widgets:
@@ -397,7 +402,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
     @cream.util.cached_property
     def add_widget_dialog(self):
-        widgets = sorted(self.available_widgets.by_id.itervalues(),
+        widgets = sorted(self.available_widgets.get(),
                           key=itemgetter('name')
         )
         return AddWidgetDialog(widgets)
@@ -481,7 +486,7 @@ class Melange(cream.Module, cream.ipc.Object):
         self.messages.debug("Loading widget '%s'..." % name)
 
         # Initialize the widget...
-        widget = Widget(self.available_widgets.get_by_name(name)._path, backref=self)
+        widget = Widget(list(self.available_widgets.get(name=name))[0]._path, backref=self)
 
         if profile:
             index, _ = widget.config.profiles.find_by_name(profile)
@@ -509,8 +514,8 @@ class Melange(cream.Module, cream.ipc.Object):
 
         res = {}
 
-        for id, w in self.available_widgets.by_id.iteritems():
-            res[id] = {
+        for w in self.available_widgets.get():
+            res[w['id']] = {
                 'name': w['name'],
                 'description': '',
                 'path': '',

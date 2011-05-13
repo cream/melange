@@ -55,14 +55,14 @@ class WidgetConfiguration(Configuration):
             'widget_skin',
             MultiOptionField('Skin',
                 section='Appearance',
-                options=((key, val['name']) for key, val in skins.iteritems())
+                options=((s['id'], s['name']) for s in skins.get())
             )
         )
         self._add_field(
             'widget_theme',
             MultiOptionField('Theme',
                 section='Appearance',
-                options=([('use.the.fucking.global.settings.and.suck.my.Dick', 'Use global settings')] + [(key, val['name']) for key, val in themes.iteritems()])
+                options=([('use.the.fucking.global.settings.and.suck.my.Dick', 'Use global settings')] + [(t['id'], t['name']) for t in themes.get()])
             )
         )
 
@@ -399,8 +399,8 @@ class Widget(gobject.GObject, cream.Component):
 
         self.config = WidgetConfiguration(scheme_path,
                                           path,
-                                          skins=self.skins.by_id,
-                                          themes=self.__melange_ref__().themes.by_id)
+                                          skins=self.skins,
+                                          themes=self.__melange_ref__().themes)
         self.config.connect('field-value-changed', self.configuration_value_changed_cb)
 
         self.load()
@@ -428,14 +428,14 @@ class Widget(gobject.GObject, cream.Component):
         return os.path.join(
             self.context.working_directory,
             'skins',
-            os.path.dirname(self.skins.get_by_id(skin_id)._path)
+            os.path.dirname(self.skins.get(id=skin_id).next()._path)
         )
 
     def get_current_theme(self):
         theme_id = self.config.widget_theme
         if theme_id == 'use.the.fucking.global.settings.and.suck.my.Dick':
             theme_id = self.__melange_ref__().config.default_theme
-        return self.__melange_ref__().themes.get_by_id(theme_id)
+        return self.__melange_ref__().themes.get(id=theme_id).next()
 
 
     def begin_move(self):
