@@ -459,14 +459,6 @@ class Melange(cream.Module, cream.ipc.Object):
         self.add_widget_dialog.dialog.hide()
 
 
-    @cream.ipc.method('', '')
-    def debug_memory(self):
-
-        from guppy import hpy
-        h = hpy()
-        print h.heap()
-
-
     @cream.ipc.method('svvs', '')
     def load_widget(self, name, x=None, y=None, profile=None):
         """
