@@ -58,7 +58,7 @@
                         <property name="headers_clickable">False</property>
                         <property name="enable_search">False</property>
                         <child>
-                          <object class="GtkTreeViewColumn" id="treeviewcolumn1">
+                          <object class="GtkTreeViewColumn" id="column_widget">
                             <property name="resizable">True</property>
                             <property name="title">column</property>
                             <property name="expand">True</property>

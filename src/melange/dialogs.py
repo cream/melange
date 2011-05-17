@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import gobject
 import gtk
 from os.path import join, dirname
 
@@ -8,9 +9,17 @@ from categories import categories
 ICON_SIZE_SMALL = 24
 ICON_SIZE_BIG = 48
 
-class AddWidgetDialog(object):
+class AddWidgetDialog(gobject.GObject):
+    
+    __gtype_name__ = 'AddWidgetDialog'
+    __gsignals__ = {
+        'load-widget': (gobject.SIGNAL_RUN_LAST, None, (gobject.TYPE_PYOBJECT,))
+    }
 
     def __init__(self, widgets):
+        
+        gobject.GObject.__init__(self)
+
         self.widgets = {}
 
         interface = gtk.Builder()
@@ -29,6 +38,8 @@ class AddWidgetDialog(object):
         self.category_view.connect('cursor-changed',
                                     lambda *x: self.on_category_change()
         )
+        self.widget_view.set_events(self.widget_view.get_events() | gtk.gdk.BUTTON_PRESS_MASK)
+        self.widget_view.connect('button-press-event', self.widget_view_press_event_cb)
 
         # add the categories to the liststore alphabetically
         categories_ = sorted(categories.iteritems(),
@@ -52,6 +63,12 @@ class AddWidgetDialog(object):
                 self._add_to_category(category['id'], widget)
 
         self.category_view.set_cursor(0)
+        
+
+    def widget_view_press_event_cb(self, widget_view, event):
+        if event.type == gtk.gdk._2BUTTON_PRESS:
+            self.emit('load-widget', self.selected_widget)
+
 
     def _add_to_category(self, category, widget):
         if category in self.widgets:

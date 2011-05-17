@@ -392,6 +392,8 @@ class Melange(cream.Module, cream.ipc.Object):
         def _load_widgets():
             for widget in self.config.widgets:
                self.load_widget(**widget)
+               
+        self.add_widget_dialog.connect('load-widget', lambda dialog, widget: self.load_widget(widget, False, False))
 
         gobject.timeout_add(100, _load_widgets)
 
