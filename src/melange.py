@@ -1,3 +1,4 @@
+
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -54,6 +55,7 @@ class TransparentWindow(gtk.Window):
 
         #self.set_colormap(self.get_screen().get_rgba_colormap())
         self.set_app_paintable(True)
+        self.set_has_resize_grip(False)
         self.connect('draw', self.draw_cb)
 
 
