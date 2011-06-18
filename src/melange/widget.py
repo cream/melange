@@ -32,6 +32,7 @@ import cream.base
 import cream.gui
 from cream.util import cached_property, random_hash, extend_querystring
 from melange.api import APIS, PyToJSInterface
+from melange.dialogs import AboutDialog
 
 from cream.config import Configuration
 from gpyconf.fields import MultiOptionField
@@ -562,23 +563,7 @@ class Widget(gobject.GObject, cream.Component):
     def about_dialog(self):
         """ Show the 'About' dialog. """
 
-        about_dialog = gtk.AboutDialog()
-        about_dialog.connect('response', lambda *x: self.about_dialog.hide())
-        about_dialog.connect('delete-event', lambda *x: True)
-
-        about_dialog.set_name(self.context.manifest['name'])
-
-        authors = ['{0} <{1}>'.format(author.get('name'),author.get('mail'))
-                            for author in self.context.manifest['authors']]
-        about_dialog.set_authors(authors)
-
-        if self.context.manifest.get('icon'):
-            icon = gtk.gdk.pixbuf_new_from_file(self.context.manifest['icon'])
-            icon = icon.scale_simple(64, 64, gtk.gdk.INTERP_HYPER)
-            about_dialog.set_logo(icon)
-        about_dialog.set_comments(self.context.manifest['description'])
-
-        return about_dialog
+        return AboutDialog(self.context.manifest)
 
 
     def __xmlserialize__(self):
