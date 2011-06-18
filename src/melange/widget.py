@@ -493,7 +493,8 @@ class Widget(gobject.GObject, cream.Component):
 
 
     def resize_request_cb(self, widget_instance, width, height):
-        pass
+
+        self.instance.view.set_size_request(width, height)
 
 
     def focus_request_cb(self, source):
