@@ -7,7 +7,10 @@ from os.path import join, dirname
 from categories import categories
 
 ICON_SIZE_SMALL = 24
-ICON_SIZE_BIG = 48
+ICON_SIZE_MEDIUM = 48
+ICON_SIZE_BIG = 64
+
+AUTHOR = '{0} <{1}>'
 
 class AddWidgetDialog(gobject.GObject):
     
@@ -84,9 +87,9 @@ class AddWidgetDialog(gobject.GObject):
 
         category = categories[self.selected_category]
         theme = gtk.icon_theme_get_default()
-        icon_info = theme.lookup_icon(category['icon'], ICON_SIZE_BIG, 0)
+        icon_info = theme.lookup_icon(category['icon'], ICON_SIZE_MEDIUM, 0)
         icon = gtk.gdk.pixbuf_new_from_file_at_size(icon_info.get_filename(),
-                                                    ICON_SIZE_BIG, ICON_SIZE_BIG)
+                                                    ICON_SIZE_MEDIUM, ICON_SIZE_MEDIUM)
 
         self.category_image.set_from_pixbuf(icon)
 
@@ -129,6 +132,39 @@ class AddWidgetDialog(gobject.GObject):
         selection = self.category_view.get_selection()
         model, iter = selection.get_selected()
         return model.get_value(iter, 1)
+
+
+class AboutDialog(gtk.AboutDialog):
+
+    def __init__(self, manifest):
+
+        gtk.AboutDialog.__init__(self)
+
+        self.connect('response', lambda *x: self.hide())
+        self.connect('delete-event', lambda *x: True)
+
+        self.set_name(manifest['name'])
+
+        developers, designers = [], []
+
+        for author in manifest['authors']:
+            author_info = AUTHOR.format(author.get('name'), author.get('mail'))
+            if author.get('type') == 'developer':
+                developers.append(author_info)
+            elif author.get('type') == 'designer':
+                designers.append(author_info)
+
+        self.set_authors(developers)
+        self.set_artists(designers)
+
+        if manifest.get('icon', None):
+            icon = gtk.gdk.pixbuf_new_from_file_at_size(manifest['icon'],
+                                                        ICON_SIZE_BIG,
+                                                        ICON_SIZE_BIG)
+            self.set_logo(icon)
+
+        self.set_comments(manifest['description'])
+
 
 def split_string(description):
     """split a long string into multiple lines"""
