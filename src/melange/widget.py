@@ -16,10 +16,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
 
-import sys
 import os
+import cairo
 import json
 
+from gi.repository import GtkClutter as gtkclutter
+from gi.repository import GObject as gobject, WebKit as webkit, Gtk as gtk, Gdk as gdk
 
 from cream.util import cached_property, extend_querystring, random_hash
 from cream.config import Configuration
@@ -114,21 +116,21 @@ class Widget(gobject.GObject):
         self.path = path
         self.themes = themes
 
-    def drag_motion_cb(self, widget, context, x, y, time):
-        context.drag_status(gtk.gdk.ACTION_MOVE, time)
-        return True
+        self.position = (x, y)
 
         self.websocket_handler = None
         self.api = None
 
 
+    def load(self):
 
-    def drag_data_cb(self, widget, context, x, y, data, info, time):
+        self.view = webkit.WebView()
+        self.view.set_transparent(True)
 
-        def check_for_drop_handlers(e):
-            if not isinstance(e.retrieve('events'), jscore.JSObject) or not 'drop' in e.retrieve('events'):
-                return False
-            return True
+        settings = self.view.get_settings()
+        settings.set_property('enable-plugins', False)
+        settings.set_property('enable_default_context_menu', False)
+        self.view.set_settings(settings)
 
         self.view.connect('draw', self.draw)
         self.view.connect('button-release-event', self.button_release_cb)
@@ -137,10 +139,9 @@ class Widget(gobject.GObject):
         url = HTTP_BASE_URL + 'widget/index.html?id={id}'.format(id=self.instance_id)
         self.view.open(url)
 
-    def resource_request_cb(self, view, frame, resource, request, response):
-        uri = request.get_property('uri')
-        uri = extend_querystring(uri, {'instance': self.widget_ref().instance_id})
-        request.set_property('uri', uri)
+        self.actor = gtkclutter.Actor.new_with_contents(self.view)
+        self.actor.set_reactive(True)
+        self.actor.set_position(*self.position)
 
 
     @cached_property
@@ -351,20 +352,14 @@ class Widget(gobject.GObject, cream.Component):
         self.websocket_handler.send(response)
 
 
-        self.instance.connect('show-config-dialog-request', lambda *args: self.config.show_dialog())
-        self.instance.connect('show-about-dialog-request', lambda *args: self.about_dialog.show_all())
-        self.instance.connect('resize-request', self.resize_request_cb)
-        self.instance.connect('remove-request', lambda *args: self.emit('remove-request'))
-        self.instance.connect('raise-request', lambda *args: self.emit('raise-request'))
-        self.instance.connect('reload-request', lambda *args: self.reload())
-        self.instance.connect('focus-request', self.focus_request_cb)
-        self.instance.connect('begin-move-request', self.begin_move_request_cb)
-        self.instance.connect('end-move-request', self.end_move_request_cb)
+    def draw(self, view, ctx):
 
+        ctx = gdk.cairo_create(self.view.get_window())
 
-    def begin_move_request_cb(self, source):
+        ctx.set_operator(cairo.OPERATOR_CLEAR)
+        ctx.set_source_rgba(0, 0, 0, 0)
+        ctx.paint()
 
-        self.begin_move()
 
 
     def end_move_request_cb(self, source):

@@ -17,54 +17,24 @@
 # MA 02110-1301, USA.
 
 import os
-import thread
-from operator import itemgetter
-
-import gobject
-gobject.threads_init()
-
-import gtk
+import sys
 import cairo
 
+
+from gi.repository import GtkClutter as gtkclutter
+gtkclutter.init(sys.argv)
+
+from gi.repository import (Gtk as gtk, Gdk as gdk, GObject as gobject, Gio as gio, GLib as glib,
+                           Clutter as clutter)
+
 import cream
-import cream.manifest
-import cream.ipc
-import cream.gui
-import cream.util
+import cream.path
+from cream.util import cached_property
 
-from gpyconf.fields import MultiOptionField
-
-from melange.dialogs import AddWidgetDialog
-
-from melange.widget import Widget
-from melange.hotkeys import HotkeyRecorder
-from melange.common import HTTPSERVER_HOST, HTTPSERVER_PORT, OVERLAY_FADE_DURATION, \
-                            STATE_NONE, STATE_MOVE, STATE_MOVING, MOUSE_BUTTON_LEFT, \
-                            MOUSE_BUTTON_RIGHT
-
-
-class TransparentWindow(gtk.Window):
-
-    def __init__(self):
-
-        gtk.Window.__init__(self)
-
-        self.alpha = 0
-
-        self.set_colormap(self.get_screen().get_rgba_colormap())
-        self.set_app_paintable(True)
-        self.connect('expose-event', self.expose_cb)
-
-
-    def expose_cb(self, source, event):
-        """ Clear the widgets background. """
-
-        ctx = source.window.cairo_create()
+from melange.widget import WidgetManager
 from melange.server import Server
+from melange.utils import get_screen_size
 
-        ctx.set_operator(cairo.OPERATOR_SOURCE)
-        ctx.set_source_rgba(0, 0, 0, self.alpha)
-        ctx.paint()
 
 
 class WidgetLayer(TransparentWindow):
@@ -109,115 +79,68 @@ class WidgetLayer(TransparentWindow):
             except AttributeError:
                 pass
 
+class TransparentWindow(gtk.Window):
 
-    def leave_notify_cb(self, widget, event):
+    def __init__(self):
 
-        for widget in self.widgets:
-            try:
-                for i in xrange(widget.instance.js_context._mootools_entered.length):
-                    e = widget.instance.js_context._mootools_entered[i]
-                    e.fireEvent('mouseleave')
-                widget.instance.js_context._mootools_entered.erase()
-            except AttributeError:
-                pass
+        gtk.Window.__init__(self)
 
+        self.alpha = 0
 
-    def key_press_cb(self, source, keysym, modifier_mask):
+        self.set_app_paintable(True)
+        self.set_decorated(False)
+        self.set_type_hint(gdk.WindowTypeHint.DESKTOP)
 
-        if keysym == self.ctrl_l_keysym and modifier_mask in [0, 64, 320]:
-            self.mode = STATE_MOVE
-            cursor = gtk.gdk.Cursor(gtk.gdk.FLEUR)
-            for widget in self.widgets:
-                widget.instance.begin_move()
-                widget.instance.view.get_window().set_cursor(cursor)
+        screen = gdk.Screen.get_default()
+        self.set_visual(screen.get_rgba_visual())
+
+        self.connect('draw', self.draw_cb)
 
 
-    def key_release_cb(self, source, keysym, modifier_mask):
+    def draw_cb(self, source, ctx):
+        """ Clear the widgets background. """
 
-        if keysym == self.ctrl_l_keysym and modifier_mask in [0, 64, 320]:
-            if self.mode == STATE_MOVE:
-                for widget in self.widgets:
-                    widget.instance.end_move()
-                    widget.instance.view.get_window().set_cursor(None)
-                self.mode = STATE_NONE
-            elif self.mode == STATE_MOVING:
-                self.mode = STATE_MOVE
+        ctx.set_operator(cairo.OPERATOR_SOURCE)
+        ctx.set_source_rgba(0, 0, 0, self.alpha)
+        ctx.paint()
 
 
-    def button_press_cb(self, window, event):
 
-        if self.mode == STATE_MOVE:
-            self.mode = STATE_MOVING
+class MelangeWindow(TransparentWindow):
 
-            return True
+    def __init__(self):
 
+        TransparentWindow.__init__(self)
 
-    def button_release_cb(self, window, event):
+        self.set_default_size(*get_screen_size())
 
-        if self.mode == STATE_MOVE:
-            for widget in self.widgets:
-                widget.instance.end_move()
-                widget.instance.view.get_window().set_cursor(None)
-            self.mode = STATE_NONE
-        elif self.mode == STATE_MOVING:
-            self.mode = STATE_MOVE
+        self.embed = gtkclutter.Embed()
+        self.add(self.embed)
 
-            return True
-
+        self.stage = self.embed.get_stage()
+        self.stage.set_use_alpha(True)
+        self.stage.set_opacity(0)
 
 
     def add_widget(self, widget):
 
-        self.widgets.append(widget)
+        action = clutter.DragAction()
+        action.set_drag_threshold(5, 5)
+        action.connect('drag-end', self.on_drag_end, widget)
+        widget.actor.add_action(action)
 
-        view = widget.instance.get_view()
-        view.connect('button-press-event', self.button_press_cb)
-        view.connect('button-release-event', self.button_release_cb)
-        self.layout.add(view, *widget.get_position())
-        view.show_all()
+        widget.actor.show_all()
 
-
-    def remove_widget(self, widget):
-
-        self.widgets.remove(widget)
-
-        view = widget.instance.get_view()
-        self.layout.remove(view)
+        self.stage.add_actor(widget.actor)
 
 
-    def raise_widget(self, widget):
+    def on_drag_end(self, action, actor, x, y, modifiers, widget):
 
-        view = widget.instance.get_view()
-        self.layout.raise_child(view)
-
-
-    def move_widget(self, widget, x, y):
-
-        view = widget.instance.get_view()
-        self.layout.move(view, x, y)
+        x, y = map(int, actor.get_position())
+        widget.position = (x, y)
 
 
-class WidgetLayerCanvas(object):
-
-    def __init__(self, widget_layer):
-
-        self.widget_layer = widget_layer
-        self.widget_layer.connect('expose-event', self.expose_cb)
-
-
-    def expose_cb(self, widget_layer, event):
-        self._draw()
-
-
-    def draw(self):
-        self.widget_layer.window.invalidate_rect(self.widget_layer.allocation, True)
-
-
-    def _draw(self):
-        pass
-
-
-class PrimaryWidgetLayer(WidgetLayer):
+class Melange(cream.Module):
 
     def __init__(self):
 
@@ -314,6 +237,10 @@ class WidgetManager(gobject.GObject):
         self.server = Server(self.widgets, self.common_path)
         self.server.start()
 
+        self.window = MelangeWindow()
+        self.window.connect('delete-event', lambda *x: self.quit())
+        self.window.connect('button-release-event', self.show_menu)
+        self.window.show_all()
 
     def remove_request_cb(self, widget):
 
@@ -340,60 +267,11 @@ class WidgetManager(gobject.GObject):
 
         self.emit('widget-removed', widget)
 
+    def show_menu(self, window, event):
 
-class Melange(cream.Module, cream.ipc.Object):
-    """ The main class of the Melange module. """
+        if event.button == MOUSE_BUTTON_RIGHT:
+            self.menu.popup(None, None, None, None, event.button, event.get_time())
 
-    def __init__(self):
-
-        cream.Module.__init__(self, 'org.cream.Melange')
-
-        cream.ipc.Object.__init__(self,
-            'org.cream.Melange',
-            '/org/cream/Melange'
-        )
-
-        self.run_server()
-
-        self.widgets = WidgetManager()
-
-        self.widgets.primary_widget_layer.connect('button-release-event', self.button_release_cb)
-
-        # Scan for themes and add them to config...
-        theme_dirs = [
-            os.path.join(self.context.get_path(), 'data/themes'),
-            os.path.join(self.context.get_user_path(), 'data/themes')
-            ]
-        self.themes = cream.manifest.ManifestDB(theme_dirs, type='org.cream.melange.Theme')
-
-        self.config._add_field(
-            'default_theme',
-            MultiOptionField('Default Theme',
-                options=((t['id'], t['name']) for t in self.themes.get())
-            )
-        )
-
-        self.config.read()
-        self.config.connect('field-value-changed', self.configuration_value_changed_cb)
-
-        self.hotkeys.connect('hotkey-activated', self.hotkey_activated_cb)
-
-        widget_dirs = [
-            os.path.join(self.context.get_path(), 'data/widgets'),
-            os.path.join(self.context.get_user_path(), 'data/widgets')
-            ]
-            
-        self.available_widgets = cream.manifest.ManifestDB(widget_dirs,
-                                            type='org.cream.melange.Widget'
-        )
-
-        def _load_widgets():
-            for widget in self.config.widgets:
-               self.load_widget(**widget)
-               
-        self.add_widget_dialog.connect('load-widget', lambda dialog, widget: self.load_widget(widget, False, False))
-
-        gobject.timeout_add(100, _load_widgets)
 
 
     @cream.util.cached_property
@@ -405,20 +283,15 @@ class Melange(cream.Module, cream.ipc.Object):
         return AddWidgetDialog(widgets)
 
 
-    @cream.util.cached_property
+    @cached_property
     def menu(self):
 
         item_add = gtk.ImageMenuItem(gtk.STOCK_ADD)
         item_add.get_children()[0].set_label('Add widgets')
-        item_add.connect('activate', lambda *x: self.add_widget())
-
-        item_settings = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
-        item_settings.get_children()[0].set_label('Settings')
-        item_settings.connect('activate', lambda *x: self.config.show_dialog())
+        item_add.connect('activate', lambda *x: self.show_dialog())
 
         menu = gtk.Menu()
         menu.append(item_add)
-        menu.append(item_settings)
         menu.show_all()
 
         return menu
