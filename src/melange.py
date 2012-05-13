@@ -36,10 +36,14 @@ from melange.server import Server
 from melange.utils import get_screen_size
 
 
+def yield_available_widgets():
 
-class WidgetLayer(TransparentWindow):
+    for path in cream.path.CREAM_DIRS:
+        path = os.path.join(path, 'org.cream.Melange/data/widgets')
+        if os.path.isdir(path):
+            for name in os.listdir(path):
+                yield name, os.path.join(path, name)
 
-    def __init__(self):
 
 def yield_available_themes():
 
@@ -49,10 +53,7 @@ def yield_available_themes():
             for name in os.listdir(path):
                 yield name, os.path.join(path, name)
 
-        self.mode = STATE_NONE
 
-        self.connect('leave-notify-event', self.leave_notify_cb)
-        self.connect('enter-notify-event', self.enter_notify_cb)
 
 class MelangeTheme(object):
 
@@ -149,21 +150,24 @@ class Melange(cream.Module):
         self.window.connect('button-release-event', self.show_menu)
         self.window.show_all()
 
-    def remove_request_cb(self, widget):
+        # load widgets from last time
+        widgets = list(self.config.get_value('widgets'))
+        if widgets:
+            for widget_id, path, x, y in widgets:
+                self.load_widget(widget_id, path, int(x), int(y))
 
-        self.remove(widget)
-        self.primary_widget_layer.remove_widget(widget)
-        widget.remove()
 
+    def load_widget(self, widget_id, path=None, x=0, y=0):
 
-    def reload_request_cb(self, widget):
+        if path is None:
+            path = self.available_widgets[widget_id]['path']
 
-        self.primary_widget_layer.remove_widget(widget)
+        widget = self.widgets.add_widget(widget_id, path, x, y, self.themes)
+        widget.connect('remove', self.remove_widget_cb)
         widget.load()
-        self.primary_widget_layer.add_widget(widget)
 
+        self.window.add_widget(widget)
 
-    def remove(self, widget):
 
         del self[widget.instance_id]
 
@@ -180,14 +184,14 @@ class Melange(cream.Module):
             self.menu.popup(None, None, None, None, event.button, event.get_time())
 
 
+    @cached_property
+    def available_widgets(self):
 
-    @cream.util.cached_property
-    def add_widget_dialog(self):
+        widgets = {}
+        for widget_id, path in yield_available_widgets():
+            widgets[widget_id] = {'path': path}
 
-        widgets = sorted(self.available_widgets.get(),
-                          key=itemgetter('name')
-        )
-        return AddWidgetDialog(widgets)
+        return widgets
 
 
     @cached_property
