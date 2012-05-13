@@ -130,83 +130,34 @@ class Widget(gobject.GObject):
         skin_path = os.path.join(self.path, 'data/skins')
         return [WidgetSkin(skin_path, name) for name in os.listdir(skin_path)]
 
+    @cached_property
+    def menu(self):
 
-class Widget(gobject.GObject, cream.Component):
+        # Building context menu:
+        item_configure = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
+        item_configure.get_children()[0].set_label("Configure")
+        item_configure.connect('activate', self.show_config_dialog)
 
-    __gtype_name__ = 'Widget'
-    __gsignals__ = {
-        'raise-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'remove-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'reload-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
-        'begin-move': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'end-move': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
-        }
+        #item_reload = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
+        #item_reload.get_children()[0].set_label("Reload")
+        #item_reload.connect('activate', lambda *x: self.emit('reload-request'))
 
-    def __init__(self, path, backref):
-        self.__melange_ref__ = weakref.ref(backref)
-        exec_mode = self.__melange_ref__().context.execution_mode
+        item_remove = gtk.ImageMenuItem(gtk.STOCK_REMOVE)
+        item_remove.get_children()[0].set_label("Remove")
+        item_remove.connect('activate', self.remove_cb)
 
-        gobject.GObject.__init__(self)
-        cream.base.Component.__init__(self, path=path, user_path_prefix='org.cream.Melange/data/widgets', exec_mode=exec_mode)
+        item_about = gtk.ImageMenuItem(gtk.STOCK_ABOUT)
+        item_about.get_children()[0].set_label("About")
+        item_about.connect('activate', self.show_about_dialog)
 
-        self.state = STATE_NONE
+        menu = gtk.Menu()
+        menu.append(item_configure)
+        #menu.append(item_reload)
+        menu.append(item_remove)
+        menu.append(item_about)
+        menu.show_all()
 
-        width = gtk.gdk.screen_width()
-        height = gtk.gdk.screen_height()
-        self._position = (int(width/2), int(height/2))
-
-        self.display = gtk.gdk.display_get_default()
-
-        self.instance_id = '%s' % random_hash(bits=100)[0:32]
-
-        # TODO: User self.context.get(_user)_path()
-        skin_dir = os.path.join(self.context.working_directory, 'data', 'skins')
-        self.skins = cream.manifest.ManifestDB(skin_dir, type='org.cream.melange.Skin')
-
-        scheme_path = os.path.join(self.context.get_path(), 'configuration/scheme.xml')
-        path = os.path.join(self.context.get_user_path(), 'configuration/')
-
-        self.config = WidgetConfiguration(scheme_path,
-                                          path,
-                                          skins=self.skins,
-                                          themes=self.__melange_ref__().themes)
-        self.config.connect('field-value-changed', self.configuration_value_changed_cb)
-
-        self.load()
-
-
-    def get_data_path(self):
-
-        data_path = os.path.join(self.context.get_user_path(), 'data/shared')
-        if not os.path.isdir(data_path):
-            orig_data_path = os.path.join(self.context.get_path(), 'data/shared')
-
-            if os.path.isdir(orig_data_path):
-                shutil.copytree(orig_data_path, data_path)
-            else:
-                os.makedirs(data_path)
-
-        return data_path
-
-
-    def get_skin_path(self):
-        return self.get_skin_path_by_id(self.config.widget_skin)
-
-
-    def get_skin_path_by_id(self, skin_id):
-        return os.path.join(
-            self.context.working_directory,
-            'skins',
-            os.path.dirname(self.skins.get(id=skin_id).next()._path)
-        )
-
-    def get_current_theme(self):
-        theme_id = self.config.widget_theme
-        if theme_id == 'use.the.fucking.global.settings.and.suck.my.Dick':
-            theme_id = self.__melange_ref__().config.default_theme
-        return self.__melange_ref__().themes.get(id=theme_id).next()
-
+        return menu
 
     @property
     def selected_skin(self):
@@ -250,10 +201,12 @@ class Widget(gobject.GObject, cream.Component):
         ctx.paint()
 
 
+    def button_release_cb(self, view, event):
 
-    def end_move_request_cb(self, source):
+        if event.button == MOUSE_BUTTON_RIGHT:
+            self.menu.popup(None, None, None, None, event.button, event.get_time())
+            return True
 
-        self.end_move()
 
     def resource_request_cb(self, view, frame, resource, request, response):
 
