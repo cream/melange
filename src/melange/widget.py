@@ -18,54 +18,19 @@
 
 import sys
 import os
-import imp
-import shutil
-import weakref
+import json
 
-import gobject
-import gtk
-import webkit
-import javascriptcore as jscore
-import webbrowser
 
-import cream.base
-import cream.gui
-from cream.util import cached_property, random_hash, extend_querystring
-from melange.api import APIS, PyToJSInterface
-from melange.dialogs import AboutDialog
-
+from cream.util import cached_property, extend_querystring, random_hash
 from cream.config import Configuration
-from gpyconf.fields import MultiOptionField
 
-from common import HTTPSERVER_BASE_URL, \
-                   STATE_MOVE, STATE_NONE, STATE_VISIBLE, \
-                   MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT, \
-                   MOVE_TIMESTEP, OPACITY_MOVE
-
-class WidgetAPI(object):
-    pass
-
-
-class WidgetConfiguration(Configuration):
-
-    def __init__(self, scheme_path, path, skins, themes):
+from melange.common import HTTP_BASE_URL, MOUSE_BUTTON_RIGHT
+from melange.api import import_api_file, APIS
 
         Configuration.__init__(self, scheme_path, path, read=False)
 
-        self._add_field(
-            'widget_skin',
-            MultiOptionField('Skin',
-                section='Appearance',
-                options=((s['id'], s['name']) for s in skins.get())
-            )
-        )
-        self._add_field(
-            'widget_theme',
-            MultiOptionField('Theme',
-                section='Appearance',
-                options=([('use.the.fucking.global.settings.and.suck.my.Dick', 'Use global settings')] + [(t['id'], t['name']) for t in themes.get()])
-            )
-        )
+RESPONSE_TYPE_INIT = 'init'
+RESPONSE_TYPE_CALL = 'call'
 
         self.read()
 
@@ -131,31 +96,31 @@ class WidgetManager(object):
 
         return self.widgets.itervalues()
 
+        self.websocket_handler = None
+        self.api = None
 
-        # Set up JavaScript API...
-        self.js_context._python = WidgetAPI()
-        self.js_context._python.init = self.init_api
-        self.js_context._python.init_config = self.init_config
+class Widget(gobject.GObject):
 
         self.js_context.melange = WidgetAPI()
         self.js_context.melange.show_add_widget_dialog = self.widget_ref().__melange_ref__().add_widget
         self.js_context.melange.show_settings_dialog = self.widget_ref().__melange_ref__().config.show_dialog
 
-        skin_url = HTTPSERVER_BASE_URL + '/widget/index.html'
-        self.view.open(skin_url)
+    def __init__(self, widget_id, path, x, y, themes):
 
-        gobject.timeout_add(250, self.apply_hack_to_avoid_problems_with_caching)
+        gobject.GObject.__init__(self)
 
+        self.id = widget_id
+        self.instance_id = random_hash()[:10]
+        self.path = path
+        self.themes = themes
 
     def drag_motion_cb(self, widget, context, x, y, time):
         context.drag_status(gtk.gdk.ACTION_MOVE, time)
         return True
 
+        self.websocket_handler = None
+        self.api = None
 
-    def drag_drop_cb(self, widget, context, x, y, time):
-        if 'text/uri-list' in context.targets:
-            widget.drag_get_data(context, 'text/uri-list', time)
-        return True
 
 
     def drag_data_cb(self, widget, context, x, y, data, info, time):
@@ -165,67 +130,12 @@ class WidgetManager(object):
                 return False
             return True
 
-        e = self.js_context.document.elementFromPoint(x, y)
+        self.view.connect('draw', self.draw)
+        self.view.connect('button-release-event', self.button_release_cb)
+        self.view.connect('resource-request-starting', self.resource_request_cb)
 
-        while not check_for_drop_handlers(e):
-            e = e.getParent()
-            if isinstance(e, jscore.NullType):
-                break
-        else:
-            e.fireEvent('drop', data.get_uris())
-            context.finish(True, False, time)
-
-
-    # evil black magic, but it fixes caching problems
-    # adds some randomness to each link, style, script, whatsoever
-    def apply_hack_to_avoid_problems_with_caching(self):
-        if hasattr(self.js_context.document.head, 'childNodes'):
-            for element in self.js_context.document.head.childNodes.values():
-                if hasattr(element, 'src') and element.src:
-                    url = extend_querystring(element.src, {'query_id': random_hash()[:5]})
-                    element.src = url
-                elif hasattr(element, 'href') and element.href:
-                    url = extend_querystring(element.href, {'query_id': random_hash()[:5]})
-                    element.href = url
-            return False
-
-    def log(self, msg):
-        self.messages.debug(msg)
-
-
-    def get_view(self):
-        return self.view
-
-
-    def init_config(self):
-        # Register the JavaScript configuration event callback for *all*
-        # configuration events. Further dispatching then *happens in JS*.
-        self.js_context.widget.config._python_config = self.config
-        self.config.connect('all', self.js_context.widget.config.on_config_event)
-
-
-    def init_api(self):
-
-        custom_api_file = os.path.join(self.widget_ref().context.get_path(), '__init__.py')
-        if os.path.isfile(custom_api_file):
-            sys.path.insert(0, self.widget_ref().context.get_path())
-            imp.load_module(
-                'custom_api_{0}'.format(self.widget_ref().instance_id),
-                open(custom_api_file),
-                custom_api_file,
-                ('.py', 'r', imp.PY_SOURCE)
-            )
-            for name, value in APIS[custom_api_file].iteritems():
-                c = value
-                c._js_ctx = self.js_context
-                c._data_path = self.widget_ref().get_data_path()
-                c.context = self.widget_ref().context
-                c.config = self.config.config_ref()
-                c = c()
-                i = PyToJSInterface(c)
-                self.js_context.widget.api.__setattr__(name, i)
-            del sys.path[0]
-
+        url = HTTP_BASE_URL + 'widget/index.html?id={id}'.format(id=self.instance_id)
+        self.view.open(url)
 
     def resource_request_cb(self, view, frame, resource, request, response):
         uri = request.get_property('uri')
@@ -418,30 +328,28 @@ class Widget(gobject.GObject, cream.Component):
         self.move()
 
 
-    def end_move(self):
+    def on_websocket_connected(self, websocket_handler):
 
-        self.emit('end-move')
+        self.websocket_handler = websocket_handler
 
-        self.state = STATE_VISIBLE
+        if not self.id in APIS:
+            import_api_file(self.path, self.id)
 
-
-    def move(self):
-
-        def move_cb(old_x, old_y):
-            new_x, new_y = self.display.get_pointer()[1:3]
-            move_x = new_x - old_x
-            move_y = new_y - old_y
-
-            if self.state == STATE_MOVE:
-                self.emit('move-request', move_x, move_y)
-                gobject.timeout_add(MOVE_TIMESTEP, move_cb, new_x, new_y)
-
-        move_cb(*self.display.get_pointer()[1:3])
+        self.api = APIS[self.id]()
 
 
-    def load(self):
+    def on_websocket_init(self):
 
-        self.instance = WidgetInstance(self)
+        response = {'type': RESPONSE_TYPE_INIT, 'methods': self.api.get_exposed_methods()}
+        self.websocket_handler.send(response)
+
+
+    def on_api_method_called(self, method, callback_id, arguments):
+
+        result = getattr(self.api, method)(*arguments)
+        response = {'type': RESPONSE_TYPE_CALL, 'callback_id': callback_id, 'arguments': result}
+        self.websocket_handler.send(response)
+
 
         self.instance.connect('show-config-dialog-request', lambda *args: self.config.show_dialog())
         self.instance.connect('show-about-dialog-request', lambda *args: self.about_dialog.show_all())
@@ -463,10 +371,12 @@ class Widget(gobject.GObject, cream.Component):
 
         self.end_move()
 
+    def resource_request_cb(self, view, frame, resource, request, response):
 
-    def resize_request_cb(self, widget_instance, width, height):
+        uri = request.get_property('uri')
+        uri = extend_querystring(uri, {'id': self.instance_id})
+        request.set_property('uri', uri)
 
-        self.instance.view.set_size_request(width, height)
 
 
     def focus_request_cb(self, source):

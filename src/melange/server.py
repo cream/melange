@@ -24,6 +24,7 @@ import threading
 
 import tornado.web
 import tornado.ioloop
+import tornado.websocket
 import tornado.httpserver
 
 
@@ -82,6 +83,37 @@ class CommonHandler(tornado.web.RequestHandler):
             self.write(file_handle.read())
 
 
+class WSHandler(tornado.websocket.WebSocketHandler):
+
+    def initialize(self, widgets):
+        self.widgets = widgets
+
+
+    def send(self, message):
+        """Send the message to the client. """
+
+        self.write_message(json.dumps(message))
+
+    def open(self):
+
+    	widget_id = self.request.uri.replace('/ws/', '')
+    	self.widgets.get_widget(widget_id).on_websocket_connected(self)
+
+
+    def on_message(self, message):
+
+    	message = json.loads(message)
+
+    	widget = self.widgets.get_widget(message['id'])
+    	if message['type'] == 'init':
+    	    widget.on_websocket_init()
+    	elif message['type'] == 'call':
+    	    widget.on_api_method_called(message['method'],
+    	       message['callback_id'],
+    	       message['arguments']
+    	   )
+
+
 
 class DummyHandler(tornado.web.RequestHandler):
 
@@ -98,6 +130,7 @@ class Server(threading.Thread):
             (r'/widget/.*', WidgetHandler, {'widgets': widgets}),
             (r'/theme/.*', ThemeHandler, {'widgets': widgets}),
             (r'/common/.*', CommonHandler, {'common_path': common_path}),
+            (r'/ws/.*', WSHandler, {'widgets': widgets}),
             (r'/favicon.ico.*', DummyHandler)
         ])
 

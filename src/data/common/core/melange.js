@@ -1,62 +1,62 @@
-var DEBUG = false;
-
-var _mootools_entered = new Array();
-
-Element.Events.mouseenter = {
-    base: "mouseover",
-    condition: function(event){
-        _mootools_entered.include(this);
-        return true;
-    }
-
-};
-
-var API = new Class({
-    Implements: Events
-});
-
-var ConfigurationWrapper = new Class({
-    Implements: Events,
-
-    get: function(option) {
-        return this._python_config[option];
-    },
-
-    set: function(option, value) {
-        if(value === undefined) {
-            /* Javascript allows this, but I don't want that. */
-            throw new TypeError("`config.set` expects two arguments");
-        }
-        this._python_config[option] = value;
-    },
-
-    /*
-     * Invoked on every gpyconf event.
-     * Uses MooTools' Events for dispatching.
-     */
-    on_config_event: function() {
-        /* `arguments` object to real `Array`: */
-        var args = Array.prototype.slice.apply(arguments);
-        /* First argument is the event name. */
-        var event_name = args.shift();
-        this.fireEvent(event_name, args);
-    }
-});
+function getWidgetInstanceId() {
+    return window.location.search.replace('?id=', '');
+}
 
 var Widget = new Class({
-    init: function() {
-        _python.init();
+
+    initialize: function(main) {
+        this.id = getWidgetInstanceId();
+        this.main = main;
+        this.callbacks = {};
+
+        this.socket = new WebSocket('ws://127.0.0.1:8085/ws/' + this.id);
+
+        this.socket.onopen = function(){
+            var msg = {type: 'init', id: this.id};
+            this.socket.send(JSON.encode(msg));
+        }.bind(this);
+
+        this.socket.onmessage = function(e){
+            var data = JSON.decode(e.data);
+
+            if(data.type == 'init'){
+
+                Array.each(data.methods, function(method) {
+                    this[method] = function() {
+                        var args = [];
+                        var cb = function() {};
+
+                        Array.each(arguments, function(arg) {
+                            if(typeof arg == 'function')
+                                cb = arg;
+                            else
+                                args.push(arg);
+                        });
+
+                        this.callRemote(method, args, cb);
+                    }
+                }, this);
+
+
+                this.main();
+
+            } else if(data.type == 'call') {
+                this.callbacks[data.callback_id](data.arguments);
+            }
+
+        }.bind(this);
     },
-    api: new API(),
-    config: new ConfigurationWrapper()
-});
 
-var widget = new Widget();
-_python.init_config();
-
-window.addEvent('domready', function() {
-    if(window.main !== undefined) {
-        widget.init();
-        main();
+    callRemote: function(methodName, arguments, cb){
+        var callback_id = '' + new Date().getTime();
+        this.callbacks[callback_id] = cb;
+        var msg = {type: 'call',
+                   id: this.id,
+                   method: methodName,
+                   callback_id: callback_id,
+                   arguments: arguments
+        };
+        this.socket.send(JSON.encode(msg));
     }
+
 });
