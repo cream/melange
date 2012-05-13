@@ -29,48 +29,28 @@ from cream.config import Configuration
 from melange.common import HTTP_BASE_URL, MOUSE_BUTTON_RIGHT
 from melange.api import import_api_file, APIS
 
-        Configuration.__init__(self, scheme_path, path, read=False)
 
 RESPONSE_TYPE_INIT = 'init'
 RESPONSE_TYPE_CALL = 'call'
 
-        self.read()
 
 
-class WidgetConfigurationProxy(object):
+class WidgetSkin(object):
 
-    def __init__(self, config):
-        self.config_ref = weakref.ref(config)
+    def __init__(self, skin_dir, name):
 
-    def __getattribute__(self, key):
-
-        try:
-            return object.__getattribute__(self, key)
-        except AttributeError:
-            return getattr(self.config_ref(), key)
+        self.path = os.path.join(skin_dir, name)
+        self.name = name.capitalize()
 
 
+    def __str__(self):
+        return '<WidgetSkin {0}>'.format(self.name)
 
-class WidgetInstance(gobject.GObject):
+    def __repr__(self):
+        return str(self)
 
-    __gtype_name__ = 'WidgetInstance'
-    __gsignals__ = {
-        'raise-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'remove-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'reload-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'resize-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
-        'focus-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'begin-move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'end-move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'show-config-dialog-request' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'show-about-dialog-request' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-    }
 
-    def __init__(self, widget):
 
-        gobject.GObject.__init__(self)
-
-        self.widget_ref = weakref.ref(widget)
 
 class WidgetManager(object):
 
@@ -145,103 +125,10 @@ class Widget(gobject.GObject):
 
 
     @cached_property
-    def widget_element(self):
-        if not self.js_context.document.body:
-            # we don't have any body yet
-            return
+    def skins(self):
 
-        for element in self.js_context.document.body.childNodes.values():
-            if getattr(element, 'className', None) == 'widget':
-                return element
-
-    widget_element.not_none = True
-
-
-    def resize_cb(self, widget, event, *args):
-
-        """ Resize the widget properly... """
-        if self.widget_element:
-            width = int(self.widget_element.offsetWidth)
-            height = int(self.widget_element.offsetHeight)
-            if not self._size == (width, height):
-                self._size = (width, height)
-                self.emit('resize-request', width, height)
-
-
-    def button_press_cb(self, source, event):
-        """ Handle clicking on the widget (e. g. by showing context menu). """
-
-        self.emit('focus-request')
-        self.emit('raise-request')
-
-        if event.button == MOUSE_BUTTON_RIGHT:
-            self.menu.popup(None, None, None, event.button, event.get_time())
-            return True
-        elif event.button == MOUSE_BUTTON_MIDDLE:
-            self.emit('begin-move-request')
-            self.fade_out()
-            return True
-        elif event.button == MOUSE_BUTTON_LEFT and self.state == STATE_MOVE:
-            self.emit('begin-move-request')
-            return False
-
-
-    def button_release_cb(self, source, event):
-
-        if event.button == MOUSE_BUTTON_MIDDLE:
-            self.emit('end-move-request')
-            self.fade_in()
-            return True
-        if event.button == MOUSE_BUTTON_LEFT and self.state == STATE_MOVE:
-            self.emit('end-move-request')
-            return False
-
-
-    def navigation_request_cb(self, view, frame, request, action, decision):
-        """ Handle clicks on links, etc. """
-
-        uri = request.get_uri()
-
-        if not uri.startswith(HTTPSERVER_BASE_URL):
-            # external URL, open in browser
-            webbrowser.open(uri)
-            return True
-
-
-    def begin_move(self):
-
-        self.state = STATE_MOVE
-
-        self.fade_out()
-
-
-    def end_move(self):
-
-        self.emit('end-move-request')
-        self.state = STATE_NONE
-
-        self.fade_in()
-
-
-    def fade_out(self):
-
-        def fade(t, state):
-            self.widget_element.style.opacity = 1 - (1-OPACITY_MOVE)*state
-
-        t = cream.gui.Timeline(200, cream.gui.CURVE_SINE)
-        t.connect('update', fade)
-        t.run()
-
-
-    def fade_in(self):
-
-        def fade(t, state):
-            self.widget_element.style.opacity = OPACITY_MOVE + (1-OPACITY_MOVE)*state
-
-        t = cream.gui.Timeline(200, cream.gui.CURVE_SINE)
-        t.connect('update', fade)
-        t.run()
-
+        skin_path = os.path.join(self.path, 'data/skins')
+        return [WidgetSkin(skin_path, name) for name in os.listdir(skin_path)]
 
 
 class Widget(gobject.GObject, cream.Component):
@@ -321,9 +208,10 @@ class Widget(gobject.GObject, cream.Component):
         return self.__melange_ref__().themes.get(id=theme_id).next()
 
 
-    def begin_move(self):
+    @property
+    def selected_skin(self):
+        return self.skins[0] # TODO
 
-        self.emit('begin-move')
 
     @property
     def selected_theme(self):
