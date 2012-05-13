@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
-import gobject
-import gtk
-from os.path import join, dirname
+from gi.repository import GObject as gobject, Gtk as gtk, Gdk as gdk, GdkPixbuf as pixbuf
 
-from categories import categories
+from os.path import join, dirname
 
 ICON_SIZE_SMALL = 24
 ICON_SIZE_MEDIUM = 48
@@ -12,18 +10,49 @@ ICON_SIZE_BIG = 64
 
 AUTHOR = '{0} <{1}>'
 
+
+categories = {
+    'org.cream.melange.CategoryInternet': {
+        'name': 'Internet',
+        'icon': 'applications-internet',
+        'description': 'Interact with the web!'
+    },
+    'org.cream.melange.CategoryMultimedia': {
+        'name': 'Multimedia',
+        'icon': 'applications-multimedia',
+        'description': 'Adds multimedia features to your desktop.'
+    },
+    'org.cream.melange.CategoryTools': {
+        'name': 'Tools',
+        'icon': 'applications-accessories',
+        'description': 'Helping you to make your life easier.'
+    },
+    'org.cream.melange.CategoryGames': {
+        'name': 'Games',
+        'icon': 'applications-games',
+        'description': 'Gaming for in between? Here you go!'
+    },
+    'org.cream.melange.CategoryMiscellaneous': {
+        'name': 'Miscellaneous',
+        'icon': 'applications-other',
+        'description': 'Various widgets.'
+    }
+
+}
+
 class AddWidgetDialog(gobject.GObject):
-    
+
     __gtype_name__ = 'AddWidgetDialog'
     __gsignals__ = {
         'load-widget': (gobject.SIGNAL_RUN_LAST, None, (gobject.TYPE_PYOBJECT,))
     }
 
     def __init__(self, widgets):
-        
+
         gobject.GObject.__init__(self)
 
-        self.widgets = {}
+        self.widgets = widgets
+        self.widgets_cat = {}
 
         interface = gtk.Builder()
         interface.add_from_file(join(dirname(__file__), 'add_dialog.glade'))
@@ -35,49 +64,46 @@ class AddWidgetDialog(gobject.GObject):
         self.widget_view =  interface.get_object('widget_view')
         self.category_image =  interface.get_object('category_image')
         self.category_description =  interface.get_object('category_description')
+        self.add_button = interface.get_object('add')
 
         # connect signals
         self.dialog.connect('delete_event', lambda *x: self.dialog.hide())
         self.category_view.connect('cursor-changed',
                                     lambda *x: self.on_category_change()
         )
-        self.widget_view.set_events(self.widget_view.get_events() | gtk.gdk.BUTTON_PRESS_MASK)
-        self.widget_view.connect('button-press-event', self.widget_view_press_event_cb)
+        self.add_button.connect('clicked', self.on_widget_added)
 
         # add the categories to the liststore alphabetically
         categories_ = sorted(categories.iteritems(),
                              key=lambda c: c[1]['name']
         )
 
-        theme = gtk.icon_theme_get_default()
+        theme = gtk.IconTheme.get_default()
         for id, category in categories_:
             icon_info = theme.lookup_icon(category['icon'], ICON_SIZE_SMALL, 0)
-            icon = gtk.gdk.pixbuf_new_from_file_at_size(icon_info.get_filename(),
+            icon = pixbuf.Pixbuf.new_from_file_at_size(icon_info.get_filename(),
                                                         ICON_SIZE_SMALL, ICON_SIZE_SMALL)
 
             self.category_liststore.append((category['name'], id, icon))
 
-        # group widgets into categories
         for widget in widgets:
-            if not widget.get('categories'):
-                category = 'org.cream.melange.CategoryMiscellaneous'
-                self._add_to_category(category, widget)
-            for category in widget['categories']:
-                self._add_to_category(category['id'], widget)
+            self._add_to_category('org.cream.melange.CategoryMiscellaneous', widget)
 
         self.category_view.set_cursor(0)
-        
 
-    def widget_view_press_event_cb(self, widget_view, event):
-        if event.type == gtk.gdk._2BUTTON_PRESS:
-            self.emit('load-widget', self.selected_widget)
+
+    def show(self):
+
+        self.dialog.show_all()
+        self.dialog.run()
+        self.dialog.hide()
 
 
     def _add_to_category(self, category, widget):
-        if category in self.widgets:
-            self.widgets[category].append(widget)
+        if category in self.widgets_cat:
+            self.widgets_cat[category].append(widget)
         else:
-            self.widgets[category] = [widget]
+            self.widgets_cat[category] = [widget]
 
     def update_info_bar(self):
         """
@@ -86,14 +112,14 @@ class AddWidgetDialog(gobject.GObject):
         """
 
         category = categories[self.selected_category]
-        theme = gtk.icon_theme_get_default()
+        theme = gtk.IconTheme.get_default()
         icon_info = theme.lookup_icon(category['icon'], ICON_SIZE_MEDIUM, 0)
-        icon = gtk.gdk.pixbuf_new_from_file_at_size(icon_info.get_filename(),
+        icon = pixbuf.Pixbuf.new_from_file_at_size(icon_info.get_filename(),
                                                     ICON_SIZE_MEDIUM, ICON_SIZE_MEDIUM)
 
         self.category_image.set_from_pixbuf(icon)
 
-        description = split_string(category['description'])
+        description = category['description']
         self.category_description.set_text(description)
 
     def on_category_change(self):
@@ -105,20 +131,22 @@ class AddWidgetDialog(gobject.GObject):
         self.widget_liststore.clear()
         self.update_info_bar()
         category = self.selected_category
-        if not category in self.widgets:
+        if not category in self.widgets_cat:
             return
 
-        for widget in self.widgets[category]:
-            if 'icon' in widget:
-                path = widget['icon']
-            else:
-                path = join(dirname(__file__), 'images/melange.png')
+        for widget in sorted(self.widgets_cat[category], key=lambda w: w['id']):
+            path = '/home/kris/projects/cream/src/src/modules/melange/src/melange.png'
 
-            icon = gtk.gdk.pixbuf_new_from_file_at_size(path, 35, 35)
-            label = '<b>{0}</b>\n{1}'.format(widget['name'],
-                                             split_string(widget['description'])
-                                      )
-            self.widget_liststore.append((icon, label, widget['name']))
+            icon = pixbuf.Pixbuf.new_from_file_at_size(path, 35, 35)
+            name = widget['id'].replace('org.cream.melange.widget.', '')
+            label = '<b>{0}</b>\n{1}'.format(name, 'description')
+            self.widget_liststore.append((icon, label, widget['id']))
+
+
+    def on_widget_added(self, *args):
+
+        self.emit('load-widget', self.selected_widget)
+
 
     @property
     def selected_widget(self):
@@ -132,49 +160,3 @@ class AddWidgetDialog(gobject.GObject):
         selection = self.category_view.get_selection()
         model, iter = selection.get_selected()
         return model.get_value(iter, 1)
-
-
-class AboutDialog(gtk.AboutDialog):
-
-    def __init__(self, manifest):
-
-        gtk.AboutDialog.__init__(self)
-
-        self.connect('response', lambda *x: self.hide())
-        self.connect('delete-event', lambda *x: True)
-
-        self.set_name(manifest['name'])
-
-        developers, designers = [], []
-
-        for author in manifest['authors']:
-            author_info = AUTHOR.format(author.get('name'), author.get('mail'))
-            if author.get('type') == 'developer':
-                developers.append(author_info)
-            elif author.get('type') == 'designer':
-                designers.append(author_info)
-
-        self.set_authors(developers)
-        self.set_artists(designers)
-
-        if manifest.get('icon', None):
-            icon = gtk.gdk.pixbuf_new_from_file_at_size(manifest['icon'],
-                                                        ICON_SIZE_BIG,
-                                                        ICON_SIZE_BIG)
-            self.set_logo(icon)
-
-        self.set_comments(manifest['description'])
-
-
-def split_string(description):
-    """split a long string into multiple lines"""
-    lst = []
-    chars = 0
-    for word in description.split():
-        if chars > 30:
-            lst.append('\n')
-            chars = 0
-        lst.append(word)
-        chars += len(word)
-
-    return ' '.join(lst)

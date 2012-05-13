@@ -34,6 +34,8 @@ from cream.util import cached_property
 from melange.widget import WidgetManager
 from melange.server import Server
 from melange.utils import get_screen_size
+from melange.dialogs import AddWidgetDialog
+from melange.common import MOUSE_BUTTON_RIGHT
 
 
 def yield_available_widgets():
@@ -169,14 +171,10 @@ class Melange(cream.Module):
         self.window.add_widget(widget)
 
 
-        del self[widget.instance_id]
+    def show_dialog(self):
 
-        widget.disconnect(self.signal_handlers[widget]['raise-request'])
-        widget.disconnect(self.signal_handlers[widget]['end-move'])
-        widget.disconnect(self.signal_handlers[widget]['move-request'])
-        widget.disconnect(self.signal_handlers[widget]['remove-request'])
+        self.add_widget_dialog.show()
 
-        self.emit('widget-removed', widget)
 
     def show_menu(self, window, event):
 
@@ -227,71 +225,17 @@ class Melange(cream.Module):
                 return path
 
 
-        # Add the widget to the list of currently active widgets:
-        self.widgets.add(widget, x, y)
+    @cached_property
+    def add_widget_dialog(self):
 
+        w = []
+        for widget_id, path in yield_available_widgets():
+            w.append({'id': widget_id})
 
-    @cream.ipc.method('', 'a{sa{ss}}')
-    def list_widgets(self):
-        """
-        List all available widgets.
+        dialog = AddWidgetDialog(w)
+        dialog.connect('load-widget', lambda dialog, widget: self.load_widget(widget))
 
-        :return: List of widgets.
-        :rtype: `list`
-        """
-
-        res = {}
-
-        for w in self.available_widgets.get():
-            res[w['id']] = {
-                'name': w['name'],
-                'description': '',
-                'path': '',
-                'id': w['id'],
-                }
-
-        return res
-
-
-    @cream.ipc.method('','')
-    def toggle_overlay(self):
-
-        layer = self.widgets.primary_widget_layer
-        width, height = layer.get_size()[0],layer.get_size()[1]
-
-        if layer.get_type_hint() == gtk.gdk.WINDOW_TYPE_HINT_DESKTOP:
-            def fade_out_widgets(t, state):
-                layer.set_opacity(1 - state)
-
-            def fade_in_overlay(t):
-                layer.hide()
-
-                def fade_in(t, state):
-                    layer.alpha = state * 0.8
-                    layer.set_opacity(state)
-                    layer.window.invalidate_rect(gtk.gdk.Rectangle(0, 0, width, height), True)
-
-                t = cream.gui.Timeline(OVERLAY_FADE_DURATION, cream.gui.CURVE_SINE)
-                t.connect('update', fade_in)
-                t.run()
-
-                layer.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
-                layer.show_all()
-
-            t = cream.gui.Timeline(OVERLAY_FADE_DURATION/2, cream.gui.CURVE_SINE)
-            t.connect('update', fade_out_widgets)
-            t.connect('completed', fade_in_overlay)
-            t.run()
-
-
-        else:
-            def fade_out_overlay(t, state):
-                layer.alpha = 0.8 - state * 0.8
-                layer.set_opacity(1 - state)
-                layer.window.invalidate_rect(gtk.gdk.Rectangle(0, 0, width, height), True)
-
-            def fade_in_widgets(t):
-                layer.hide()
+        return dialog
 
 
                 layer.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DESKTOP)
