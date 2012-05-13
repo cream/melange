@@ -38,6 +38,25 @@ var Widget = new Class({
                 }, this);
 
 
+                // mega hack
+                // for some strange reason stylesheets embedded in a link tag
+                // will be requested from the server and sent back, but don't
+                // take effect in the DOM, so as a workaround scan for link tags
+                // and get the style via ajax and inject it into the head
+                $$('link').each(function(el) {
+                    var req = new Request({
+                        url: el.href,
+                        method: 'get',
+                        onSuccess: function(css) {
+                            var style = new Element('style', {
+                                html: css
+                            });
+                            $(document.head).adopt(style);
+                        }
+                    });
+                    req.send();
+                });
+
                 this.main();
 
             } else if(data.type == 'call') {
