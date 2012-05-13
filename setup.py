@@ -29,7 +29,6 @@ def collect_data_files():
             ))
 
     data_files.append(('share/cream/{0}/data'.format(ID), ['src/melange.png']))
-    data_files.append(('share/cream/{0}'.format(ID), ['src/manifest.xml']))
 
     return data_files
 
