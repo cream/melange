@@ -78,14 +78,13 @@ class WidgetManager(object):
 
         return self.widgets.itervalues()
 
-        self.websocket_handler = None
-        self.api = None
 
 class Widget(gobject.GObject):
 
-        self.js_context.melange = WidgetAPI()
-        self.js_context.melange.show_add_widget_dialog = self.widget_ref().__melange_ref__().add_widget
-        self.js_context.melange.show_settings_dialog = self.widget_ref().__melange_ref__().config.show_dialog
+    __gtype_name__ = 'MelangeWidget'
+    __gsignals__ = {
+        'remove': (gobject.SignalFlags.RUN_LAST, None, ()),
+    }
 
     def __init__(self, widget_id, path, x, y, themes):
 
@@ -283,19 +282,13 @@ class Widget(gobject.GObject):
 
         return AboutDialog(self.context.manifest)
 
+    def remove_cb(self, menuitem):
 
-    def __xmlserialize__(self):
-        """
-        Return serialized data about widget.
+        # Destroy the ui elements, which too closes the websocket connection
+        self.view.destroy()
+        self.actor.destroy()
 
-        :return: Dict containing 'name', 'x' and 'y'.
-        :rtype: `dict`
-        """
+        self.view = None
+        self.actor = None
 
-        # TODO: Save hash rather than name here?
-        return {
-            'name' : self.context.manifest['name'],
-            'x'    : self.get_position()[0],
-            'y'    : self.get_position()[1],
-            'profile': self.config.profiles.active.name
-        }
+        self.emit('remove')

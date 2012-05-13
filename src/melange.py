@@ -238,13 +238,9 @@ class Melange(cream.Module):
         return dialog
 
 
-                layer.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DESKTOP)
-                layer.show_all()
+    def remove_widget_cb(self, widget):
 
-            t = cream.gui.Timeline(OVERLAY_FADE_DURATION, cream.gui.CURVE_SINE)
-            t.connect('update', fade_out_overlay)
-            t.connect('completed', fade_in_widgets)
-            t.run()
+        self.widgets.remove_widget(widget.instance_id)
 
 
     def quit(self):
