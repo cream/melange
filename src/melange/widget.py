@@ -214,73 +214,15 @@ class Widget(gobject.GObject):
         request.set_property('uri', uri)
 
 
+    def show_config_dialog(self, *args):
 
-    def focus_request_cb(self, source):
         pass
 
 
-    def reload(self):
-        """ Reload the widget. Really? Yeah. """
+    def show_about_dialog(self, *args):
 
-        self.emit('reload-request')
+        pass
 
-
-    def remove(self):
-        """ Close the widget window and emit 'remove' signal. """
-
-        self.config.save()
-
-        self.instance.get_view().destroy()
-        del self
-
-
-    def get_size(self):
-        """
-        Get the size of the widget.
-
-        :return: Size.
-        :rtype: `tuple`
-        """
-
-        return self.window.get_size()
-
-
-    def get_position(self):
-        """
-        Get the position of the widget.
-
-        :return: Position.
-        :rtype: `tuple`
-        """
-
-        return self._position
-
-
-    def set_position(self, x, y):
-        """
-        Set the position of the widget.
-
-        :param x: The x-coordinate.
-        :param y: The y-coordinate.
-
-        :type x: `int`
-        :type y: `int`
-        """
-
-        self._position = (x, y)
-
-
-    def configuration_value_changed_cb(self, source, key, value):
-
-        if key == 'widget_theme' or key == 'widget_skin':
-            self.reload()
-
-
-    @cached_property
-    def about_dialog(self):
-        """ Show the 'About' dialog. """
-
-        return AboutDialog(self.context.manifest)
 
     def remove_cb(self, menuitem):
 
