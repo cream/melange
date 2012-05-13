@@ -41,43 +41,34 @@ class WidgetLayer(TransparentWindow):
 
     def __init__(self):
 
-        TransparentWindow.__init__(self)
+def yield_available_themes():
 
-        self.set_events(gtk.gdk.BUTTON_RELEASE_MASK)
+    for path in cream.path.CREAM_DIRS:
+        path = os.path.join(path, 'org.cream.Melange/data/themes')
+        if os.path.isdir(path):
+            for name in os.listdir(path):
+                yield name, os.path.join(path, name)
 
         self.mode = STATE_NONE
 
         self.connect('leave-notify-event', self.leave_notify_cb)
         self.connect('enter-notify-event', self.enter_notify_cb)
 
-        self.widgets = []
+class MelangeTheme(object):
 
-        self.display = self.get_display()
-        self.screen = self.display.get_default_screen()
-        width, height = self.screen.get_width(), self.screen.get_height()
-        self.resize(width, height)
+    def __init__(self, path, name):
 
-        self.layout = cream.gui.CompositeBin()
-        self.add(self.layout)
-
-        keysym, modifier_mask = gtk.accelerator_parse('Super_L')
-        self.ctrl_l_keysym = keysym
-
-        self.hotkey_recorder = HotkeyRecorder([(keysym, modifier_mask), (keysym, 64), (keysym, 320)])
-        self.hotkey_recorder.connect('key-press', self.key_press_cb)
-        self.hotkey_recorder.connect('key-release', self.key_release_cb)
+        self.path = path
+        self.name = name.capitalize()
 
 
-    def enter_notify_cb(self, widget, event):
+    def __str__(self):
+        return '<MelangeTheme {0}>'.format(self.name)
 
-        for widget in self.widgets:
-            try:
-                for i in xrange(widget.instance.js_context._mootools_entered.length):
-                    e = widget.instance.js_context._mootools_entered[i]
-                    e.fireEvent('mouseleave')
-                widget.instance.js_context._mootools_entered.erase()
-            except AttributeError:
-                pass
+    def __repr__(self):
+        return str(self)
+
+
 
 class TransparentWindow(gtk.Window):
 
@@ -297,13 +288,15 @@ class WidgetManager(gobject.GObject):
         return menu
 
 
-    def hotkey_activated_cb(self, source, action):
+    @cached_property
+    def themes(self):
 
-        if action == 'toggle-overlay':
-            self.toggle_overlay()
+        themes = []
+        for name, path in yield_available_themes():
+            themes.append(MelangeTheme(path, name))
 
+        return themes
 
-    def configuration_value_changed_cb(self, source, key, value):
 
     @cached_property
     def common_path(self):

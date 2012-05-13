@@ -325,8 +325,9 @@ class Widget(gobject.GObject, cream.Component):
 
         self.emit('begin-move')
 
-        self.state = STATE_MOVE
-        self.move()
+    @property
+    def selected_theme(self):
+        return self.themes[1] # TODO
 
 
     def on_websocket_connected(self, websocket_handler):
