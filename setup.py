@@ -38,8 +38,6 @@ ID = 'org.cream.Melange'
 data_files = collect_data_files()
 data_files.extend(
     [
-    ('share/cream/{0}/configuration'.format(ID),
-        ['src/configuration/scheme.xml']),
     ('share/icons',
         ['src/melange.png']),
     ('share/applications',
