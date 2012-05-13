@@ -217,11 +217,7 @@ class WidgetManager(gobject.GObject):
         self.primary_widget_layer.raise_widget(widget)
 
 
-    def end_move_cb(self, widget):
-        pass
-
-
-    def move_request_cb(self, widget, x, y):
+        self.config = gio.Settings('org.cream.melange1', '/test/')
 
         self.widgets = WidgetManager()
 
@@ -306,57 +302,6 @@ class WidgetManager(gobject.GObject):
             if os.path.isdir(path):
                 return path
 
-    def button_release_cb(self, window, event):
-
-        if event.button == MOUSE_BUTTON_RIGHT:
-            self.menu.popup(None, None, None, event.button, event.get_time())
-
-
-    def run_server(self):
-        server = HttpServer(self)
-        thread.start_new_thread(server.run, (HTTPSERVER_HOST, HTTPSERVER_PORT))
-
-
-    def add_widget(self):
-
-        self.add_widget_dialog.dialog.show_all()
-
-        if self.add_widget_dialog.dialog.run() == 1:
-            widget = self.add_widget_dialog.selected_widget
-            if widget:
-                self.load_widget(widget, False, False)
-        self.add_widget_dialog.dialog.hide()
-
-
-    @cream.ipc.method('svvs', '')
-    def load_widget(self, name, x=None, y=None, profile=None):
-        """
-        Load a widget with the given name at the specified coordinates (optional).
-
-        :param name: The name of the widget.
-        :param x: The x-coordinate.
-        :param y: The y-coordinate.
-
-        :type name: `str`
-        :type x: `int`
-        :type y: `int`
-        """
-
-        self.messages.debug("Loading widget '%s'..." % name)
-
-        # Initialize the widget...
-        widget = Widget(list(self.available_widgets.get(name=name))[0]._path, backref=self)
-
-        if profile:
-            index, _ = widget.config.profiles.find_by_name(profile)
-            widget.config.use_profile(index)
-
-        if x and y:
-            x, y = int(x), int(y)
-        else:
-            x, y = widget.get_position()
-
-        widget.set_position(x, y)
 
         # Add the widget to the list of currently active widgets:
         self.widgets.add(widget, x, y)
@@ -424,11 +369,6 @@ class WidgetManager(gobject.GObject):
             def fade_in_widgets(t):
                 layer.hide()
 
-                def fade_in(t, state):
-                    layer.set_opacity(state)
-                t = cream.gui.Timeline(OVERLAY_FADE_DURATION/2, cream.gui.CURVE_SINE)
-                t.connect('update', fade_in)
-                t.run()
 
                 layer.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DESKTOP)
                 layer.show_all()
@@ -440,10 +380,14 @@ class WidgetManager(gobject.GObject):
 
 
     def quit(self):
-        """ Quit the module. """
 
-        for widget in self.widgets.values():
-            widget.config.save()
+        widgets = []
+        for widget in self.widgets.get_all_widgets():
+            x, y = map(str, widget.position)
+            widgets.append([widget.id, widget.path, x, y])
+
+        widgets = glib.Variant('aas', widgets)
+        self.config.set_value('widgets', widgets)
 
         self.server.stop()
         cream.Module.quit(self)

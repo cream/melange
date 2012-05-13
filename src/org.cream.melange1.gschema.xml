@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.cream.melange1" path="/test/">
+
+    <key name="widgets" type="aas">
+      <default>[]</default>
+    </key>
+
+  </schema>
+</schemalist>
