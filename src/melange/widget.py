@@ -105,61 +105,32 @@ class WidgetInstance(gobject.GObject):
 
         self.widget_ref = weakref.ref(widget)
 
-        self.config = WidgetConfigurationProxy(self.widget_ref().config)
+class WidgetManager(object):
 
-        self._size = (0, 0)
-        self.state = STATE_NONE
+    def __init__(self):
 
-        self.messages = cream.log.Messages()
+        self.widgets = {}
 
-        # Initializing the WebView...
-        self.view = webkit.WebView()
-        self.view.set_transparent(True)
+    def add_widget(self, widget_id, path, x, y, themes):
 
-        settings = self.view.get_settings()
-        settings.set_property('enable-plugins', False)
-        self.view.set_settings(settings)
+        widget = Widget(widget_id, path, x, y, themes)
+        self.widgets[widget.instance_id] = widget
 
-        # Connecting to signals:
-        self.view.connect('expose-event', self.resize_cb)
-        self.view.connect('button-press-event', self.button_press_cb)
-        self.view.connect('button-release-event', self.button_release_cb)
-        self.view.connect('new-window-policy-decision-requested', self.navigation_request_cb)
-        self.view.connect('navigation-policy-decision-requested', self.navigation_request_cb)
-        self.view.connect('resource-request-starting', self.resource_request_cb)
+        return widget
 
-        # Initialize drag and drop...
-        self.view.drag_dest_set(0, [], 0)
-        self.view.connect('drag_motion', self.drag_motion_cb)
-        self.view.connect('drag_drop', self.drag_drop_cb)
-        self.view.connect('drag_data_received', self.drag_data_cb)
+    def remove_widget(self, instance_id):
 
-        # Building context menu:
-        item_configure = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
-        item_configure.get_children()[0].set_label("Configure")
-        item_configure.connect('activate', lambda *x: self.emit('show-config-dialog-request'))
+        del self.widgets[instance_id]
 
-        item_reload = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
-        item_reload.get_children()[0].set_label("Reload")
-        item_reload.connect('activate', lambda *x: self.emit('reload-request'))
 
-        item_remove = gtk.ImageMenuItem(gtk.STOCK_REMOVE)
-        item_remove.connect('activate', lambda *x: self.emit('remove-request'))
+    def get_widget(self, instance_id):
 
-        item_about = gtk.ImageMenuItem(gtk.STOCK_ABOUT)
-        item_about.connect('activate', lambda *x: self.emit('show-about-dialog-request'))
+        return self.widgets[instance_id]
 
-        self.menu = gtk.Menu()
-        self.menu.append(item_configure)
-        self.menu.append(item_reload)
-        self.menu.append(item_remove)
-        self.menu.append(item_about)
-        self.menu.show_all()
+    def get_all_widgets(self):
 
-        # Create JavaScript context...
-        self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
+        return self.widgets.itervalues()
 
-        self.js_context.log = self.log
 
         # Set up JavaScript API...
         self.js_context._python = WidgetAPI()

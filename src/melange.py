@@ -37,7 +37,6 @@ from gpyconf.fields import MultiOptionField
 from melange.dialogs import AddWidgetDialog
 
 from melange.widget import Widget
-from melange.httpserver import HttpServer
 from melange.hotkeys import HotkeyRecorder
 from melange.common import HTTPSERVER_HOST, HTTPSERVER_PORT, OVERLAY_FADE_DURATION, \
                             STATE_NONE, STATE_MOVE, STATE_MOVING, MOUSE_BUTTON_LEFT, \
@@ -61,6 +60,7 @@ class TransparentWindow(gtk.Window):
         """ Clear the widgets background. """
 
         ctx = source.window.cairo_create()
+from melange.server import Server
 
         ctx.set_operator(cairo.OPERATOR_SOURCE)
         ctx.set_source_rgba(0, 0, 0, self.alpha)
@@ -309,12 +309,10 @@ class WidgetManager(gobject.GObject):
 
     def move_request_cb(self, widget, x, y):
 
-        old_x, old_y = widget.get_position()
-        new_x = max(0, min(old_x + x, self.screen_width - widget.instance.get_view().allocation.width))
-        new_y = max(0, min(old_y + y, self.screen_height - widget.instance.get_view().allocation.height))
+        self.widgets = WidgetManager()
 
-        self.primary_widget_layer.move_widget(widget, new_x, new_y)
-        widget.set_position(new_x, new_y)
+        self.server = Server(self.widgets, self.common_path)
+        self.server.start()
 
 
     def remove_request_cb(self, widget):
@@ -434,10 +432,13 @@ class Melange(cream.Module, cream.ipc.Object):
 
     def configuration_value_changed_cb(self, source, key, value):
 
-        if key == 'default_theme':
-            for widget in self.widgets.values():
-                widget.reload()
+    @cached_property
+    def common_path(self):
 
+        for path in cream.path.CREAM_DIRS:
+            path = os.path.join(path, 'org.cream.Melange/data/common')
+            if os.path.isdir(path):
+                return path
 
     def button_release_cb(self, window, event):
 
@@ -578,7 +579,7 @@ class Melange(cream.Module, cream.ipc.Object):
         for widget in self.widgets.values():
             widget.config.save()
 
-        self.config.widgets = self.widgets.values()
+        self.server.stop()
         cream.Module.quit(self)
 
 
