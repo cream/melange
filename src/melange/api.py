@@ -20,8 +20,7 @@ import inspect
 import os.path
 import weakref
 import gobject
-import threading
-import tempfile
+#import threading
 from collections import defaultdict
 
 APIS = defaultdict(dict)
@@ -60,17 +59,17 @@ class Proxy(object):
             callback = args.pop(-1)
 
         # Initialize thread:
-        call_thread = Thread(self.obj, args)
+        #call_thread = Thread(self.obj, args)
 
         # Register callback function:
         if callback:
             ctx = self.ctx_ref()
             self.event = self.obj.__name__
             ctx.widget.api.addEvent(self.event, callback)
-            call_thread.connect('finished', lambda thread, data: self.fire_event(self.obj.__name__, data))
+            #call_thread.connect('finished', lambda thread, data: self.fire_event(self.obj.__name__, data))
 
         # Start thread:
-        call_thread.start()
+        #call_thread.start()
 
 
     def fire_event(self, event, data):
@@ -106,7 +105,7 @@ class PyToJSInterface(object):
         raise AttributeError
 
 
-class Thread(threading.Thread, gobject.GObject):
+class Thread(gobject.GObject):
     """ An advanced threading class emitting a GObject signal after running. """
 
     __gtype_name__ = 'MelangeThread'
@@ -120,7 +119,7 @@ class Thread(threading.Thread, gobject.GObject):
         self.args = args if args is not None else []
         self.kwargs = kwargs if kwargs is not None else {}
 
-        threading.Thread.__init__(self)
+        #threading.Thread.__init__(self)
         gobject.GObject.__init__(self)
 
 
@@ -172,15 +171,15 @@ class FunctionInMainThread(object):
     def __init__(self, func):
 
         self.func = func
-        self.lock = threading.Event()
+#        self.lock = threading.Event()
         self.ret = None
 
 
     def __call__(self, *args, **kwargs):
 
-        self.lock.clear()
+ #       self.lock.clear()
         gobject.timeout_add(0, self._func_wrapper, args, kwargs)
-        self.lock.wait()
+  #      self.lock.wait()
         return self.ret
 
 
@@ -190,7 +189,7 @@ class FunctionInMainThread(object):
         except Exception, e:
             import traceback
             traceback.print_exc()
-        self.lock.set()
+   #     self.lock.set()
 
 
 def in_main_thread(func):

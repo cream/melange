@@ -7,7 +7,6 @@
         <description lang="de" content="Ein Widget-System für den Cream Desktop Umgebung." />
 
         <use-feature id=".config" read="false" />
-        <use-feature id=".hotkeys" />
 
         <author name="Sebastian Billaudelle" mail="stein@cream-project.org" type="developer" />
         <author name="Jonas Haag" mail="jonas@cream-project.org" type="developer" />
