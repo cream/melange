@@ -123,6 +123,10 @@ class Melange(cream.Module, cream.ipc.Object):
             '/org/cream/Melange'
         )
 
+        self.common_path = os.path.join(self.context.working_directory,
+            'data/common'
+        )
+
         theme_dirs = [
             os.path.join(self.context.get_path(), 'data/themes'),
             os.path.join(self.context.get_user_path(), 'data/themes')
@@ -200,7 +204,10 @@ class Melange(cream.Module, cream.ipc.Object):
         self.messages.debug("Loading widget '%s'..." % id)
 
         path = self.available_widgets.get_by_id(id)._path
-        widget = Widget(path, os.path.dirname(self.selected_theme._path))
+        widget = Widget(path, 
+            os.path.dirname(self.selected_theme._path),
+            self.common_path
+        )
 
         if x and y:
             x, y = int(x), int(y)
