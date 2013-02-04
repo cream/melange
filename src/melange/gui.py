@@ -24,7 +24,6 @@ class CompositeBin(gtk.Fixed):
         ctx.set_operator(cairo.OPERATOR_OVER)
         x, y = widget.get_position()
         width, height = widget.get_allocated_width(), widget.get_allocated_height()
-        #widget.get_window().invalidate_rect(widget.get_allocation(), True)
         ctx.rectangle(x, y, width, height)
         ctx.clip()
 
@@ -67,4 +66,3 @@ class CompositeBin(gtk.Fixed):
         child.get_window().raise_()
         self.children.remove(child)
         self.children.insert(len(self.children), child)
-        self.window.invalidate_rect(child.allocation, True)
