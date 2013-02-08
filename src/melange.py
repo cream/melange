@@ -58,17 +58,6 @@ class WidgetLayer(TransparentWindow):
         self.add(self.layout)
 
 
-        '''view = webkit.WebView()
-        view.set_transparent(True)
-        view.load_uri('file:///tmp/test.html')
-
-        self.layout.add(view, 50, 50)
-        '''
-
-
-        self.show_all()
-
-
     def add_widget(self, widget):
 
         self.widgets[widget.instance_id] = widget
