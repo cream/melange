@@ -141,7 +141,7 @@ class Widget(gobject.GObject, cream.Component):
         gobject.GObject.__init__(self)
         cream.Component.__init__(self, path=path)
 
-        self.instance_id = cream.util.random_hash(bits=100)[:10]
+        self.instance_id = cream.util.random_hash()[:10]
 
         self.theme_path = theme_path
         self.common_path = common_path
