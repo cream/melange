@@ -144,6 +144,8 @@ class Melange(cream.Module, cream.ipc.Object):
 
         self.layer = WidgetLayer()
         self.layer.connect('button-release-event', self.button_release_cb)
+        self.layer.show_all()
+
 
         self.load_widget('org.cream.melange.CalculatorWidget')
 
