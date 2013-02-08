@@ -36,7 +36,6 @@ class WidgetView(webkit.WebView, gobject.GObject):
         settings.set_property('enable-plugins', False)
         self.set_settings(settings)
 
-        self.connect('resource-request-starting', self.dispatch_resource)
         self.connect('button-press-event', self.button_press_cb)
         self.connect('button-release-event', self.button_release_cb)
 
@@ -45,7 +44,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
         self.load_uri('file://' + self.skin_url)
 
         self.connect('resource-request-starting', self.dispatch_resource)
-
+        self.connect('navigation-policy-decision-requested', self.navigation_request_cb)
 
     def dispatch_resource(self, view, frame, resource, request, response):
 
@@ -63,8 +62,24 @@ class WidgetView(webkit.WebView, gobject.GObject):
         elif path.startswith('/common'):
             path = path[8:] # remove /common/
             path = os.path.join(self.widget_ref.common_path, path)
+        elif not os.path.exists(path):
+            print 'Ignoring ' + path
+            return
 
         request.set_uri('file://' + path)
+
+
+    def navigation_request_cb(self, view, frame, request, action, decision):
+
+        print 'nav'
+        scheme, _, path, _, query, _ = urlparse.urlparse(request.get_uri())
+
+        print scheme, path, query
+
+        decision.ignore()
+        return True
+
+
 
 
     def button_press_cb(self, view, event):
