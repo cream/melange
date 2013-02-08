@@ -151,8 +151,12 @@ class Widget(gobject.GObject, cream.Component):
             type='org.cream.melange.Skin'
         )
 
-        self.view = WidgetView(self)
 
+        self.load()
+
+    def load(self):
+
+        self.view = WidgetView(self)
         self.view.connect('begin-move', lambda *x: self.view.move())
 
 

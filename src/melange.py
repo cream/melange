@@ -67,6 +67,7 @@ class WidgetLayer(TransparentWindow):
         handler_ids.append(widget.view.connect('move-request', self.move_request_cb))
         handler_ids.append(widget.view.connect('raise-request', self.raise_request_cb))
         handler_ids.append(widget.view.connect('remove-request', self.remove_request_cb))
+        handler_ids.append(widget.view.connect('reload-request', self.reload_request_cb))
 
 
         self.layout.add(widget.view, *widget.get_position())
@@ -99,6 +100,15 @@ class WidgetLayer(TransparentWindow):
 
         self.layout.remove(view)
         widget.destroy()
+
+
+    def reload_request_cb(self, view):
+
+        widget = view.widget_ref
+
+        self.remove_request_cb(view)
+        widget.load()
+        self.add_widget(widget)
 
 
 
