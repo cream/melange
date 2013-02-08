@@ -69,20 +69,20 @@ class WidgetLayer(TransparentWindow):
         handler_ids.append(widget.view.connect('remove-request', self.remove_request_cb))
 
 
-        self.layout.add(widget.view, *widget.view.get_position())
+        self.layout.add(widget.view, *widget.get_position())
         widget.view.show_all()
 
 
 
     def move_request_cb(self, view, x, y):
 
-        old_x, old_y = view.get_position()
+        old_x, old_y = view.widget_ref.get_position()
         allocation = view.get_allocation()
         new_x = max(0, min(old_x + x, self.width - allocation.width))
         new_y = max(0, min(old_y + y, self.height - allocation.height))
 
         self.layout.move(view, new_x, new_y)
-        view.set_position(new_x, new_y)
+        view.widget_ref.set_position(new_x, new_y)
 
 
     def raise_request_cb(self, view):
@@ -200,9 +200,9 @@ class Melange(cream.Module, cream.ipc.Object):
 
         if x and y:
             x, y = int(x), int(y)
-            widget.view.set_position(x, y)
+            widget.set_position(x, y)
         else:
-            x, y = widget.view.get_position()
+            x, y = widget.get_position()
 
 
         self.layer.add_widget(widget)

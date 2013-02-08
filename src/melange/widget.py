@@ -25,7 +25,6 @@ class WidgetView(webkit.WebView, gobject.GObject):
     def __init__(self, widget):
 
         self.widget_ref = widget # XXX Circular reference
-        self.position = (0, 0)
         self.state = STATE_NONE
 
         webkit.WebView.__init__(self)
@@ -101,13 +100,6 @@ class WidgetView(webkit.WebView, gobject.GObject):
         move_cb(*display.get_pointer()[1:3])
 
 
-    def get_position(self):
-        return self.position
-
-    def set_position(self, x, y):
-        self.position = (x, y)
-
-
 
     @cream.util.cached_property
     def menu(self):
@@ -152,6 +144,8 @@ class Widget(gobject.GObject, cream.Component):
         self.theme_path = theme_path
         self.common_path = common_path
 
+        self.position = (0, 0)
+
         skin_dir = os.path.join(self.context.working_directory, 'data', 'skins')
         self.skins = cream.manifest.ManifestDB(skin_dir, 
             type='org.cream.melange.Skin'
@@ -162,6 +156,11 @@ class Widget(gobject.GObject, cream.Component):
         self.view.connect('begin-move', lambda *x: self.view.move())
 
 
+    def get_position(self):
+        return self.position
+
+    def set_position(self, x, y):
+        self.position = (x, y)
 
     def set_theme_path(self, theme_path):
         self.theme_path = theme_path
