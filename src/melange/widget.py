@@ -42,7 +42,9 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
         skin_url = self.widget_ref.get_skin_path()
         self.skin_url = os.path.join(skin_url, 'index.html')
-        self.open(self.skin_url)
+        self.load_uri('file://' + self.skin_url)
+
+        self.connect('resource-request-starting', self.dispatch_resource)
 
 
     def dispatch_resource(self, view, frame, resource, request, response):
