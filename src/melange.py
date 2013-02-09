@@ -235,7 +235,7 @@ class Melange(cream.Module, cream.ipc.Object):
         self.messages.debug("Loading widget '%s'..." % id)
 
         path = self.available_widgets.get_by_id(id)._path
-        widget = Widget(path, self.selected_theme, self.common_path)
+        widget = Widget(path, self.themes, self.selected_theme, self.common_path)
 
         if x and y:
             x, y = int(x), int(y)

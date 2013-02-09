@@ -5,10 +5,42 @@ from gi.repository import Gtk as gtk, Gdk as gdk, GObject as gobject, WebKit as 
 
 import cream
 import cream.util
+import cream.config
 import cream.manifest
+
+from gpyconf.fields import MultiOptionField
+
 
 from melange.common import (STATE_NONE, STATE_MOVING, MOUSE_BUTTON_MIDDLE,
                             MOUSE_BUTTON_RIGHT, MOVE_TIMESTEP)
+
+
+class WidgetConfiguration(cream.config.Configuration):
+
+    def __init__(self, scheme_path, path, skins, themes):
+
+        cream.config.Configuration.__init__(self, scheme_path, path, read=False)
+
+        self._add_field(
+            'skin',
+            MultiOptionField('Skin',
+                section='Appearance',
+                options=((s['id'], s['name']) for s in skins.manifests.values())
+            )
+        )
+
+        options = [('use.the.fucking.global.settings', 'Use global settings')]
+        options += [(t['id'], t['name']) for t in themes.manifests.values()]
+        self._add_field(
+            'theme',
+            MultiOptionField('Theme',
+                section='Appearance',
+                options=options
+            )
+        )
+
+        self.read()
+
 
 
 class WidgetView(webkit.WebView, gobject.GObject):
@@ -151,13 +183,14 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
 class Widget(gobject.GObject, cream.Component):
 
-    def __init__(self, path, theme, common_path):
+    def __init__(self, path, themes, theme, common_path):
 
         gobject.GObject.__init__(self)
         cream.Component.__init__(self, path=path)
 
         self.instance_id = cream.util.random_hash()[:10]
 
+        self.themes = themes
         self.theme = theme
         self.common_path = common_path
 
@@ -168,6 +201,14 @@ class Widget(gobject.GObject, cream.Component):
             type='org.cream.melange.Skin'
         )
 
+        scheme_path = os.path.join(self.context.get_path(), 
+            'configuration/scheme.xml'
+        )
+        path = os.path.join(self.context.get_user_path(), 'configuration/')
+
+        self.config = WidgetConfiguration(scheme_path, path, self.skins, self.themes)
+        self.config.connect('field-value-changed', self.configuration_value_changed_cb)
+
 
         self.load()
 
@@ -175,6 +216,9 @@ class Widget(gobject.GObject, cream.Component):
 
         self.view = WidgetView(self)
         self.view.connect('begin-move', lambda *x: self.view.move())
+        self.view.connect('show-config-dialog-request', 
+            lambda *x: self.config.show_dialog()
+        )
 
 
     def get_position(self):
@@ -185,17 +229,20 @@ class Widget(gobject.GObject, cream.Component):
 
 
     def get_theme_path(self):
-        return os.path.dirname(self.theme._path)
+
+        theme_id = self.config.theme
+        if theme_id == 'use.the.fucking.global.settings':
+            theme_id = self.theme['id']
+
+        return os.path.dirname(self.themes.get_by_id(theme_id)._path)
 
 
     def get_skin_path(self):
 
-        # XXX Config
-
         return os.path.join(
             self.context.working_directory,
             'skins',
-            os.path.dirname(self.skins.manifests.values()[0]._path)
+            os.path.dirname(self.skins.get_by_id(self.config.skin)._path)
         )
 
 
@@ -204,3 +251,6 @@ class Widget(gobject.GObject, cream.Component):
         self.view.widget_ref = None
         self.view.destroy()
 
+    def configuration_value_changed_cb(self, source, key, value):
+        if key in ('theme', 'skin'):
+            self.view.emit('reload-request')
