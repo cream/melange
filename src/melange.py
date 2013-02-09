@@ -74,6 +74,28 @@ class WidgetLayer(TransparentWindow):
         widget.view.show_all()
 
 
+    def remove_widget(self, widget):
+
+        del self.widgets[widget.instance_id]
+
+        for id in self.signal_handlers[widget.instance_id]:
+            widget.view.disconnect(id)
+
+        self.layout.remove(widget.view)
+        widget.destroy()
+
+
+    def reload(self, widget):
+        self.remove_widget(widget)
+        widget.load()
+        self.add_widget(widget)
+
+
+    def reload_all(self):
+
+        for widget in self.widgets.itervalues():
+            self.reload(widget)
+
 
     def move_request_cb(self, view, x, y):
 
@@ -87,29 +109,19 @@ class WidgetLayer(TransparentWindow):
 
 
     def raise_request_cb(self, view):
+
         self.layout.raise_child(view)
 
 
     def remove_request_cb(self, view):
 
-        widget = view.widget_ref
-        del self.widgets[widget.instance_id]
-
-        for id in self.signal_handlers[widget.instance_id]:
-            view.disconnect(id)
-
-        self.layout.remove(view)
-        widget.destroy()
+        self.remove_widget(view.widget_ref)
 
 
     def reload_request_cb(self, view):
 
         widget = view.widget_ref
-
-        self.remove_request_cb(view)
-        widget.load()
-        self.add_widget(widget)
-
+        self.reload(widget)
 
 
 class Melange(cream.Module, cream.ipc.Object):
