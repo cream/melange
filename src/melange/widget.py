@@ -56,7 +56,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
             raise HandlerMissing()
         elif path.startswith('/theme'):
             path = path[7:] # remove /theme/
-            path = os.path.join(self.widget_ref.theme_path, path)
+            path = os.path.join(self.widget_ref.get_theme_path(), path)
         elif path.startswith('/data'):
             raise HandlerMissing()
         elif path.startswith('/common'):
@@ -151,14 +151,14 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
 class Widget(gobject.GObject, cream.Component):
 
-    def __init__(self, path, theme_path, common_path):
+    def __init__(self, path, theme, common_path):
 
         gobject.GObject.__init__(self)
         cream.Component.__init__(self, path=path)
 
         self.instance_id = cream.util.random_hash()[:10]
 
-        self.theme_path = theme_path
+        self.theme = theme
         self.common_path = common_path
 
         self.position = (0, 0)
@@ -183,10 +183,9 @@ class Widget(gobject.GObject, cream.Component):
     def set_position(self, x, y):
         self.position = (x, y)
 
-    def set_theme_path(self, theme_path):
-        self.theme_path = theme_path
-        # XXX reload
 
+    def get_theme_path(self):
+        return os.path.dirname(self.theme._path)
 
 
     def get_skin_path(self):

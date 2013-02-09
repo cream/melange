@@ -8,6 +8,8 @@ from gi.repository import (Gtk as gtk, Gdk as gdk, GObject as gobject,
 import cream
 import cream.ipc
 
+from gpyconf.fields import MultiOptionField
+
 from melange.widget import Widget
 from melange.gui import CompositeBin
 from melange.dialogs import AddWidgetDialog
@@ -154,6 +156,17 @@ class Melange(cream.Module, cream.ipc.Object):
             type='org.cream.melange.Widget'
         )
 
+
+        self.config._add_field(
+            'theme',
+            MultiOptionField('Theme',
+                options=((k, v['name']) for k,v in self.themes.manifests.items())
+            )
+        )
+
+        self.config.read()
+        self.config.connect('field-value-changed', self.configuration_value_changed_cb)
+
         self.layer = WidgetLayer()
         self.layer.connect('button-release-event', self.button_release_cb)
         self.layer.show_all()
@@ -193,9 +206,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
     @property
     def selected_theme(self):
-        # XXX config
-
-        return self.themes.manifests.values()[0]
+        return self.themes.get_by_id(self.config.theme)
 
 
     def add_widget(self):
@@ -211,16 +222,20 @@ class Melange(cream.Module, cream.ipc.Object):
             self.menu.popup(None, None, None, None, event.button, event.get_time())
 
 
+    def configuration_value_changed_cb(self, source, key, value):
+        if key == 'theme':
+            theme = self.themes.get_by_id(value)
+            for widget in self.layer.widgets.itervalues():
+                widget.theme = theme
+            self.layer.reload_all()
+
     @cream.ipc.method('svv', '')
     def load_widget(self, id, x=None, y=None):
 
         self.messages.debug("Loading widget '%s'..." % id)
 
         path = self.available_widgets.get_by_id(id)._path
-        widget = Widget(path, 
-            os.path.dirname(self.selected_theme._path),
-            self.common_path
-        )
+        widget = Widget(path, self.selected_theme, self.common_path)
 
         if x and y:
             x, y = int(x), int(y)
