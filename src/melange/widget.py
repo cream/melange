@@ -47,7 +47,6 @@ class WidgetView(webkit.WebView, gobject.GObject):
     __gsignals__ = {
         'move-request': (gobject.SignalFlags.RUN_LAST, None, (int, int)),
         'begin-move': (gobject.SignalFlags.RUN_LAST, None, ()),
-        'raise-request': (gobject.SignalFlags.RUN_LAST, None, ()),
         'show-config-dialog-request': (gobject.SignalFlags.RUN_LAST, None, ()),
         'reload-request': (gobject.SignalFlags.RUN_LAST, None, ()),
         'remove-request': (gobject.SignalFlags.RUN_LAST, None, ()),
@@ -115,8 +114,6 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
 
     def button_press_cb(self, view, event):
-
-        self.emit('raise-request')
 
         if event.button == MOUSE_BUTTON_MIDDLE:
             self.state = STATE_MOVING
