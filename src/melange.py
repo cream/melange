@@ -245,7 +245,7 @@ class Melange(cream.Module, cream.ipc.Object):
         if event.button == MOUSE_BUTTON_RIGHT:
             self.menu.popup(None, None, None, None, event.button, event.get_time())
 
-
+        # Raise all widgets to be on top of the event_layer again
         for window in self.windows:
             window.present()
 
