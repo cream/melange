@@ -15,6 +15,8 @@ from melange.common import (STATE_NONE, STATE_MOVING, MOUSE_BUTTON_MIDDLE,
                             MOUSE_BUTTON_RIGHT, MOVE_TIMESTEP)
 
 
+USE_GLOBAL_SETTINGS = 'use.the.fucking.global.settings'
+
 class WidgetConfiguration(cream.config.Configuration):
 
     def __init__(self, scheme_path, path, skins, themes):
@@ -29,8 +31,8 @@ class WidgetConfiguration(cream.config.Configuration):
             )
         )
 
-        options = [('use.the.fucking.global.settings', 'Use global settings')]
-        options += [(t['id'], t['name']) for t in themes.manifests.values()]
+        options = [(USE_GLOBAL_SETTINGS, 'Use global settings')]
+        options += [(t['id'], t['name']) for t in themes.get_all_themes()]
         self._add_field(
             'theme',
             MultiOptionField('Theme',
@@ -180,7 +182,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
 class Widget(gobject.GObject, cream.Component):
 
-    def __init__(self, path, themes, theme, common_path):
+    def __init__(self, path, themes, common_path):
 
         gobject.GObject.__init__(self)
         cream.Component.__init__(self, path=path)
@@ -188,7 +190,8 @@ class Widget(gobject.GObject, cream.Component):
         self.instance_id = cream.util.random_hash()[:10]
 
         self.themes = themes
-        self.theme = theme
+        self.themes.connect('changed', self.theme_change_cb)
+
         self.common_path = common_path
 
         self.position = (0, 0)
@@ -228,10 +231,10 @@ class Widget(gobject.GObject, cream.Component):
     def get_theme_path(self):
 
         theme_id = self.config.theme
-        if theme_id == 'use.the.fucking.global.settings':
-            theme_id = self.theme['id']
+        if theme_id == USE_GLOBAL_SETTINGS:
+            theme_id = self.themes.selected_theme_id
 
-        return os.path.dirname(self.themes.get_by_id(theme_id)._path)
+        return os.path.dirname(self.themes.get_theme(theme_id)._path)
 
 
     def get_skin_path(self):
@@ -250,4 +253,9 @@ class Widget(gobject.GObject, cream.Component):
 
     def configuration_value_changed_cb(self, source, key, value):
         if key in ('theme', 'skin'):
+            self.view.emit('reload-request')
+
+
+    def theme_change_cb(self, themes, theme_id):
+        if self.config.theme == USE_GLOBAL_SETTINGS:
             self.view.emit('reload-request')

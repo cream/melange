@@ -118,16 +118,34 @@ class WidgetWindow(gtk.Window, gobject.GObject):
         ctx.paint()
 
 
+class Themes(gobject.GObject):
+    __gsignals__ = {
+        'changed': (gobject.SignalFlags.RUN_LAST, None, (str,))
+    }
 
-    def remove_request_cb(self, view):
+    def __init__(self, theme_dirs):
 
-        self.remove_widget(view.widget_ref)
+        gobject.GObject.__init__(self)
+
+        self._themes = cream.manifest.ManifestDB(theme_dirs,
+            type='org.cream.melange.Theme'
+        )
+
+        self.selected_theme_id = None
 
 
-    def reload_request_cb(self, view):
+    def change_theme(self, theme_id):
 
-        widget = view.widget_ref
-        self.reload(widget)
+        self.selected_theme_id = theme_id
+        self.emit('changed', theme_id)
+
+    def get_theme(self, theme_id):
+
+        return self._themes.get_by_id(theme_id)
+
+    def get_all_themes(self):
+
+        return self._themes.manifests.values()
 
 
 class Melange(cream.Module, cream.ipc.Object):
@@ -148,9 +166,7 @@ class Melange(cream.Module, cream.ipc.Object):
             os.path.join(self.context.get_path(), 'data/themes'),
             os.path.join(self.context.get_user_path(), 'data/themes')
         ]
-        self.themes = cream.manifest.ManifestDB(theme_dirs, 
-            type='org.cream.melange.Theme'
-        )
+        self.themes = Themes(theme_dirs)
 
         widget_dirs = [
             os.path.join(self.context.get_path(), 'data/widgets'),
@@ -164,13 +180,14 @@ class Melange(cream.Module, cream.ipc.Object):
         self.config._add_field(
             'theme',
             MultiOptionField('Theme',
-                options=((k, v['name']) for k,v in self.themes.manifests.items())
+                options=((t['id'], t['name']) for t in self.themes.get_all_themes())
             )
         )
 
         self.config.read()
         self.config.connect('field-value-changed', self.configuration_value_changed_cb)
 
+        self.themes.change_theme(self.config.theme)
 
         self.event_layer = TransparentWindow()
         self.event_layer.connect('button-release-event', self.button_release_cb)
@@ -213,7 +230,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
     @property
     def selected_theme(self):
-        return self.themes.get_by_id(self.config.theme)
+        return self.themes.get_theme(self.config.theme)
 
 
     def add_widget(self):
@@ -221,12 +238,6 @@ class Melange(cream.Module, cream.ipc.Object):
         widget_id = self.add_widget_dialog.run()
         if widget_id is not None:
             self.load_widget(widget_id)
-
-
-    def reload_all_widgets(self):
-
-        for window in self.windows:
-            window.reload()
 
 
     def button_release_cb(self, layer, event):
@@ -241,8 +252,9 @@ class Melange(cream.Module, cream.ipc.Object):
 
 
     def configuration_value_changed_cb(self, source, key, value):
+
         if key == 'theme':
-            gobject.timeout_add(100, self.reload_all_widgets)
+            self.themes.change_theme(value)
 
     def remove_request_cb(self, window):
 
@@ -255,7 +267,7 @@ class Melange(cream.Module, cream.ipc.Object):
         self.messages.debug("Loading widget '%s'..." % id)
 
         path = self.available_widgets.get_by_id(id)._path
-        widget = Widget(path, self.themes, self.selected_theme, self.common_path)
+        widget = Widget(path, self.themes, self.common_path)
 
         if x and y:
             x, y = int(x), int(y)
