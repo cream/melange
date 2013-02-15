@@ -19,7 +19,7 @@ var Widget = new Class({
     registerMethod: function(method) {
         this.api[method] = function() {
             var args = [];
-            var cb = function() {};
+            var cb = null;
 
             Array.each(arguments, function(arg) {
                 if(typeof arg == 'function')
@@ -46,16 +46,20 @@ var Widget = new Class({
     },
 
     callRemote: function(method, args, cb) {
-        var callbackId = this.callbackId++;
-        this.callbacks[callbackId] = cb;
 
         var data = {};
+        if(cb !== null) {
+            var callbackId = this.callbackId++;
+            this.callbacks[callbackId] = cb;
+            data['callback_id'] = callbackId;
+        }
+
         var i = 0;
         Array.each(args, function(v) {
             data['argument_' + i.toString()] = v
             i++;
         });
-        data['callback_id'] = callbackId;
+
         var qs = Object.toQueryString(data);
 
         window.location.href = 'melange://call/' + method + '?' + qs;

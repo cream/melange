@@ -135,7 +135,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
                 self.execute_script("widget.main();")
             elif action == 'call':
                 method = path[1:]
-                callback_id = query.pop('callback_id')
+                callback_id = query.pop('callback_id', None)
 
                 arguments = []
                 for key in sorted(query.keys()):
@@ -145,7 +145,10 @@ class WidgetView(webkit.WebView, gobject.GObject):
                 meth = getattr(self.api, method)
 
                 thread = Thread(meth, callback_id, arguments)
-                thread.connect('finished', self.invoke_callback)
+
+                if callback_id is not None:
+                    thread.connect('finished', self.invoke_callback)
+
                 thread.start()
 
             decision.ignore()
