@@ -200,9 +200,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
         self.windows = []
 
-
-        self.load_widget('org.cream.melange.CalculatorWidget')
-
+        gobject.timeout_add(20, self.load_widgets_from_config)
 
     @cream.util.cached_property
     def add_widget_dialog(self):
@@ -266,6 +264,12 @@ class Melange(cream.Module, cream.ipc.Object):
         self.windows.remove(window)
         window.destroy()
 
+
+    def load_widgets_from_config(self):
+
+        for widget in self.config.widgets:
+            self.load_widget(**widget)
+
     @cream.ipc.method('svv', '')
     def load_widget(self, id, x=None, y=None):
 
@@ -285,6 +289,21 @@ class Melange(cream.Module, cream.ipc.Object):
         window.load_widget(widget)
 
         self.windows.append(window)
+
+
+    def quit(self):
+
+        widgets = []
+        for window in self.windows:
+            widget = window._widget
+            widgets.append({
+                'id': widget.id, 
+                'x': widget.get_position()[0],
+                'y': widget.get_position()[1]
+            })
+
+        self.config.widgets = widgets
+        cream.Module.quit(self)
 
 
 
