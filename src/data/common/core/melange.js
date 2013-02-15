@@ -30,6 +30,7 @@ var Remote = new Class({
 var Widget = new Class({
     initialize: function(main) {
         this.api = {};
+        this.config = new ConfigurationWrapper();
         this.main = main || function() {};
         this.callbacks = {};
         this.callbackId = 0;
@@ -89,8 +90,17 @@ var Widget = new Class({
 var ConfigurationWrapper = new Class({
     Implements: Events,
 
-    get: function(option) {
-        //return this._python_config[option];
+    initialize: function() {
+        this.callbacks = {};
+        this.callbackId = 0;
+    },
+
+    get: function(option, cb) {
+        var id = this.callbackId++;
+        this.callbacks[id] = cb;
+        var qs = Object.toQueryString({option: option, callback_id: id});
+
+        remote.call('config://get/?' + qs);
     },
 
     set: function(option, value) {
@@ -98,18 +108,23 @@ var ConfigurationWrapper = new Class({
             // Javascript allows this, but I don't want that.
             throw new TypeError("`config.set` expects two arguments");
         }
-        //this._python_config[option] = value;
+
+        var qs = Object.toQueryString({option: option, value: value})
+        remote.call('config://set/?' + qs);
+    },
+
+    invokeCallback: function(callbackId, value) {
+        var cb = this.callbacks[callbackId];
+        cb(value);
+        delete this.callbacks[callbackId];
     },
 
      //
      // Invoked on every gpyconf event.
      // Uses MooTools' Events for dispatching.
      //
-    on_config_event: function() {
-        // `arguments` object to real `Array`: 
-        var args = Array.prototype.slice.apply(arguments);
-        // First argument is the event name. 
-        var event_name = args.shift();
+    onConfigEvent: function(event_name, key, value) {
+        args = [key, value];
         this.fireEvent(event_name, args);
     }
 });

@@ -24,7 +24,7 @@ def register_scheme(scheme):
         getattr(urlparse, method).append(scheme)
 
 register_scheme('melange')
-
+register_scheme('config')
 
 
 class WidgetConfiguration(cream.config.Configuration):
@@ -129,6 +129,8 @@ class WidgetView(webkit.WebView, gobject.GObject):
                     import_api_file(path, self.widget_ref.id)
                 self.api = APIS[self.widget_ref.id]()
 
+                self.api.config = self.widget_ref.config
+
                 for method in self.api.get_exposed_methods():
                     self.execute_script("widget.registerMethod('{}');".format(method))
 
@@ -143,7 +145,6 @@ class WidgetView(webkit.WebView, gobject.GObject):
                         arguments.append(query[key])
 
                 meth = getattr(self.api, method)
-
                 thread = Thread(meth, callback_id, arguments)
 
                 if callback_id is not None:
@@ -151,6 +152,16 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
                 thread.start()
 
+            decision.ignore()
+        elif scheme == 'config':
+            if action == 'get':
+                callback_id, option = query['callback_id'], query['option']
+                value = getattr(self.widget_ref.config, option)
+                script = 'widget.config.invokeCallback({}, "{}");'.format(callback_id, value)
+                self.execute_script(script)
+            elif action == 'set':
+                option, value = query['option'], query['value']
+                setattr(self.widget_ref.config, option, value)
             decision.ignore()
         else:
             # open webbrowser
@@ -160,8 +171,14 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
 
     def invoke_callback(self, thread, callback_id, result):
-
         script = 'widget.invokeCallback({}, {});'.format(callback_id, str(result))
+        self.execute_script(script)
+
+
+    def configuration_value_changed_cb(self, key, value):
+
+        event = 'field-value-changed'
+        script = 'widget.config.onConfigEvent("{}", "{}", "{}");'.format(event, key, value)
         self.execute_script(script)
 
 
@@ -298,12 +315,16 @@ class Widget(gobject.GObject, cream.Component):
 
     def destroy(self):
 
+        self.view.api.config = None
+        self.view.api = None
         self.view.widget_ref = None
         self.view.destroy()
 
     def configuration_value_changed_cb(self, source, key, value):
         if key in ('theme', 'skin'):
             self.view.emit('reload-request')
+        else:
+            self.view.configuration_value_changed_cb(key, value)
 
 
     def theme_change_cb(self, themes, theme_id):
