@@ -1,5 +1,32 @@
 var REMOTECALLDELTA = 50;
 
+
+// prevent calls to get invoked short after another
+// as one will get lost because melange won't pickup the fast
+// window.location.href change
+var Remote = new Class({
+    initialize: function() {
+        this.lastRemoteCallTime = 0;
+    },
+
+    call: function(url) {
+        var now = new Date().getTime();
+        if(this.lastRemoteCallTime + REMOTECALLDELTA > now) {
+            setTimeout(function() {
+                remote.call(url);
+            }, 50);
+        } else {
+            this.lastRemoteCallTime = now;
+            this._call(url);
+        }
+    },
+
+    _call: function(url) {
+        window.location.href = url;
+    }
+});
+
+
 var Widget = new Class({
     initialize: function(main) {
         this.api = {};
@@ -7,9 +34,7 @@ var Widget = new Class({
         this.callbacks = {};
         this.callbackId = 0;
 
-        this.lastRemoteCallTime = 0;
-
-        window.location.href = 'melange://init';
+        remote.call('melange://init');
     },
 
     main: function() {
@@ -28,20 +53,7 @@ var Widget = new Class({
                     args.push(arg);
             });
 
-            // prevent calls to get invoked short after another
-            // as one will get lost because melange won't pickup the fast
-            // window.location.href change
-            function call() {
-                var now = new Date().getTime();
-                if(this.lastRemoteCallTime + REMOTECALLDELTA > now)
-                    setTimeout(call, 50);
-                else {
-                    this.lastRemoteCallTime = now;
-                    widget.callRemote(method, args, cb);
-                }
-            }
-
-            call();
+            widget.callRemote(method, args, cb);
         }
     },
 
@@ -62,7 +74,7 @@ var Widget = new Class({
 
         var qs = Object.toQueryString(data);
 
-        window.location.href = 'melange://call/' + method + '?' + qs;
+        remote.call('melange://call/' + method + '?' + qs);
     },
 
     invokeCallback: function(callbackId, data) {
@@ -103,6 +115,7 @@ var ConfigurationWrapper = new Class({
 });
 
 
+var remote = new Remote();
 var widget = null;
 
 window.addEvent('domready', function() {
