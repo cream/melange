@@ -1,19 +1,74 @@
-/*var DEBUG = false;
+var REMOTECALLDELTA = 50;
 
-var _mootools_entered = new Array();
+var Widget = new Class({
+    initialize: function(main) {
+        this.api = {};
+        this.main = main || function() {};
+        this.callbacks = {};
+        this.callbackId = 0;
 
-Element.Events.mouseenter = {
-    base: "mouseover",
-    condition: function(event){
-        _mootools_entered.include(this);
-        return true;
+        this.lastRemoteCallTime = 0;
+
+        window.location.href = 'melange://init';
+    },
+
+    main: function() {
+        this.main();
+    },
+
+    registerMethod: function(method) {
+        this.api[method] = function() {
+            var args = [];
+            var cb = function() {};
+
+            Array.each(arguments, function(arg) {
+                if(typeof arg == 'function')
+                    cb = arg;
+                else
+                    args.push(arg);
+            });
+
+            // prevent calls to get invoked short after another
+            // as one will get lost because melange won't pickup the fast
+            // window.location.href change
+            function call() {
+                var now = new Date().getTime();
+                if(this.lastRemoteCallTime + REMOTECALLDELTA > now)
+                    setTimeout(call, 50);
+                else {
+                    this.lastRemoteCallTime = now;
+                    widget.callRemote(method, args, cb);
+                }
+            }
+
+            call();
+        }
+    },
+
+    callRemote: function(method, args, cb) {
+        var callbackId = this.callbackId++;
+        this.callbacks[callbackId] = cb;
+
+        var data = {};
+        var i = 0;
+        Array.each(args, function(v) {
+            data['argument_' + i.toString()] = v
+            i++;
+        });
+        data['callback_id'] = callbackId;
+        var qs = Object.toQueryString(data);
+
+        window.location.href = 'melange://call/' + method + '?' + qs;
+    },
+
+    invokeCallback: function(callbackId, data) {
+        var callback = this.callbacks[callbackId];
+        callback(data);
+        delete this.callbacks[callbackId];
     }
-
-};*/
-
-var API = new Class({
-    Implements: Events
 });
+
+
 
 var ConfigurationWrapper = new Class({
     Implements: Events,
@@ -43,31 +98,9 @@ var ConfigurationWrapper = new Class({
     }
 });
 
-var Widget = new Class({
-    init: function() {
-        console.log('test');
-        //window.location.href = 'melange://init';
-        var myRequest = new Request({
-            url: 'http://init',
-            method: 'get',
-            onSuccess: function(responseText){
-                myElement.set('text', responseText);
-            },
-            onFailure: function() {
-                console.log('fail');
-            }
-        }).send();
-    },
-    api: new API(),
-    config: new ConfigurationWrapper()
-});
 
-var widget = new Widget();
-//_python.init_config();
+var widget = null;
 
 window.addEvent('domready', function() {
-    if(window.main !== undefined) {
-        widget.init();
-        //main();
-    }
+    widget = new Widget(window.main);
 });

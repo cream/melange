@@ -11,11 +11,21 @@ import cream.manifest
 from gpyconf.fields import MultiOptionField
 
 
+from melange.api import import_api_file, Thread, APIS
 from melange.common import (STATE_NONE, STATE_MOVING, MOUSE_BUTTON_MIDDLE,
                             MOUSE_BUTTON_RIGHT, MOVE_TIMESTEP)
 
 
 USE_GLOBAL_SETTINGS = 'use.the.fucking.global.settings'
+
+
+def register_scheme(scheme):
+    for method in filter(lambda s: s.startswith('uses_'), dir(urlparse)):
+        getattr(urlparse, method).append(scheme)
+
+register_scheme('melange')
+
+
 
 class WidgetConfiguration(cream.config.Configuration):
 
@@ -60,6 +70,8 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
         self.widget_ref = widget # XXX Circular reference
         self.state = STATE_NONE
+
+        self.api = None
 
         webkit.WebView.__init__(self)
         gobject.GObject.__init__(self)
@@ -107,15 +119,47 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
     def navigation_request_cb(self, view, frame, request, action, decision):
 
-        print 'nav'
-        scheme, _, path, _, query, _ = urlparse.urlparse(request.get_uri())
+        scheme, action, path, _, query, _ = urlparse.urlparse(request.get_uri())
+        query = dict(urlparse.parse_qsl(query))
 
-        print scheme, path, query
+        if scheme == 'melange':
+            if action == 'init':
+                if not self.widget_ref.id in APIS:
+                    path = self.widget_ref.context.working_directory
+                    import_api_file(path, self.widget_ref.id)
+                self.api = APIS[self.widget_ref.id]()
 
-        decision.ignore()
+                for method in self.api.get_exposed_methods():
+                    self.execute_script("widget.registerMethod('{}');".format(method))
+
+                self.execute_script("widget.main();")
+            elif action == 'call':
+                method = path[1:]
+                callback_id = query.pop('callback_id')
+
+                arguments = []
+                for key in sorted(query.keys()):
+                    if key.startswith('argument_'):
+                        arguments.append(query[key])
+
+                meth = getattr(self.api, method)
+
+                thread = Thread(meth, callback_id, arguments)
+                thread.connect('finished', self.invoke_callback)
+                thread.start()
+
+            decision.ignore()
+        else:
+            # open webbrowser
+            pass
+
         return True
 
 
+    def invoke_callback(self, thread, callback_id, result):
+
+        script = 'widget.invokeCallback({}, {});'.format(callback_id, str(result))
+        self.execute_script(script)
 
 
     def button_press_cb(self, view, event):
@@ -185,12 +229,12 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
 class Widget(gobject.GObject, cream.Component):
 
-    def __init__(self, path, themes, common_path):
+    def __init__(self, widget_id, path, themes, common_path):
 
         gobject.GObject.__init__(self)
         cream.Component.__init__(self, path=path)
 
-        self.instance_id = cream.util.random_hash()[:10]
+        self.id = widget_id
 
         self.themes = themes
         self.themes.connect('changed', self.theme_change_cb)
