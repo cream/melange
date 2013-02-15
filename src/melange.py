@@ -66,12 +66,12 @@ class WidgetWindow(gtk.Window, gobject.GObject):
         self._widget = widget
         self.handlers = []
 
+        self.handlers.append(widget.view.connect('show-request', self.show_request_cb))
         self.handlers.append(widget.view.connect('move-request', self.move_request_cb))
         self.handlers.append(widget.view.connect('remove-request', self.remove_request_cb))
         self.handlers.append(widget.view.connect('reload-request', self.reload_request_cb))
 
         self.add(widget.view)
-        self.show_all()
 
 
     def reload(self):
@@ -83,6 +83,11 @@ class WidgetWindow(gtk.Window, gobject.GObject):
         self._widget.destroy()
         self._widget.load()
         self.load_widget(self._widget)
+
+
+    def show_request_cb(self, view):
+
+        self.show_all()
 
 
     def move_request_cb(self, view, x, y):

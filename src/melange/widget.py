@@ -47,6 +47,7 @@ class WidgetConfiguration(cream.config.Configuration):
 
 class WidgetView(webkit.WebView, gobject.GObject):
     __gsignals__ = {
+        'show-request': (gobject.SignalFlags.RUN_LAST, None, ()),
         'move-request': (gobject.SignalFlags.RUN_LAST, None, (int, int)),
         'begin-move': (gobject.SignalFlags.RUN_LAST, None, ()),
         'show-config-dialog-request': (gobject.SignalFlags.RUN_LAST, None, ()),
@@ -78,6 +79,8 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
         self.connect('resource-request-starting', self.dispatch_resource)
         self.connect('navigation-policy-decision-requested', self.navigation_request_cb)
+        self.connect('document-load-finished', lambda *x: self.emit('show-request'))
+
 
     def dispatch_resource(self, view, frame, resource, request, response):
 
