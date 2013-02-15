@@ -88,6 +88,7 @@ class WidgetWindow(gtk.Window, gobject.GObject):
     def show_request_cb(self, view):
 
         self.show_all()
+        self.move(*self._widget.get_position())
 
 
     def move_request_cb(self, view, x, y):
