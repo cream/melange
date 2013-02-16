@@ -169,8 +169,9 @@ class WidgetView(webkit.WebView, gobject.GObject):
             path = self.widget_ref.context.working_directory
             import_api_file(path, self.widget_ref.id)
 
-        self.api = APIS[self.widget_ref.id]()
-        self.api.config = self.widget_ref.config
+        api_klass = APIS[self.widget_ref.id]
+        api_klass.config = self.widget_ref.config
+        self.api = api_klass()
 
         for method in self.api.get_exposed_methods():
             self.execute_script('widget.registerMethod("{}");'.format(method))
