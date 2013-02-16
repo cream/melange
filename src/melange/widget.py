@@ -133,17 +133,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
         if scheme == 'melange':
             if action == 'init':
-                if not self.widget_ref.id in APIS:
-                    path = self.widget_ref.context.working_directory
-                    import_api_file(path, self.widget_ref.id)
-                self.api = APIS[self.widget_ref.id]()
-
-                self.api.config = self.widget_ref.config
-
-                for method in self.api.get_exposed_methods():
-                    self.execute_script("widget.registerMethod('{}');".format(method))
-
-                self.execute_script("widget.main();")
+                self.init_api()
             elif action == 'call':
                 method = path[1:]
                 callback_id = query.pop('callback_id', None)
@@ -153,13 +143,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
                     if key.startswith('argument_'):
                         arguments.append(query[key])
 
-                meth = getattr(self.api, method)
-                thread = Thread(meth, callback_id, arguments)
-
-                if callback_id is not None:
-                    thread.connect('finished', self.invoke_callback)
-
-                thread.start()
+                self.handle_api_call(method, callback_id, arguments)
 
             decision.ignore()
         elif scheme == 'config':
@@ -179,9 +163,37 @@ class WidgetView(webkit.WebView, gobject.GObject):
         return True
 
 
-    def invoke_callback(self, thread, callback_id, result):
-        script = 'widget.invokeCallback({}, {});'.format(callback_id, json.dumps(result))
-        self.execute_script(script)
+    def init_api(self):
+
+        if not self.widget_ref.id in APIS:
+            path = self.widget_ref.context.working_directory
+            import_api_file(path, self.widget_ref.id)
+
+        self.api = APIS[self.widget_ref.id]()
+        self.api.config = self.widget_ref.config
+
+        for method in self.api.get_exposed_methods():
+            self.execute_script('widget.registerMethod("{}");'.format(method))
+        self.execute_script('widget.main();')
+
+
+    def handle_api_call(self, method_name, callback_id, arguments):
+
+        def invoke_callback(thread, callback_id, result):
+            result = json.dumps(result)
+            script = 'widget.invokeCallback({}, {});'.format(callback_id, result)
+            self.execute_script(script)
+
+        method = getattr(self.api, method_name, None)
+        if method is None:
+            self.widget_ref.messages.error('API Method "{}" not found'.format(method_name))
+
+        thread = Thread(method, callback_id, arguments)
+
+        if callback_id is not None:
+            thread.connect('finished', invoke_callback)
+
+        thread.start()
 
 
     def configuration_value_changed_cb(self, key, value):
