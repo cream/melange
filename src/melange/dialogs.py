@@ -141,7 +141,7 @@ class AboutDialog(gtk.AboutDialog):
         self.connect('response', lambda *x: self.hide())
         self.connect('delete-event', lambda *x: True)
 
-        self.set_name(manifest['name'])
+        self.set_program_name(manifest['name'])
 
         developers, designers = [], []
 
