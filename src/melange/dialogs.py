@@ -8,7 +8,7 @@ from categories import categories
 ICON_SIZE_SMALL = 24
 ICON_SIZE_BIG = 48
 
-AUTHOR = '{0} <{1}>'
+AUTHOR = u'{0} <{1}>'
 class AddWidgetDialog(object):
 
     def __init__(self, widgets):
@@ -100,9 +100,10 @@ class AddWidgetDialog(object):
                 path = join(dirname(__file__), 'images/melange.png')
 
             icon = gdkpixbuf.Pixbuf.new_from_file_at_size(path, 35, 35)
-            label = '<b>{0}</b>\n{1}'.format(widget['name'],
-                                             split_string(widget['description'])
-                                      )
+            label = u'<b>{0}</b>\n{1}'.format(
+                widget['name'],
+                split_string(widget['description'])
+            )
             self.widget_liststore.append((icon, label, widget['id']))
 
     @property
