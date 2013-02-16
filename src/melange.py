@@ -175,13 +175,11 @@ class Melange(cream.Module, cream.ipc.Object):
         self.themes = Themes(theme_dirs)
 
         widget_dirs = [
-            os.path.join(self.context.get_path(), 'data/widgets'),
             os.path.join(self.context.get_user_path(), 'data/widgets')
         ]
         self.available_widgets = cream.manifest.ManifestDB(widget_dirs,
             type='org.cream.melange.Widget'
         )
-
 
         self.config._add_field(
             'theme',
