@@ -157,7 +157,6 @@ class WidgetView(webkit.WebView, gobject.GObject):
                 setattr(self.widget_ref.config, option, value)
             decision.ignore()
         else:
-            # open webbrowser
             webbrowser.open(request.get_uri())
 
         return True
