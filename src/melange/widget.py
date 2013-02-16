@@ -12,6 +12,7 @@ from gpyconf.fields import MultiOptionField
 
 
 from melange.api import import_api_file, Thread, APIS
+from melange.dialogs import AboutDialog
 from melange.common import (STATE_NONE, STATE_MOVING, MOUSE_BUTTON_MIDDLE,
                             MOUSE_BUTTON_RIGHT, MOVE_TIMESTEP)
 
@@ -283,8 +284,11 @@ class Widget(gobject.GObject, cream.Component):
 
         self.view = WidgetView(self)
         self.view.connect('begin-move', lambda *x: self.view.move())
-        self.view.connect('show-config-dialog-request', 
+        self.view.connect('show-config-dialog-request',
             lambda *x: self.config.show_dialog()
+        )
+        self.view.connect('show-about-dialog-request',
+            lambda *x: self.about_dialog.show()
         )
 
 
@@ -331,3 +335,11 @@ class Widget(gobject.GObject, cream.Component):
     def theme_change_cb(self, themes, theme_id):
         if self.config.theme == USE_GLOBAL_SETTINGS:
             self.view.emit('reload-request')
+
+
+    @cream.util.cached_property
+    def about_dialog(self):
+
+        return AboutDialog(self.context.manifest)
+
+
