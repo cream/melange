@@ -1,6 +1,7 @@
 import os
 import json
 import urlparse
+import webbrowser
 
 from gi.repository import Gtk as gtk, Gdk as gdk, GObject as gobject, WebKit as webkit
 
@@ -173,7 +174,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
             decision.ignore()
         else:
             # open webbrowser
-            pass
+            webbrowser.open(request.get_uri())
 
         return True
 
