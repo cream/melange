@@ -171,6 +171,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
         api_klass = APIS[self.widget_ref.id]
         api_klass.config = self.widget_ref.config
+        api_klass.context = self.widget_ref.context
         self.api = api_klass()
 
         for method in self.api.get_exposed_methods():
