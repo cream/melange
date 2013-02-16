@@ -315,8 +315,9 @@ class Widget(gobject.GObject, cream.Component):
 
     def destroy(self):
 
-        self.view.api.config = None
-        self.view.api = None
+        if self.view.api is not None:
+            self.view.api.config = None
+            self.view.api = None
         self.view.widget_ref = None
         self.view.destroy()
 
