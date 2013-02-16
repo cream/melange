@@ -87,6 +87,12 @@ class WidgetView(webkit.WebView, gobject.GObject):
         self.connect('button-press-event', self.button_press_cb)
         self.connect('button-release-event', self.button_release_cb)
 
+        # Initialize drag and drop...
+        self.drag_dest_set(0, [], 0)
+        self.connect('drag_motion', self.drag_motion_cb)
+        self.connect('drag_drop', self.drag_drop_cb)
+        self.connect('drag_data_received', self.drag_data_cb)
+
         skin_url = self.widget_ref.get_skin_path()
         self.skin_url = os.path.join(skin_url, 'index.html')
         self.load_uri('file://' + self.skin_url)
@@ -199,6 +205,28 @@ class WidgetView(webkit.WebView, gobject.GObject):
         if event.button == MOUSE_BUTTON_MIDDLE:
             self.state = STATE_NONE
             return True
+
+
+    def drag_motion_cb(self, view, context, x, y, time):
+        gdk.drag_status(context, gdk.DragAction.MOVE, time)
+        return True
+
+
+    def drag_drop_cb(self, view, context, x, y, time):
+
+        for target in context.list_targets():
+            if 'text/uri-list' in target.name():
+                view.drag_get_data(context, target, time)
+        return True
+
+
+    def drag_data_cb(self, view, context, x, y, data, info, time):
+
+        uris = json.dumps(data.get_uris())
+        script = "widget.fireDrop({}, {}, '{}');".format(x, y, uris)
+        self.execute_script(script)
+
+        gdk.drop_finish(context, True, time)
 
 
     def move(self):

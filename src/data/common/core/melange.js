@@ -82,6 +82,20 @@ var Widget = new Class({
         var callback = this.callbacks[callbackId];
         callback(data);
         delete this.callbacks[callbackId];
+    },
+
+    fireDrop: function(x, y, data) {
+
+        data = JSON.decode(data);
+
+        // find the drop target
+        var el = document.elementFromPoint(x, y);
+        var events = el.retrieve('events');
+        while(events === null || !'drop' in events) {
+            el = el.getParent();
+            events = el.retrieve('events');
+        }
+        el.fireEvent('drop', [data]);
     }
 });
 
