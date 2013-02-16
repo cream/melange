@@ -1,4 +1,5 @@
 import os
+import json
 import urlparse
 
 from gi.repository import Gtk as gtk, Gdk as gdk, GObject as gobject, WebKit as webkit
@@ -172,7 +173,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
 
     def invoke_callback(self, thread, callback_id, result):
-        script = 'widget.invokeCallback({}, {});'.format(callback_id, str(result))
+        script = 'widget.invokeCallback({}, {});'.format(callback_id, json.dumps(result))
         self.execute_script(script)
 
 
