@@ -56,6 +56,17 @@ def register(widget_id):
     return wrapper
 
 
+
+def in_main_thread(func):
+    """ Decorator for functions that have to be called in the main thread. """
+
+    def wrapper(*args, **kwargs):
+        f = FunctionInMainThread(func)
+        return f(*args, **kwargs)
+
+    return wrapper
+
+
 class API(object):
 
     @expose
@@ -97,3 +108,31 @@ class Thread(threading.Thread, gobject.GObject):
 
     def _emit(self, ret):
         self.emit('finished', self.callback_id, ret)
+
+
+
+class FunctionInMainThread(object):
+    """ A wrapper for functions that have to be called in the main thread. """
+
+    def __init__(self, func):
+
+        self.func = func
+        self.lock = threading.Event()
+        self.ret = None
+
+
+    def __call__(self, *args, **kwargs):
+
+        self.lock.clear()
+        gobject.timeout_add(0, self._func_wrapper, args, kwargs)
+        self.lock.wait()
+        return self.ret
+
+
+    def _func_wrapper(self, args, kwargs):
+        try:
+            self.ret = self.func(*args, **kwargs)
+        except Exception:
+            import traceback
+            traceback.print_exc()
+        self.lock.set()
