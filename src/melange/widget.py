@@ -100,7 +100,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
         self.connect('resource-request-starting', self.dispatch_resource)
         self.connect('navigation-policy-decision-requested', self.navigation_request_cb)
-        self.connect('document-load-finished', lambda *x: self.emit('show-request'))
+        self.connect('document-load-finished', self.document_load_finished_cb)
 
 
     def dispatch_resource(self, view, frame, resource, request, response):
@@ -197,6 +197,11 @@ class WidgetView(webkit.WebView, gobject.GObject):
         thread.start()
 
 
+    def document_load_finished_cb(self, view, frame):
+
+        self.workaround_theme_caching()
+        self.emit('show-request')
+
     def configuration_value_changed_cb(self, key, value):
 
         event = 'field-value-changed'
@@ -289,6 +294,27 @@ class WidgetView(webkit.WebView, gobject.GObject):
         return menu
 
 
+    def workaround_theme_caching(self):
+        """
+        When we request our theme files via the /theme/ui url webkit caches
+        the first file, but if we change theme, then this url points to a different
+        location on disk and webkit instead loads the version from the cache.
+        Solve this issue by appending a random querystring onto every link and
+        script element that points to /themes/ui
+        """
+
+        self.execute_script('''
+            var links = document.getElementsByTagName('link');
+            for(i = 0; i < links.length; i++) {
+                if(links[i].href.indexOf('/theme/ui') != -1)
+                    links[i].href += '?random=' + (new Date()).getTime();
+            }
+            var scripts = document.getElementsByTagName('script');
+            for(i = 0; i < scripts.length; i++) {
+                if(scripts[i].src.indexOf('/theme/ui') != -1)
+                    scripts[i].src += '?random=' + (new Date()).getTime();
+            }
+        ''')
 
 
 class Widget(gobject.GObject, cream.Component):
