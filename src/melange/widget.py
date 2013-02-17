@@ -94,7 +94,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
         self.connect('drag_drop', self.drag_drop_cb)
         self.connect('drag_data_received', self.drag_data_cb)
 
-        skin_url = self.widget_ref.get_skin_path()
+        skin_url = self.widget_ref.current_skin_path
         self.skin_url = os.path.join(skin_url, 'index.html')
         self.load_uri('file://' + self.skin_url)
 
@@ -113,7 +113,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
             raise HandlerMissing()
         elif path.startswith('/theme'):
             path = path[7:] # remove /theme/
-            path = os.path.join(self.widget_ref.get_theme_path(), path)
+            path = os.path.join(self.widget_ref.current_theme_path, path)
         elif path.startswith('/data'):
             raise HandlerMissing()
         elif path.startswith('/common'):
@@ -356,6 +356,8 @@ class Widget(gobject.GObject, cream.Component):
         self.config = WidgetConfiguration(scheme_path, path, self.skins, self.themes)
         self.config.connect('field-value-changed', self.configuration_value_changed_cb)
 
+        self.skin_id = self.config.skin
+        self.theme_id = self.config.theme
 
         self.load()
 
@@ -378,21 +380,23 @@ class Widget(gobject.GObject, cream.Component):
         self.position = (x, y)
 
 
-    def get_theme_path(self):
+    @property
+    def current_theme_path(self):
 
-        theme_id = self.config.theme
+        theme_id = self.theme_id
         if theme_id == USE_GLOBAL_SETTINGS:
             theme_id = self.themes.selected_theme_id
 
         return os.path.dirname(self.themes.get_theme(theme_id)._path)
 
 
-    def get_skin_path(self):
+    @property
+    def current_skin_path(self):
 
         return os.path.join(
             self.context.working_directory,
             'skins',
-            os.path.dirname(self.skins.get_by_id(self.config.skin)._path)
+            os.path.dirname(self.skins.get_by_id(self.skin_id)._path)
         )
 
 
@@ -405,7 +409,12 @@ class Widget(gobject.GObject, cream.Component):
         self.view.destroy()
 
     def configuration_value_changed_cb(self, source, key, value):
-        if key in ('theme', 'skin'):
+
+        if key == 'skin':
+            self.skin_id = value
+            self.view.emit('reload-request')
+        elif key == 'theme':
+            self.theme_id = value
             self.view.emit('reload-request')
         else:
             self.view.configuration_value_changed_cb(key, value)
