@@ -209,11 +209,21 @@ class WidgetView(webkit.WebView, gobject.GObject):
         self.execute_script(script)
 
 
+    def begin_move(self):
+
+        self.state = STATE_MOVING
+        self.emit('begin-move')
+
+
+    def end_move(self):
+
+        self.state = STATE_NONE
+
+
     def button_press_cb(self, view, event):
 
         if event.button == MOUSE_BUTTON_MIDDLE:
-            self.state = STATE_MOVING
-            self.emit('begin-move')
+            self.begin_move()
             return True
         elif event.button == MOUSE_BUTTON_RIGHT:
             self.menu.popup(None, None, None, None, event.button, event.get_time())
@@ -222,7 +232,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
     def button_release_cb(self, view, event):
         if event.button == MOUSE_BUTTON_MIDDLE:
-            self.state = STATE_NONE
+            self.end_move()
             return True
 
 

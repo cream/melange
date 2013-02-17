@@ -11,7 +11,7 @@ from gpyconf.fields import MultiOptionField
 
 from melange.widget import Widget
 from melange.dialogs import AddWidgetDialog
-from melange.common import MOUSE_BUTTON_RIGHT
+from melange.common import MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT
 
 
 class TransparentWindow(gtk.Window):
@@ -49,12 +49,19 @@ class WidgetWindow(gtk.Window, gobject.GObject):
         gtk.Window.__init__(self)
         gobject.GObject.__init__(self)
 
+        self.ctrl_pressed = False
+
         self.set_events(gdk.EventMask.BUTTON_RELEASE_MASK)
         self.set_type_hint(gdk.WindowTypeHint.DESKTOP)
 
         self.set_app_paintable(True)
         self.set_visual(self.get_screen().get_rgba_visual())
+
         self.connect('draw', self.draw_cb)
+        self.connect('key-press-event', self.key_press_cb)
+        self.connect('key-release-event', self.key_release_cb)
+        self.connect('button-press-event', self.button_press_cb)
+        self.connect('button-release-event', self.button_release_cb)
 
         screen = gdk.Screen.get_default()
         self.screen_width = screen.get_width()
@@ -116,6 +123,32 @@ class WidgetWindow(gtk.Window, gobject.GObject):
     def reload_request_cb(self, view):
 
         self.reload()
+
+
+    def key_press_cb(self, window, event):
+
+        if event.keyval in (gdk.KEY_Control_L, gdk.KEY_Control_R):
+            self.ctrl_pressed = True
+
+
+    def key_release_cb(self, window, event):
+
+        if event.keyval in (gdk.KEY_Control_L, gdk.KEY_Control_R):
+            self.ctrl_pressed = False
+            self._widget.view.end_move()
+
+
+    def button_press_cb(self, window, event):
+
+        if self.ctrl_pressed and event.button == MOUSE_BUTTON_LEFT:
+            self._widget.view.begin_move()
+
+
+    def button_release_cb(self, window, event):
+
+        if self.ctrl_pressed and event.button == MOUSE_BUTTON_LEFT:
+            self._widget.view.end_move()
+
 
     def draw_cb(self, window, ctx):
 
