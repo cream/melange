@@ -107,15 +107,9 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
         scheme, _, path, _, query, _ = urlparse.urlparse(request.get_uri())
 
-        class HandlerMissing(Exception): pass
-
-        if path.startswith('/widget'):
-            raise HandlerMissing()
-        elif path.startswith('/theme'):
+        if path.startswith('/theme'):
             path = path[7:] # remove /theme/
             path = os.path.join(self.widget_ref.current_theme_path, path)
-        elif path.startswith('/data'):
-            raise HandlerMissing()
         elif path.startswith('/common'):
             path = path[8:] # remove /common/
             path = os.path.join(self.widget_ref.common_path, path)
