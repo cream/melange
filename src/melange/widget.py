@@ -6,6 +6,7 @@ import webbrowser
 from gi.repository import Gtk as gtk, Gdk as gdk, GObject as gobject, WebKit as webkit
 
 import cream
+import cream.log
 import cream.util
 import cream.config
 import cream.manifest
@@ -167,6 +168,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
         api_klass = APIS[self.widget_ref.id]
         api_klass.config = self.widget_ref.config
         api_klass.context = self.widget_ref.context
+        api_klass.messages = self.widget_ref.messages
         self.api = api_klass()
 
         for method in self.api.get_exposed_methods():
@@ -331,6 +333,7 @@ class Widget(gobject.GObject, cream.Component):
         cream.Component.__init__(self, path=path)
 
         self.id = widget_id
+        self.messages = cream.log.Messages()
 
         self.themes = themes
         self.themes.connect('changed', self.theme_change_cb)

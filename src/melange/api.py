@@ -71,7 +71,7 @@ class API(object):
 
     @expose
     def log(self, msg):
-        print msg # XXX use cream.Messages
+        self.messages.info(msg)
 
     def get_exposed_methods(self):
         methods = []
