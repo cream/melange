@@ -333,14 +333,12 @@ class Widget(gobject.GObject, cream.Component):
         cream.Component.__init__(self, path=path)
 
         self.id = widget_id
+        self.common_path = common_path
+        self.position = (0, 0)
         self.messages = cream.log.Messages()
 
         self.themes = themes
         self.themes.connect('changed', self.theme_change_cb)
-
-        self.common_path = common_path
-
-        self.position = (0, 0)
 
         skin_dir = os.path.join(self.context.working_directory, 'data', 'skins')
         self.skins = cream.manifest.ManifestDB(skin_dir, 
