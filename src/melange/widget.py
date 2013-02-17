@@ -113,8 +113,10 @@ class WidgetView(webkit.WebView, gobject.GObject):
         elif path.startswith('/common'):
             path = path[8:] # remove /common/
             path = os.path.join(self.widget_ref.common_path, path)
-        elif not os.path.exists(path):
-            print 'Ignoring ' + path
+        elif scheme == 'file' and not os.path.exists(path):
+            request.set_uri('about:blank')
+            return
+        else:
             return
 
         request.set_uri('file://' + path)
