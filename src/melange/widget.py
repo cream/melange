@@ -1,5 +1,6 @@
 import os
 import json
+import shutil
 import urlparse
 import webbrowser
 
@@ -114,6 +115,9 @@ class WidgetView(webkit.WebView, gobject.GObject):
         elif path.startswith('/common'):
             path = path[8:] # remove /common/
             path = os.path.join(self.widget_ref.common_path, path)
+        elif path.startswith('/data'):
+            path = path[6:] # remove /data/
+            path = os.path.join(self.widget_ref.get_data_path(), path)
         elif scheme == 'file' and not os.path.exists(path):
             request.set_uri('about:blank')
             return
@@ -168,6 +172,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
         api_klass = APIS[self.widget_ref.id]
         api_klass.config = self.widget_ref.config
         api_klass.context = self.widget_ref.context
+        api_klass.data_path = self.widget_ref.get_data_path()
         api_klass.messages = self.widget_ref.messages
         api_klass.emit = self._emit_api_signal
         self.api = api_klass()
@@ -381,6 +386,20 @@ class Widget(gobject.GObject, cream.Component):
 
     def set_position(self, x, y):
         self.position = (x, y)
+
+
+    def get_data_path(self):
+
+        data_path = os.path.join(self.context.get_user_path(), 'data/shared')
+        if not os.path.isdir(data_path):
+            orig_data_path = os.path.join(self.context.get_path(), 'data/shared')
+
+            if os.path.isdir(orig_data_path):
+                shutil.copytree(orig_data_path, data_path)
+            else:
+                os.makedirs(data_path)
+
+        return data_path
 
 
     @property
