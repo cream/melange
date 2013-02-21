@@ -169,6 +169,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
         api_klass.config = self.widget_ref.config
         api_klass.context = self.widget_ref.context
         api_klass.messages = self.widget_ref.messages
+        api_klass.emit = self._emit_api_signal
         self.api = api_klass()
 
         for method in self.api.get_exposed_methods():
@@ -194,6 +195,11 @@ class WidgetView(webkit.WebView, gobject.GObject):
 
         thread.start()
 
+
+    def _emit_api_signal(self, signal, data=''):
+
+        script = 'widget.emitSignal("{}", {});'.format(signal, json.dumps(data))
+        self.execute_script(script)
 
     def document_load_finished_cb(self, view, frame):
 

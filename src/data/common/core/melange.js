@@ -33,7 +33,14 @@ var Widget = new Class({
         this.config = new ConfigurationWrapper();
         this.main = main || function() {};
         this.callbacks = {};
+        this.signalCallbacks = {};
         this.callbackId = 0;
+
+        // register signal callbacks
+        var _this = this;
+        this.api['addEvent'] = function(signal, cb) {
+            _this.signalCallbacks[signal] = cb;
+        }
 
         remote.call('melange://init');
     },
@@ -82,6 +89,11 @@ var Widget = new Class({
         var callback = this.callbacks[callbackId];
         callback(data);
         delete this.callbacks[callbackId];
+    },
+
+    emitSignal: function(signal, data) {
+        if(signal in this.signalCallbacks)
+            this.signalCallbacks[signal](data);
     },
 
     fireDrop: function(x, y, data) {
