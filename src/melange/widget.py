@@ -65,6 +65,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
         'show-request': (gobject.SignalFlags.RUN_LAST, None, ()),
         'move-request': (gobject.SignalFlags.RUN_LAST, None, (int, int)),
         'begin-move': (gobject.SignalFlags.RUN_LAST, None, ()),
+        'end-move': (gobject.SignalFlags.RUN_LAST, None, ()),
         'show-config-dialog-request': (gobject.SignalFlags.RUN_LAST, None, ()),
         'reload-request': (gobject.SignalFlags.RUN_LAST, None, ()),
         'remove-request': (gobject.SignalFlags.RUN_LAST, None, ()),
@@ -227,6 +228,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
     def end_move(self):
 
         self.state = STATE_NONE
+        self.emit('end-move')
 
 
     def button_press_cb(self, view, event):

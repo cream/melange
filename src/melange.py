@@ -75,6 +75,8 @@ class WidgetWindow(gtk.Window, gobject.GObject):
 
         self.handlers.append(widget.view.connect('show-request', self.show_request_cb))
         self.handlers.append(widget.view.connect('move-request', self.move_request_cb))
+        self.handlers.append(widget.view.connect('begin-move', self.fade_out))
+        self.handlers.append(widget.view.connect('end-move', self.fade_in))
         self.handlers.append(widget.view.connect('remove-request', self.remove_request_cb))
         self.handlers.append(widget.view.connect('reload-request', self.reload_request_cb))
 
@@ -90,6 +92,14 @@ class WidgetWindow(gtk.Window, gobject.GObject):
         self._widget.destroy()
         self._widget.load()
         self.load_widget(self._widget)
+
+
+    def fade_in(self, view):
+        self.set_opacity(1)
+
+
+    def fade_out(self, view):
+        self.set_opacity(0.8)
 
 
     def show_request_cb(self, view):
