@@ -1,140 +1,294 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-# MA 02110-1301, USA.
-
-import sys
 import os
-import imp
+import json
 import shutil
-import weakref
-
-import gobject
-import gtk
-import webkit
-import javascriptcore as jscore
+import urlparse
 import webbrowser
 
-import cream.base
-import cream.gui
-from cream.util import cached_property, random_hash, extend_querystring
-from melange.api import APIS, PyToJSInterface
-from melange.dialogs import AboutDialog
+from gi.repository import Gtk as gtk, Gdk as gdk, GObject as gobject, WebKit as webkit
 
-from cream.config import Configuration
+import cream
+import cream.log
+import cream.util
+import cream.config
+import cream.manifest
+
 from gpyconf.fields import MultiOptionField
 
-from common import HTTPSERVER_BASE_URL, \
-                   STATE_MOVE, STATE_NONE, STATE_VISIBLE, \
-                   MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT, \
-                   MOVE_TIMESTEP, OPACITY_MOVE
 
-class WidgetAPI(object):
-    pass
+from melange.api import import_api_file, Thread, APIS
+from melange.dialogs import AboutDialog
+from melange.common import (STATE_NONE, STATE_MOVING, MOUSE_BUTTON_MIDDLE,
+                            MOUSE_BUTTON_RIGHT, MOVE_TIMESTEP)
 
 
-class WidgetConfiguration(Configuration):
+USE_GLOBAL_SETTINGS = 'use.the.fucking.global.settings'
+
+
+def register_scheme(scheme):
+    for method in filter(lambda s: s.startswith('uses_'), dir(urlparse)):
+        getattr(urlparse, method).append(scheme)
+
+register_scheme('melange')
+register_scheme('config')
+
+
+class WidgetConfiguration(cream.config.Configuration):
 
     def __init__(self, scheme_path, path, skins, themes):
 
-        Configuration.__init__(self, scheme_path, path, read=False)
+        cream.config.Configuration.__init__(self, scheme_path, path, read=False)
 
         self._add_field(
-            'widget_skin',
+            'skin',
             MultiOptionField('Skin',
                 section='Appearance',
-                options=((s['id'], s['name']) for s in skins.get())
+                options=((s['id'], s['name']) for s in skins.get_all())
             )
         )
+
+        options = [(USE_GLOBAL_SETTINGS, 'Use global settings')]
+        options += [(t['id'], t['name']) for t in themes.get_all_themes()]
         self._add_field(
-            'widget_theme',
+            'theme',
             MultiOptionField('Theme',
                 section='Appearance',
-                options=([('use.the.fucking.global.settings.and.suck.my.Dick', 'Use global settings')] + [(t['id'], t['name']) for t in themes.get()])
+                options=options
             )
         )
 
         self.read()
 
 
-class WidgetConfigurationProxy(object):
 
-    def __init__(self, config):
-        self.config_ref = weakref.ref(config)
-
-    def __getattribute__(self, key):
-
-        try:
-            return object.__getattribute__(self, key)
-        except AttributeError:
-            return getattr(self.config_ref(), key)
-
-
-
-class WidgetInstance(gobject.GObject):
-
-    __gtype_name__ = 'WidgetInstance'
+class WidgetView(webkit.WebView, gobject.GObject):
     __gsignals__ = {
-        'raise-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'remove-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'reload-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'resize-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
-        'focus-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'begin-move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'end-move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'show-config-dialog-request' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'show-about-dialog-request' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        'show-request': (gobject.SignalFlags.RUN_LAST, None, ()),
+        'move-request': (gobject.SignalFlags.RUN_LAST, None, (int, int)),
+        'begin-move': (gobject.SignalFlags.RUN_LAST, None, ()),
+        'end-move': (gobject.SignalFlags.RUN_LAST, None, ()),
+        'show-config-dialog-request': (gobject.SignalFlags.RUN_LAST, None, ()),
+        'reload-request': (gobject.SignalFlags.RUN_LAST, None, ()),
+        'remove-request': (gobject.SignalFlags.RUN_LAST, None, ()),
+        'show-about-dialog-request': (gobject.SignalFlags.RUN_LAST, None, ())
     }
 
     def __init__(self, widget):
 
-        gobject.GObject.__init__(self)
-
-        self.widget_ref = weakref.ref(widget)
-
-        self.config = WidgetConfigurationProxy(self.widget_ref().config)
-
-        self._size = (0, 0)
+        self.widget_ref = widget # XXX Circular reference
         self.state = STATE_NONE
 
-        self.messages = cream.log.Messages()
+        self.api = None
 
-        # Initializing the WebView...
-        self.view = webkit.WebView()
-        self.view.set_transparent(True)
+        webkit.WebView.__init__(self)
+        gobject.GObject.__init__(self)
 
-        settings = self.view.get_settings()
+        self.set_transparent(True)
+
+        settings = self.get_settings()
         settings.set_property('enable-plugins', False)
-        self.view.set_settings(settings)
+        self.set_settings(settings)
 
-        # Connecting to signals:
-        self.view.connect('expose-event', self.resize_cb)
-        self.view.connect('button-press-event', self.button_press_cb)
-        self.view.connect('button-release-event', self.button_release_cb)
-        self.view.connect('new-window-policy-decision-requested', self.navigation_request_cb)
-        self.view.connect('navigation-policy-decision-requested', self.navigation_request_cb)
-        self.view.connect('resource-request-starting', self.resource_request_cb)
+        self.connect('button-press-event', self.button_press_cb)
+        self.connect('button-release-event', self.button_release_cb)
 
         # Initialize drag and drop...
-        self.view.drag_dest_set(0, [], 0)
-        self.view.connect('drag_motion', self.drag_motion_cb)
-        self.view.connect('drag_drop', self.drag_drop_cb)
-        self.view.connect('drag_data_received', self.drag_data_cb)
+        self.drag_dest_set(0, [], 0)
+        self.connect('drag_motion', self.drag_motion_cb)
+        self.connect('drag_drop', self.drag_drop_cb)
+        self.connect('drag_data_received', self.drag_data_cb)
 
-        # Building context menu:
+        skin_url = self.widget_ref.current_skin_path
+        self.skin_url = os.path.join(skin_url, 'index.html')
+        self.load_uri('file://' + self.skin_url)
+
+        self.connect('resource-request-starting', self.dispatch_resource)
+        self.connect('navigation-policy-decision-requested', self.navigation_request_cb)
+        self.connect('document-load-finished', self.document_load_finished_cb)
+
+
+    def dispatch_resource(self, view, frame, resource, request, response):
+
+        scheme, _, path, _, query, _ = urlparse.urlparse(request.get_uri())
+
+        if path.startswith('/theme'):
+            path = path[7:] # remove /theme/
+            path = os.path.join(self.widget_ref.current_theme_path, path)
+        elif path.startswith('/common'):
+            path = path[8:] # remove /common/
+            path = os.path.join(self.widget_ref.common_path, path)
+        elif path.startswith('/data'):
+            path = path[6:] # remove /data/
+            path = os.path.join(self.widget_ref.get_data_path(), path)
+        elif scheme == 'file' and not os.path.exists(path):
+            request.set_uri('about:blank')
+            return
+        else:
+            return
+
+        request.set_uri('file://' + path)
+
+
+    def navigation_request_cb(self, view, frame, request, action, decision):
+
+        scheme, action, path, _, query, _ = urlparse.urlparse(request.get_uri())
+        query = dict(urlparse.parse_qsl(query))
+
+        if scheme == 'melange':
+            if action == 'init':
+                self.init_api()
+            elif action == 'call':
+                method = path[1:]
+                callback_id = query.pop('callback_id', None)
+
+                arguments = []
+                for key in sorted(query.keys()):
+                    if key.startswith('argument_'):
+                        arguments.append(query[key])
+
+                self.handle_api_call(method, callback_id, arguments)
+
+            decision.ignore()
+        elif scheme == 'config':
+            if action == 'get':
+                callback_id, option = query['callback_id'], query['option']
+                value = getattr(self.widget_ref.config, option)
+                script = 'widget.config.invokeCallback({}, "{}");'.format(callback_id, value)
+                self.execute_script(script)
+            elif action == 'set':
+                option, value = query['option'], query['value']
+                setattr(self.widget_ref.config, option, value)
+            decision.ignore()
+        else:
+            webbrowser.open(request.get_uri())
+
+        return True
+
+
+    def init_api(self):
+
+        if not self.widget_ref.id in APIS:
+            path = self.widget_ref.context.working_directory
+            import_api_file(path, self.widget_ref.id)
+
+        api_klass = APIS[self.widget_ref.id]
+        api_klass.config = self.widget_ref.config
+        api_klass.context = self.widget_ref.context
+        api_klass.data_path = self.widget_ref.get_data_path()
+        api_klass.messages = self.widget_ref.messages
+        api_klass.emit = self._emit_api_signal
+        self.api = api_klass()
+
+        for method in self.api.get_exposed_methods():
+            self.execute_script('widget.registerMethod("{}");'.format(method))
+        self.execute_script('widget.main();')
+
+
+    def handle_api_call(self, method_name, callback_id, arguments):
+
+        def invoke_callback(thread, callback_id, result):
+            result = json.dumps(result)
+            script = 'widget.invokeCallback({}, {});'.format(callback_id, result)
+            self.execute_script(script)
+
+        method = getattr(self.api, method_name, None)
+        if method is None:
+            self.widget_ref.messages.error('API Method "{}" not found'.format(method_name))
+
+        thread = Thread(method, callback_id, arguments)
+
+        if callback_id is not None:
+            thread.connect('finished', invoke_callback)
+
+        thread.start()
+
+
+    def _emit_api_signal(self, signal, data=''):
+
+        script = 'widget.emitSignal("{}", {});'.format(signal, json.dumps(data))
+        self.execute_script(script)
+
+    def document_load_finished_cb(self, view, frame):
+
+        self.workaround_theme_caching()
+        self.emit('show-request')
+
+    def configuration_value_changed_cb(self, key, value):
+
+        event = 'field-value-changed'
+        script = 'widget.config.onConfigEvent("{}", "{}", "{}");'.format(event, key, value)
+        self.execute_script(script)
+
+
+    def begin_move(self):
+
+        self.state = STATE_MOVING
+        self.emit('begin-move')
+
+
+    def end_move(self):
+
+        self.state = STATE_NONE
+        self.emit('end-move')
+
+
+    def button_press_cb(self, view, event):
+
+        if event.button == MOUSE_BUTTON_MIDDLE:
+            self.begin_move()
+            return True
+        elif event.button == MOUSE_BUTTON_RIGHT:
+            self.menu.popup(None, None, None, None, event.button, event.get_time())
+            return True
+
+
+    def button_release_cb(self, view, event):
+        if event.button == MOUSE_BUTTON_MIDDLE:
+            self.end_move()
+            return True
+
+
+    def drag_motion_cb(self, view, context, x, y, time):
+        gdk.drag_status(context, gdk.DragAction.MOVE, time)
+        return True
+
+
+    def drag_drop_cb(self, view, context, x, y, time):
+
+        for target in context.list_targets():
+            if 'text/uri-list' in target.name():
+                view.drag_get_data(context, target, time)
+        return True
+
+
+    def drag_data_cb(self, view, context, x, y, data, info, time):
+
+        uris = json.dumps(data.get_uris())
+        script = "widget.fireDrop({}, {}, '{}');".format(x, y, uris)
+        self.execute_script(script)
+
+        gdk.drop_finish(context, True, time)
+
+
+    def move(self):
+        display = gdk.Display.get_default()
+
+        def move_cb(old_x, old_y):
+            new_x, new_y = display.get_pointer()[1:3]
+
+            move_x = new_x - old_x
+            move_y = new_y - old_y
+
+            if self.state == STATE_MOVING:
+                self.emit('move-request', move_x, move_y)
+                gobject.timeout_add(MOVE_TIMESTEP, move_cb, new_x, new_y)
+
+        move_cb(*display.get_pointer()[1:3])
+
+
+
+    @cream.util.cached_property
+    def menu(self):
+
         item_configure = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
         item_configure.get_children()[0].set_label("Configure")
         item_configure.connect('activate', lambda *x: self.emit('show-config-dialog-request'))
@@ -144,267 +298,96 @@ class WidgetInstance(gobject.GObject):
         item_reload.connect('activate', lambda *x: self.emit('reload-request'))
 
         item_remove = gtk.ImageMenuItem(gtk.STOCK_REMOVE)
+        item_remove.get_children()[0].set_label("Remove")
         item_remove.connect('activate', lambda *x: self.emit('remove-request'))
 
         item_about = gtk.ImageMenuItem(gtk.STOCK_ABOUT)
+        item_about.get_children()[0].set_label("About")
         item_about.connect('activate', lambda *x: self.emit('show-about-dialog-request'))
 
-        self.menu = gtk.Menu()
-        self.menu.append(item_configure)
-        self.menu.append(item_reload)
-        self.menu.append(item_remove)
-        self.menu.append(item_about)
-        self.menu.show_all()
+        menu = gtk.Menu()
+        menu.append(item_configure)
+        menu.append(item_reload)
+        menu.append(item_remove)
+        menu.append(item_about)
+        menu.show_all()
 
-        # Create JavaScript context...
-        self.js_context = jscore.JSContext(self.view.get_main_frame().get_global_context()).globalObject
-
-        self.js_context.log = self.log
-
-        # Set up JavaScript API...
-        self.js_context._python = WidgetAPI()
-        self.js_context._python.init = self.init_api
-        self.js_context._python.init_config = self.init_config
-
-        self.js_context.melange = WidgetAPI()
-        self.js_context.melange.show_add_widget_dialog = self.widget_ref().__melange_ref__().add_widget
-        self.js_context.melange.show_settings_dialog = self.widget_ref().__melange_ref__().config.show_dialog
-
-        skin_url = HTTPSERVER_BASE_URL + '/widget/index.html'
-        self.view.open(skin_url)
-
-        gobject.timeout_add(250, self.apply_hack_to_avoid_problems_with_caching)
+        return menu
 
 
-    def drag_motion_cb(self, widget, context, x, y, time):
-        context.drag_status(gtk.gdk.ACTION_MOVE, time)
-        return True
+    def workaround_theme_caching(self):
+        """
+        When we request our theme files via the /theme/ui url webkit caches
+        the first file, but if we change theme, then this url points to a different
+        location on disk and webkit instead loads the version from the cache.
+        Solve this issue by appending a random querystring onto every link and
+        script element that points to /themes/ui
+        """
 
-
-    def drag_drop_cb(self, widget, context, x, y, time):
-        if 'text/uri-list' in context.targets:
-            widget.drag_get_data(context, 'text/uri-list', time)
-        return True
-
-
-    def drag_data_cb(self, widget, context, x, y, data, info, time):
-
-        def check_for_drop_handlers(e):
-            if not isinstance(e.retrieve('events'), jscore.JSObject) or not 'drop' in e.retrieve('events'):
-                return False
-            return True
-
-        e = self.js_context.document.elementFromPoint(x, y)
-
-        while not check_for_drop_handlers(e):
-            e = e.getParent()
-            if isinstance(e, jscore.NullType):
-                break
-        else:
-            e.fireEvent('drop', data.get_uris())
-            context.finish(True, False, time)
-
-
-    # evil black magic, but it fixes caching problems
-    # adds some randomness to each link, style, script, whatsoever
-    def apply_hack_to_avoid_problems_with_caching(self):
-        if hasattr(self.js_context.document.head, 'childNodes'):
-            for element in self.js_context.document.head.childNodes.values():
-                if hasattr(element, 'src') and element.src:
-                    url = extend_querystring(element.src, {'query_id': random_hash()[:5]})
-                    element.src = url
-                elif hasattr(element, 'href') and element.href:
-                    url = extend_querystring(element.href, {'query_id': random_hash()[:5]})
-                    element.href = url
-            return False
-
-    def log(self, msg):
-        self.messages.debug(msg)
-
-
-    def get_view(self):
-        return self.view
-
-
-    def init_config(self):
-        # Register the JavaScript configuration event callback for *all*
-        # configuration events. Further dispatching then *happens in JS*.
-        self.js_context.widget.config._python_config = self.config
-        self.config.connect('all', self.js_context.widget.config.on_config_event)
-
-
-    def init_api(self):
-
-        custom_api_file = os.path.join(self.widget_ref().context.get_path(), '__init__.py')
-        if os.path.isfile(custom_api_file):
-            sys.path.insert(0, self.widget_ref().context.get_path())
-            imp.load_module(
-                'custom_api_{0}'.format(self.widget_ref().instance_id),
-                open(custom_api_file),
-                custom_api_file,
-                ('.py', 'r', imp.PY_SOURCE)
-            )
-            for name, value in APIS[custom_api_file].iteritems():
-                c = value
-                c._js_ctx = self.js_context
-                c._data_path = self.widget_ref().get_data_path()
-                c.context = self.widget_ref().context
-                c.config = self.config.config_ref()
-                c = c()
-                i = PyToJSInterface(c)
-                self.js_context.widget.api.__setattr__(name, i)
-            del sys.path[0]
-
-
-    def resource_request_cb(self, view, frame, resource, request, response):
-        uri = request.get_property('uri')
-        uri = extend_querystring(uri, {'instance': self.widget_ref().instance_id})
-        request.set_property('uri', uri)
-
-
-    @cached_property
-    def widget_element(self):
-        if not self.js_context.document.body:
-            # we don't have any body yet
-            return
-
-        for element in self.js_context.document.body.childNodes.values():
-            if getattr(element, 'className', None) == 'widget':
-                return element
-
-    widget_element.not_none = True
-
-
-    def resize_cb(self, widget, event, *args):
-
-        """ Resize the widget properly... """
-        if self.widget_element:
-            width = int(self.widget_element.offsetWidth)
-            height = int(self.widget_element.offsetHeight)
-            if not self._size == (width, height):
-                self._size = (width, height)
-                self.emit('resize-request', width, height)
-
-
-    def button_press_cb(self, source, event):
-        """ Handle clicking on the widget (e. g. by showing context menu). """
-
-        self.emit('focus-request')
-        self.emit('raise-request')
-
-        if event.button == MOUSE_BUTTON_RIGHT:
-            self.menu.popup(None, None, None, event.button, event.get_time())
-            return True
-        elif event.button == MOUSE_BUTTON_MIDDLE:
-            self.emit('begin-move-request')
-            self.fade_out()
-            return True
-        elif event.button == MOUSE_BUTTON_LEFT and self.state == STATE_MOVE:
-            self.emit('begin-move-request')
-            return False
-
-
-    def button_release_cb(self, source, event):
-
-        if event.button == MOUSE_BUTTON_MIDDLE:
-            self.emit('end-move-request')
-            self.fade_in()
-            return True
-        if event.button == MOUSE_BUTTON_LEFT and self.state == STATE_MOVE:
-            self.emit('end-move-request')
-            return False
-
-
-    def navigation_request_cb(self, view, frame, request, action, decision):
-        """ Handle clicks on links, etc. """
-
-        uri = request.get_uri()
-
-        if not uri.startswith(HTTPSERVER_BASE_URL):
-            # external URL, open in browser
-            webbrowser.open(uri)
-            return True
-
-
-    def begin_move(self):
-
-        self.state = STATE_MOVE
-
-        self.fade_out()
-
-
-    def end_move(self):
-
-        self.emit('end-move-request')
-        self.state = STATE_NONE
-
-        self.fade_in()
-
-
-    def fade_out(self):
-
-        def fade(t, state):
-            self.widget_element.style.opacity = 1 - (1-OPACITY_MOVE)*state
-
-        t = cream.gui.Timeline(200, cream.gui.CURVE_SINE)
-        t.connect('update', fade)
-        t.run()
-
-
-    def fade_in(self):
-
-        def fade(t, state):
-            self.widget_element.style.opacity = OPACITY_MOVE + (1-OPACITY_MOVE)*state
-
-        t = cream.gui.Timeline(200, cream.gui.CURVE_SINE)
-        t.connect('update', fade)
-        t.run()
-
+        self.execute_script('''
+            var links = document.getElementsByTagName('link');
+            for(i = 0; i < links.length; i++) {
+                if(links[i].href.indexOf('/theme/ui') != -1)
+                    links[i].href += '?random=' + (new Date()).getTime();
+            }
+            var scripts = document.getElementsByTagName('script');
+            for(i = 0; i < scripts.length; i++) {
+                if(scripts[i].src.indexOf('/theme/ui') != -1)
+                    scripts[i].src += '?random=' + (new Date()).getTime();
+            }
+        ''')
 
 
 class Widget(gobject.GObject, cream.Component):
 
-    __gtype_name__ = 'Widget'
-    __gsignals__ = {
-        'raise-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'remove-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'reload-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'move-request': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_INT, gobject.TYPE_INT)),
-        'begin-move': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
-        'end-move': (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
-        }
-
-    def __init__(self, path, backref):
-        self.__melange_ref__ = weakref.ref(backref)
-        exec_mode = self.__melange_ref__().context.execution_mode
+    def __init__(self, widget_id, path, themes, common_path):
 
         gobject.GObject.__init__(self)
-        cream.base.Component.__init__(self, path=path, user_path_prefix='org.cream.Melange/data/widgets', exec_mode=exec_mode)
+        cream.Component.__init__(self, path=path)
 
-        self.state = STATE_NONE
+        self.id = widget_id
+        self.common_path = common_path
+        self.position = (0, 0)
+        self.messages = cream.log.Messages()
 
-        width = gtk.gdk.screen_width()
-        height = gtk.gdk.screen_height()
-        self._position = (int(width/2), int(height/2))
+        self.themes = themes
+        self.themes.connect('changed', self.theme_change_cb)
 
-        self.display = gtk.gdk.display_get_default()
-
-        self.instance_id = '%s' % random_hash(bits=100)[0:32]
-
-        # TODO: User self.context.get(_user)_path()
         skin_dir = os.path.join(self.context.working_directory, 'data', 'skins')
-        self.skins = cream.manifest.ManifestDB(skin_dir, type='org.cream.melange.Skin')
+        self.skins = cream.manifest.ManifestDB(skin_dir, 
+            type='org.cream.melange.Skin'
+        )
 
-        scheme_path = os.path.join(self.context.get_path(), 'configuration/scheme.xml')
+        scheme_path = os.path.join(self.context.get_path(), 
+            'configuration/scheme.xml'
+        )
         path = os.path.join(self.context.get_user_path(), 'configuration/')
 
-        self.config = WidgetConfiguration(scheme_path,
-                                          path,
-                                          skins=self.skins,
-                                          themes=self.__melange_ref__().themes)
+        self.config = WidgetConfiguration(scheme_path, path, self.skins, self.themes)
         self.config.connect('field-value-changed', self.configuration_value_changed_cb)
 
+        self.skin_id = self.config.skin
+        self.theme_id = self.config.theme
+
         self.load()
+
+    def load(self):
+
+        self.view = WidgetView(self)
+        self.view.connect('begin-move', lambda *x: self.view.move())
+        self.view.connect('show-config-dialog-request',
+            lambda *x: self.config.show_dialog()
+        )
+        self.view.connect('show-about-dialog-request',
+            lambda *x: self.about_dialog.show()
+        )
+
+
+    def get_position(self):
+        return self.position
+
+    def set_position(self, x, y):
+        self.position = (x, y)
 
 
     def get_data_path(self):
@@ -421,163 +404,54 @@ class Widget(gobject.GObject, cream.Component):
         return data_path
 
 
-    def get_skin_path(self):
-        return self.get_skin_path_by_id(self.config.widget_skin)
+    @property
+    def current_theme_path(self):
+
+        theme_id = self.theme_id
+        if theme_id == USE_GLOBAL_SETTINGS:
+            theme_id = self.themes.selected_theme_id
+
+        return os.path.dirname(self.themes.get_theme(theme_id)._path)
 
 
-    def get_skin_path_by_id(self, skin_id):
+    @property
+    def current_skin_path(self):
+
         return os.path.join(
             self.context.working_directory,
             'skins',
-            os.path.dirname(self.skins.get(id=skin_id).next()._path)
+            os.path.dirname(self.skins.get(id=self.skin_id)._path)
         )
 
-    def get_current_theme(self):
-        theme_id = self.config.widget_theme
-        if theme_id == 'use.the.fucking.global.settings.and.suck.my.Dick':
-            theme_id = self.__melange_ref__().config.default_theme
-        return self.__melange_ref__().themes.get(id=theme_id).next()
 
+    def destroy(self):
 
-    def begin_move(self):
-
-        self.emit('begin-move')
-
-        self.state = STATE_MOVE
-        self.move()
-
-
-    def end_move(self):
-
-        self.emit('end-move')
-
-        self.state = STATE_VISIBLE
-
-
-    def move(self):
-
-        def move_cb(old_x, old_y):
-            new_x, new_y = self.display.get_pointer()[1:3]
-            move_x = new_x - old_x
-            move_y = new_y - old_y
-
-            if self.state == STATE_MOVE:
-                self.emit('move-request', move_x, move_y)
-                gobject.timeout_add(MOVE_TIMESTEP, move_cb, new_x, new_y)
-
-        move_cb(*self.display.get_pointer()[1:3])
-
-
-    def load(self):
-
-        self.instance = WidgetInstance(self)
-
-        self.instance.connect('show-config-dialog-request', lambda *args: self.config.show_dialog())
-        self.instance.connect('show-about-dialog-request', lambda *args: self.about_dialog.show_all())
-        self.instance.connect('resize-request', self.resize_request_cb)
-        self.instance.connect('remove-request', lambda *args: self.emit('remove-request'))
-        self.instance.connect('raise-request', lambda *args: self.emit('raise-request'))
-        self.instance.connect('reload-request', lambda *args: self.reload())
-        self.instance.connect('focus-request', self.focus_request_cb)
-        self.instance.connect('begin-move-request', self.begin_move_request_cb)
-        self.instance.connect('end-move-request', self.end_move_request_cb)
-
-
-    def begin_move_request_cb(self, source):
-
-        self.begin_move()
-
-
-    def end_move_request_cb(self, source):
-
-        self.end_move()
-
-
-    def resize_request_cb(self, widget_instance, width, height):
-
-        self.instance.view.set_size_request(width, height)
-
-
-    def focus_request_cb(self, source):
-        pass
-
-
-    def reload(self):
-        """ Reload the widget. Really? Yeah. """
-
-        self.emit('reload-request')
-
-
-    def remove(self):
-        """ Close the widget window and emit 'remove' signal. """
-
-        self.config.save()
-
-        self.instance.get_view().destroy()
-        del self
-
-
-    def get_size(self):
-        """
-        Get the size of the widget.
-
-        :return: Size.
-        :rtype: `tuple`
-        """
-
-        return self.window.get_size()
-
-
-    def get_position(self):
-        """
-        Get the position of the widget.
-
-        :return: Position.
-        :rtype: `tuple`
-        """
-
-        return self._position
-
-
-    def set_position(self, x, y):
-        """
-        Set the position of the widget.
-
-        :param x: The x-coordinate.
-        :param y: The y-coordinate.
-
-        :type x: `int`
-        :type y: `int`
-        """
-
-        self._position = (x, y)
-
+        if self.view.api is not None:
+            self.view.api.config = None
+            self.view.api = None
+        self.view.widget_ref = None
+        self.view.destroy()
 
     def configuration_value_changed_cb(self, source, key, value):
 
-        if key == 'widget_theme' or key == 'widget_skin':
-            self.reload()
+        if key == 'skin':
+            self.skin_id = value
+            self.view.emit('reload-request')
+        elif key == 'theme':
+            self.theme_id = value
+            self.view.emit('reload-request')
+        else:
+            self.view.configuration_value_changed_cb(key, value)
 
 
-    @cached_property
+    def theme_change_cb(self, themes, theme_id):
+        if self.config.theme == USE_GLOBAL_SETTINGS:
+            self.view.emit('reload-request')
+
+
+    @cream.util.cached_property
     def about_dialog(self):
-        """ Show the 'About' dialog. """
 
         return AboutDialog(self.context.manifest)
 
 
-    def __xmlserialize__(self):
-        """
-        Return serialized data about widget.
-
-        :return: Dict containing 'name', 'x' and 'y'.
-        :rtype: `dict`
-        """
-
-        # TODO: Save hash rather than name here?
-        return {
-            'name' : self.context.manifest['name'],
-            'x'    : self.get_position()[0],
-            'y'    : self.get_position()[1],
-            'profile': self.config.profiles.active.name
-        }

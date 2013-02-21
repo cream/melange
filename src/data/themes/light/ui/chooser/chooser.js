@@ -1,18 +1,22 @@
+var $chk = function(obj){
+    return !!(obj || obj === 0);
+}
+
 window.addEvent('domready', function() {
     $$('.chooser').each(function(chooser) {
-        
+
         // load all available options assigned to this chooser
         chooser.options = chooser.getElements('.option');
 
         // the first option should be the active one
         chooser.active = chooser.options[0];
-    
+
 
         // Apply some properties to the options
         chooser.options.each(function(option) {
             // set the assigned chooser
             option.chooser = chooser;
-            
+
             // on click this option should be set as active
             option.onclick = function() {
                 if (option != option.chooser.active) {
@@ -20,7 +24,7 @@ window.addEvent('domready', function() {
                 }
             }
         })
-            
+
         // Check if there is a tabs container assigned to this chooser
         tabs_container_id_wouldbe = chooser.id + '-tabs';
         chooser.has_tabs = $chk($(tabs_container_id_wouldbe));
@@ -32,7 +36,7 @@ window.addEvent('domready', function() {
 
             // apply some properties to the available tabs
             chooser.tabs.each(function(tab) {
-                // assign the option that belongs to this tab 
+                // assign the option that belongs to this tab
                 // (which has almost the same ID as this tab,
                 // but it ends without the '-tab', so we'll remove it)
                 tab.option = $(tab.id.replace('-tab', ''));
@@ -66,13 +70,13 @@ window.addEvent('domready', function() {
                         tab.fade(1);
                         tab.className = 'tab active';
                     }
-                });                
+                });
             }
 
             // ha! the active option has changed, so we have to emit a signal (which is an event in JS's case)
             option.chooser.fireEvent('value_changed', option);
         };
-        
+
         chooser.set_active(chooser.active);
     });
 });
