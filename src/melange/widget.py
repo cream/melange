@@ -42,7 +42,7 @@ class WidgetConfiguration(cream.config.Configuration):
             'skin',
             MultiOptionField('Skin',
                 section='Appearance',
-                options=((s['id'], s['name']) for s in skins.manifests.values())
+                options=((s['id'], s['name']) for s in skins.get_all())
             )
         )
 
@@ -420,7 +420,7 @@ class Widget(gobject.GObject, cream.Component):
         return os.path.join(
             self.context.working_directory,
             'skins',
-            os.path.dirname(self.skins.get_by_id(self.skin_id)._path)
+            os.path.dirname(self.skins.get(id=self.skin_id)._path)
         )
 
 

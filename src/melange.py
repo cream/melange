@@ -190,11 +190,11 @@ class Themes(gobject.GObject):
 
     def get_theme(self, theme_id):
 
-        return self._themes.get_by_id(theme_id)
+        return self._themes.get(id=theme_id)
 
     def get_all_themes(self):
 
-        return self._themes.manifests.values()
+        return self._themes.get_all()
 
 
 class Melange(cream.Module, cream.ipc.Object):
@@ -248,7 +248,7 @@ class Melange(cream.Module, cream.ipc.Object):
     def add_widget_dialog(self):
 
         widgets = sorted(
-            self.available_widgets.manifests.itervalues(), 
+            self.available_widgets.get_all(),
             key=lambda w: w['name']
         )
         return AddWidgetDialog(widgets)
@@ -317,7 +317,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
         self.messages.debug("Loading widget '%s'..." % id)
 
-        path = self.available_widgets.get_by_id(id)._path
+        path = self.available_widgets.get(id=id)._path
         widget = Widget(id, path, self.themes, self.common_path)
 
         if x and y:
