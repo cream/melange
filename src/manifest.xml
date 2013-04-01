@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <manifest namespace="org.cream" version="0.0.5">
-    <component name="Melange" id=".Melange" version="0.4" type=".Module" exec="melange">
+    <component name="Melange" id=".Melange" version="0.5" type=".Module" exec="melange">
         <license title="GPL" version="3+" />
 
         <description lang="en" content="A widget system for the Cream Desktop Environment." />
