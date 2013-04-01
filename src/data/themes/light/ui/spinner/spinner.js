@@ -30,7 +30,7 @@ var Spinner = new Class({
         this.interval_id = this.draw.periodical(100, this);
     },
     stop: function() {
-        this.interval_id = $clear(this.interval_id);
+        this.interval_id = clearTimeout(this.interval_id);
     },
     draw: function() {
         this.ctx.clearRect(-this.size/2, -this.size/2, this.size, this.size);		// Clear the image

@@ -1,62 +1,164 @@
-var DEBUG = false;
+var REMOTECALLDELTA = 50;
 
-var _mootools_entered = new Array();
 
-Element.Events.mouseenter = {
-    base: "mouseover",
-    condition: function(event){
-        _mootools_entered.include(this);
-        return true;
+// prevent calls to get invoked short after another
+// as one will get lost because melange won't pickup the fast
+// window.location.href change
+var Remote = new Class({
+    initialize: function() {
+        this.lastRemoteCallTime = 0;
+    },
+
+    call: function(url) {
+        var now = new Date().getTime();
+        if(this.lastRemoteCallTime + REMOTECALLDELTA > now) {
+            setTimeout(function() {
+                remote.call(url);
+            }, 50);
+        } else {
+            this.lastRemoteCallTime = now;
+            this._call(url);
+        }
+    },
+
+    _call: function(url) {
+        window.location.href = url;
     }
-
-};
-
-var API = new Class({
-    Implements: Events
 });
+
+
+var Widget = new Class({
+    initialize: function(main) {
+        this.api = {};
+        this.config = new ConfigurationWrapper();
+        this.main = main || function() {};
+        this.callbacks = {};
+        this.signalCallbacks = {};
+        this.callbackId = 0;
+
+        // register signal callbacks
+        var _this = this;
+        this.api['addEvent'] = function(signal, cb) {
+            _this.signalCallbacks[signal] = cb;
+        }
+
+        remote.call('melange://init');
+    },
+
+    main: function() {
+        this.main();
+    },
+
+    registerMethod: function(method) {
+        this.api[method] = function() {
+            var args = [];
+            var cb = null;
+
+            Array.each(arguments, function(arg) {
+                if(typeof arg == 'function')
+                    cb = arg;
+                else
+                    args.push(arg);
+            });
+
+            widget.callRemote(method, args, cb);
+        }
+    },
+
+    callRemote: function(method, args, cb) {
+
+        var data = {};
+        if(cb !== null) {
+            var callbackId = this.callbackId++;
+            this.callbacks[callbackId] = cb;
+            data['callback_id'] = callbackId;
+        }
+
+        var i = 0;
+        Array.each(args, function(v) {
+            data['argument_' + i.toString()] = v
+            i++;
+        });
+
+        var qs = Object.toQueryString(data);
+
+        remote.call('melange://call/' + method + '?' + qs);
+    },
+
+    invokeCallback: function(callbackId, data) {
+        var callback = this.callbacks[callbackId];
+        callback(data);
+        delete this.callbacks[callbackId];
+    },
+
+    emitSignal: function(signal, data) {
+        if(signal in this.signalCallbacks)
+            this.signalCallbacks[signal](data);
+    },
+
+    fireDrop: function(x, y, data) {
+
+        data = JSON.decode(data);
+
+        // find the drop target
+        var el = document.elementFromPoint(x, y);
+        var events = el.retrieve('events');
+        while(events === null || !'drop' in events) {
+            el = el.getParent();
+            events = el.retrieve('events');
+        }
+        el.fireEvent('drop', [data]);
+    }
+});
+
+
 
 var ConfigurationWrapper = new Class({
     Implements: Events,
 
-    get: function(option) {
-        return this._python_config[option];
+    initialize: function() {
+        this.callbacks = {};
+        this.callbackId = 0;
+    },
+
+    get: function(option, cb) {
+        var id = this.callbackId++;
+        this.callbacks[id] = cb;
+        var qs = Object.toQueryString({option: option, callback_id: id});
+
+        remote.call('config://get/?' + qs);
     },
 
     set: function(option, value) {
         if(value === undefined) {
-            /* Javascript allows this, but I don't want that. */
+            // Javascript allows this, but I don't want that.
             throw new TypeError("`config.set` expects two arguments");
         }
-        this._python_config[option] = value;
+
+        var qs = Object.toQueryString({option: option, value: value})
+        remote.call('config://set/?' + qs);
     },
 
-    /*
-     * Invoked on every gpyconf event.
-     * Uses MooTools' Events for dispatching.
-     */
-    on_config_event: function() {
-        /* `arguments` object to real `Array`: */
-        var args = Array.prototype.slice.apply(arguments);
-        /* First argument is the event name. */
-        var event_name = args.shift();
+    invokeCallback: function(callbackId, value) {
+        var cb = this.callbacks[callbackId];
+        cb(value);
+        delete this.callbacks[callbackId];
+    },
+
+     //
+     // Invoked on every gpyconf event.
+     // Uses MooTools' Events for dispatching.
+     //
+    onConfigEvent: function(event_name, key, value) {
+        args = [key, value];
         this.fireEvent(event_name, args);
     }
 });
 
-var Widget = new Class({
-    init: function() {
-        _python.init();
-    },
-    api: new API(),
-    config: new ConfigurationWrapper()
-});
 
-var widget = new Widget();
-_python.init_config();
+var remote = new Remote();
+var widget = null;
 
 window.addEvent('domready', function() {
-    if(window.main !== undefined) {
-        widget.init();
-        main();
-    }
+    widget = new Widget(window.main);
 });
