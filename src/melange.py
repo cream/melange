@@ -14,6 +14,13 @@ from melange.dialogs import AddWidgetDialog
 from melange.common import MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT
 
 
+VIRTUAL_ENV = 'VIRTUAL_ENV' in os.environ
+if VIRTUAL_ENV:
+    VIRTUAL_ENV_SHARE = os.path.join(
+        os.environ['VIRTUAL_ENV'],
+        'share/cream/org.cream.Melange'
+    )
+
 class TransparentWindow(gtk.Window):
 
     def __init__(self):
@@ -220,6 +227,9 @@ class Melange(cream.Module, cream.ipc.Object):
         widget_dirs = [
             os.path.join(self.context.get_user_path(), 'data/widgets')
         ]
+        if VIRTUAL_ENV:
+            widget_dirs.append(os.path.join(VIRTUAL_ENV_SHARE, 'data/widgets'))
+
         self.available_widgets = cream.manifest.ManifestDB(widget_dirs,
             type='org.cream.melange.Widget'
         )
