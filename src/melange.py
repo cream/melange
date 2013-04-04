@@ -78,14 +78,15 @@ class WidgetWindow(gtk.Window, gobject.GObject):
     def load_widget(self, widget):
 
         self._widget = widget
-        self.handlers = []
 
-        self.handlers.append(widget.view.connect('show-request', self.show_request_cb))
-        self.handlers.append(widget.view.connect('move-request', self.move_request_cb))
-        self.handlers.append(widget.view.connect('begin-move', self.fade_out))
-        self.handlers.append(widget.view.connect('end-move', self.fade_in))
-        self.handlers.append(widget.view.connect('remove-request', self.remove_request_cb))
-        self.handlers.append(widget.view.connect('reload-request', self.reload_request_cb))
+        self.handlers = [
+            widget.view.connect('show-request', self.show_request_cb),
+            widget.view.connect('move-request', self.move_request_cb),
+            widget.view.connect('begin-move', self.fade_out),
+            widget.view.connect('end-move', self.fade_in),
+            widget.view.connect('remove-request', self.remove_request_cb),
+            widget.view.connect('reload-request', self.reload_request_cb)
+        ]
 
         self.add(widget.view)
 
