@@ -3,7 +3,7 @@
         <item type="dict">
             <y type="int">20</y>
             <x type="int">0</x>
-            <name type="str">Melange Tips</name>
+            <id type="str">org.cream.melange.TipsWidget</id>
         </item>
     </widgets>
     <hotkey action="toggle-overlay" type="hotkey" label="Hotkey toggling the overlay mode">F12</hotkey>
