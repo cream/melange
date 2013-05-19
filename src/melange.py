@@ -14,13 +14,6 @@ from melange.dialogs import AddWidgetDialog
 from melange.common import MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT
 
 
-VIRTUAL_ENV = 'VIRTUAL_ENV' in os.environ
-if VIRTUAL_ENV:
-    VIRTUAL_ENV_SHARE = os.path.join(
-        os.environ['VIRTUAL_ENV'],
-        'share/cream/org.cream.Melange'
-    )
-
 class TransparentWindow(gtk.Window):
 
     def __init__(self):
@@ -215,21 +208,32 @@ class Melange(cream.Module, cream.ipc.Object):
             '/org/cream/Melange'
         )
 
-        self.common_path = os.path.join(self.context.working_directory,
+        self.common_path = os.path.join(
+            self.context.working_directory,
             'data/common'
         )
 
         theme_dirs = [
             os.path.join(self.context.get_path(), 'data/themes'),
+            os.path.join(self.context.get_system_path(), 'data/themes'),
             os.path.join(self.context.get_user_path(), 'data/themes')
         ]
+        if self.context.in_virtualenv:
+            theme_dirs.append(os.path.join(
+                self.context.get_virtualenv_path(),
+                'data/themes'
+            ))
         self.themes = Themes(theme_dirs)
 
         widget_dirs = [
+            os.path.join(self.context.get_system_path(), 'data/widgets'),
             os.path.join(self.context.get_user_path(), 'data/widgets')
         ]
-        if VIRTUAL_ENV:
-            widget_dirs.append(os.path.join(VIRTUAL_ENV_SHARE, 'data/widgets'))
+        if self.context.in_virtualenv:
+            widget_dirs.append(os.path.join(
+                self.context.get_virtualenv_path(),
+                'data/widgets'
+            ))
 
         self.available_widgets = cream.manifest.ManifestDB(widget_dirs,
             type='org.cream.melange.Widget'
