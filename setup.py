@@ -34,7 +34,7 @@ def collect_data_files():
     return data_files
 
 
-NAME = 'melange'
+NAME = 'cream-melange'
 
 data_files = collect_data_files()
 data_files.extend(

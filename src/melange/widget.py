@@ -344,7 +344,7 @@ class Widget(gobject.GObject, cream.Component):
 
         gobject.GObject.__init__(self)
         cream.Component.__init__(self, path=path,
-            user_path_prefix='melange/widget_data',
+            user_path_prefix='cream-melange/widget_data',
             use_id_in_path=True
         )
 
