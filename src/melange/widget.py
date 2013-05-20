@@ -131,7 +131,7 @@ class WidgetView(webkit.WebView, gobject.GObject):
     def navigation_request_cb(self, view, frame, request, action, decision):
 
         scheme, action, path, _, query, _ = urlparse.urlparse(request.get_uri())
-        query = dict(urlparse.parse_qsl(query))
+        query = dict(urlparse.parse_qsl(query, keep_blank_values=True))
 
         if scheme == 'melange':
             if action == 'init':
