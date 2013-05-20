@@ -343,7 +343,10 @@ class Widget(gobject.GObject, cream.Component):
     def __init__(self, widget_id, path, themes, common_path):
 
         gobject.GObject.__init__(self)
-        cream.Component.__init__(self, path=path)
+        cream.Component.__init__(self, path=path,
+            user_path_prefix='melange/widget_data',
+            use_id_in_path=True
+        )
 
         self.id = widget_id
         self.common_path = common_path
