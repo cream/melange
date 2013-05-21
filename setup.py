@@ -50,7 +50,7 @@ data_files.extend(
 
 setup(
     name = 'melange',
-    version = '0.5',
+    version = '0.5.1',
     author = 'The Cream Project (http://cream-project.org)',
     url = 'http://github.com/cream/melange',
     package_dir = {'melange': 'src/melange'},
