@@ -218,7 +218,7 @@ class Melange(cream.Module, cream.ipc.Object):
 
     def __init__(self):
 
-        cream.Module.__init__(self, 'org.cream.Melange')
+        cream.Module.__init__(self, 'org.cream.Melange', 'cream-melange')
         cream.ipc.Object.__init__(self,
             'org.cream.Melange',
             '/org/cream/Melange'
