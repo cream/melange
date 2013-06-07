@@ -21,9 +21,47 @@ from os.path import join, dirname
 from categories import categories
 
 ICON_SIZE_SMALL = 24
-ICON_SIZE_BIG = 48
+ICON_SIZE_MEDIUM = 35
+ICON_SIZE_LARGE = 48
 
 AUTHOR = u'{0} <{1}>'
+
+
+melange_icon_path = join(dirname(__file__), 'images/melange.png')
+
+ICON_MELANGE_SMALL = gdkpixbuf.Pixbuf.new_from_file_at_size(
+    melange_icon_path,
+    ICON_SIZE_SMALL,
+    ICON_SIZE_SMALL
+)
+ICON_MELANGE_MEDIUM = gdkpixbuf.Pixbuf.new_from_file_at_size(
+    melange_icon_path,
+    ICON_SIZE_MEDIUM,
+    ICON_SIZE_MEDIUM
+)
+ICON_MELANGE_LARGE = gdkpixbuf.Pixbuf.new_from_file_at_size(
+    melange_icon_path,
+    ICON_SIZE_LARGE,
+    ICON_SIZE_LARGE
+)
+
+def get_icon_by_name_at_size(name, size):
+    theme = gtk.IconTheme.get_default()
+    if theme.has_icon(name):
+        return theme.load_icon(
+            name,
+            size,
+            gtk.IconLookupFlags.USE_BUILTIN
+        )
+    else:
+        if size <= ICON_SIZE_SMALL:
+            return ICON_MELANGE_SMALL
+        elif size <= ICON_SIZE_MEDIUM:
+            return ICON_MELANGE_MEDIUM
+        else:
+            return ICON_MELANGE_LARGE
+
+
 class AddWidgetDialog(object):
 
     def __init__(self, widgets):
@@ -49,15 +87,8 @@ class AddWidgetDialog(object):
         # add the categories to the liststore alphabetically
         categories_ = sorted(categories.iteritems(), key=lambda c: c[1]['name'])
 
-        theme = gtk.IconTheme.get_default()
         for id, category in categories_:
-            icon_info = theme.lookup_icon(category['icon'], ICON_SIZE_SMALL, 0)
-            icon = gdkpixbuf.Pixbuf.new_from_file_at_size(
-                icon_info.get_filename(),
-                ICON_SIZE_SMALL,
-                ICON_SIZE_SMALL
-            )
-
+            icon = get_icon_by_name_at_size(category['icon'], ICON_SIZE_SMALL)
             self.category_liststore.append((category['name'], id, icon))
 
         # group widgets into categories
@@ -83,14 +114,7 @@ class AddWidgetDialog(object):
         """
 
         category = categories[self.selected_category]
-        theme = gtk.IconTheme.get_default()
-        icon_info = theme.lookup_icon(category['icon'], ICON_SIZE_BIG, 0)
-        icon = gdkpixbuf.Pixbuf.new_from_file_at_size(
-            icon_info.get_filename(),
-            ICON_SIZE_BIG,
-            ICON_SIZE_BIG
-        )
-
+        icon = get_icon_by_name_at_size(category['icon'], ICON_SIZE_LARGE)
         self.category_image.set_from_pixbuf(icon)
 
         description = split_string(category['description'])
@@ -110,11 +134,10 @@ class AddWidgetDialog(object):
 
         for widget in self.widgets[category]:
             if 'icon' in widget:
-                path = widget['icon']
+                icon = gdkpixbuf.Pixbuf.new_from_file_at_size(widget['icon'], 35, 35)
             else:
-                path = join(dirname(__file__), 'images/melange.png')
+                icon = ICON_MELANGE_MEDIUM
 
-            icon = gdkpixbuf.Pixbuf.new_from_file_at_size(path, 35, 35)
             label = u'<b>{0}</b>\n{1}'.format(
                 widget['name'],
                 split_string(widget['description'])
@@ -173,8 +196,8 @@ class AboutDialog(gtk.AboutDialog):
         if manifest.get('icon', None):
             icon = gdkpixbuf.Pixbuf.new_from_file_at_size(
                 manifest['icon'],
-                ICON_SIZE_BIG,
-                ICON_SIZE_BIG
+                ICON_SIZE_LARGE,
+                ICON_SIZE_LARGE
             )
             self.set_logo(icon)
 
