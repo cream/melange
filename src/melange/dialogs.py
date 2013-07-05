@@ -15,10 +15,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from gi.repository import Gtk as gtk, GdkPixbuf as gdkpixbuf
-from os.path import join, dirname
+import os
 
-from categories import categories
+from gi.repository import Gtk as gtk, GdkPixbuf as gdkpixbuf
+
+from melange.categories import categories
 
 ICON_SIZE_SMALL = 24
 ICON_SIZE_MEDIUM = 35
@@ -27,48 +28,15 @@ ICON_SIZE_LARGE = 48
 AUTHOR = u'{0} <{1}>'
 
 
-melange_icon_path = join(dirname(__file__), 'images/melange.png')
-
-ICON_MELANGE_SMALL = gdkpixbuf.Pixbuf.new_from_file_at_size(
-    melange_icon_path,
-    ICON_SIZE_SMALL,
-    ICON_SIZE_SMALL
-)
-ICON_MELANGE_MEDIUM = gdkpixbuf.Pixbuf.new_from_file_at_size(
-    melange_icon_path,
-    ICON_SIZE_MEDIUM,
-    ICON_SIZE_MEDIUM
-)
-ICON_MELANGE_LARGE = gdkpixbuf.Pixbuf.new_from_file_at_size(
-    melange_icon_path,
-    ICON_SIZE_LARGE,
-    ICON_SIZE_LARGE
-)
-
-def get_icon_by_name_at_size(name, size):
-    theme = gtk.IconTheme.get_default()
-    if theme.has_icon(name):
-        return theme.load_icon(
-            name,
-            size,
-            gtk.IconLookupFlags.USE_BUILTIN
-        )
-    else:
-        if size <= ICON_SIZE_SMALL:
-            return ICON_MELANGE_SMALL
-        elif size <= ICON_SIZE_MEDIUM:
-            return ICON_MELANGE_MEDIUM
-        else:
-            return ICON_MELANGE_LARGE
-
-
 class AddWidgetDialog(object):
 
-    def __init__(self, widgets):
+    def __init__(self, widgets, data_path):
+
+        self.melange_icon_path = os.path.join(data_path, 'images/melange.png')
         self.widgets = {}
 
         interface = gtk.Builder()
-        interface.add_from_file(join(dirname(__file__), 'add_dialog.glade'))
+        interface.add_from_file(os.path.join(data_path, 'add_dialog.glade'))
 
         self.dialog =  interface.get_object('dialog')
         self.category_liststore =  interface.get_object('categories')
@@ -88,7 +56,7 @@ class AddWidgetDialog(object):
         categories_ = sorted(categories.iteritems(), key=lambda c: c[1]['name'])
 
         for id, category in categories_:
-            icon = get_icon_by_name_at_size(category['icon'], ICON_SIZE_SMALL)
+            icon = self.get_icon_by_name_at_size(category['icon'], ICON_SIZE_SMALL)
             self.category_liststore.append((category['name'], id, icon))
 
         # group widgets into categories
@@ -114,7 +82,7 @@ class AddWidgetDialog(object):
         """
 
         category = categories[self.selected_category]
-        icon = get_icon_by_name_at_size(category['icon'], ICON_SIZE_LARGE)
+        icon = self.get_icon_by_name_at_size(category['icon'], ICON_SIZE_LARGE)
         self.category_image.set_from_pixbuf(icon)
 
         description = split_string(category['description'])
@@ -136,7 +104,7 @@ class AddWidgetDialog(object):
             if 'icon' in widget:
                 icon = gdkpixbuf.Pixbuf.new_from_file_at_size(widget['icon'], 35, 35)
             else:
-                icon = ICON_MELANGE_MEDIUM
+                icon = self.get_melange_icon_at_size(ICON_SIZE_MEDIUM)
 
             label = u'<b>{0}</b>\n{1}'.format(
                 widget['name'],
@@ -168,6 +136,32 @@ class AddWidgetDialog(object):
         self.dialog.hide()
 
         return widget
+
+
+    def get_melange_icon_at_size(self, size):
+
+        return gdkpixbuf.Pixbuf.new_from_file_at_size(
+            self.melange_icon_path,
+            size,
+            size
+        )
+
+
+    def get_icon_by_name_at_size(self, name, size):
+        theme = gtk.IconTheme.get_default()
+        if theme.has_icon(name):
+            return theme.load_icon(
+                name,
+                size,
+                gtk.IconLookupFlags.USE_BUILTIN
+            )
+        else:
+            if size <= ICON_SIZE_SMALL:
+                return self.get_melange_icon_at_size(ICON_SIZE_SMALL)
+            elif size <= ICON_SIZE_MEDIUM:
+                return self.get_melange_icon_at_size(ICON_SIZE_MEDIUM)
+            else:
+                return self.get_melange_icon_at_size(ICON_SIZE_LARGE)
 
 
 class AboutDialog(gtk.AboutDialog):

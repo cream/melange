@@ -224,31 +224,29 @@ class Melange(cream.Module, cream.ipc.Object):
             '/org/cream/Melange'
         )
 
-        self.common_path = os.path.join(
-            self.context.working_directory,
-            'data/common'
-        )
+        self.common_path = os.path.join(self.context.get_path(), 'common')
 
         theme_dirs = [
-            os.path.join(self.context.get_path(), 'data/themes'),
-            os.path.join(self.context.get_system_path(), 'data/themes'),
-            os.path.join(self.context.get_user_path(), 'data/themes')
+            os.path.join(self.context.get_path(), 'themes'),
+            os.path.join(self.context.get_system_path(), 'themes'),
+            os.path.join(self.context.get_user_path(), 'themes')
         ]
         if self.context.in_virtualenv:
             theme_dirs.append(os.path.join(
                 self.context.get_virtualenv_path(),
-                'data/themes'
+                'themes'
             ))
         self.themes = Themes(theme_dirs)
 
         widget_dirs = [
-            os.path.join(self.context.get_system_path(), 'data/widgets'),
-            os.path.join(self.context.get_user_path(), 'data/widgets')
+            os.path.join(self.context.get_system_path(), 'widgets'),
+            os.path.join(self.context.get_user_path(), 'widgets')
         ]
+
         if self.context.in_virtualenv:
             widget_dirs.append(os.path.join(
                 self.context.get_virtualenv_path(),
-                'data/widgets'
+                'widgets'
             ))
 
         self.available_widgets = cream.manifest.ManifestDB(widget_dirs,
@@ -282,7 +280,7 @@ class Melange(cream.Module, cream.ipc.Object):
             self.available_widgets.get_all(),
             key=lambda w: w['name']
         )
-        return AddWidgetDialog(widgets)
+        return AddWidgetDialog(widgets, self.context.get_path())
 
 
     @cream.util.cached_property

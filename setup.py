@@ -20,16 +20,13 @@ def collect_data_files():
 
     data_files = []
 
-    for directory, directories, files in os.walk('src/data'):
-        rel_dir = directory.replace('src/data/', '')
+    for directory, directories, files in os.walk('data/'):
+        rel_dir = directory.replace('data/', '')
         for file_ in files:
             data_files.append((
-                    os.path.join('share/{0}/data'.format(NAME), rel_dir),
+                    os.path.join('share/{0}'.format(NAME), rel_dir),
                     [os.path.join(directory, file_)]
             ))
-
-    data_files.append(('share/{0}/data'.format(NAME), ['src/melange.png']))
-    data_files.append(('share/{0}'.format(NAME), ['src/manifest.xml']))
 
     return data_files
 
@@ -37,16 +34,6 @@ def collect_data_files():
 NAME = 'cream-melange'
 
 data_files = collect_data_files()
-data_files.extend(
-    [
-    ('share/{0}/configuration'.format(NAME),
-        ['src/configuration/scheme.xml']),
-    ('share/icons',
-        ['src/melange.png']),
-    ('share/applications',
-        ['src/melange.desktop'])
-    ])
-
 
 setup(
     name = 'melange',
@@ -54,7 +41,6 @@ setup(
     author = 'The Cream Project (http://cream-project.org)',
     url = 'http://github.com/cream/melange',
     package_dir = {'melange': 'src/melange'},
-    package_data={'melange': ['add_dialog.glade', 'images/*']},
     packages = ['melange'],
     data_files = data_files,
     cmdclass={'install_scripts': post_install},
