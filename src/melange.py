@@ -25,9 +25,9 @@ import cream.ipc
 
 from gpyconf.fields import MultiOptionField
 
-from melange.widget import Widget
-from melange.dialogs import AddWidgetDialog
-from melange.common import MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT
+from cream.melange.widget import Widget
+from cream.melange.dialogs import AddWidgetDialog
+from cream.melange.common import MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT
 
 
 class TransparentWindow(gtk.Window):

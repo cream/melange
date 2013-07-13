@@ -40,7 +40,7 @@ setup(
     version = '0.5.1',
     author = 'The Cream Project (http://cream-project.org)',
     url = 'http://github.com/cream/melange',
-    package_dir = {'melange': 'src/melange'},
+    package_dir = {'cream.melange': 'src/melange'},
     packages = ['melange'],
     data_files = data_files,
     cmdclass={'install_scripts': post_install},

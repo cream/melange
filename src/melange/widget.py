@@ -32,9 +32,9 @@ import cream.manifest
 from gpyconf.fields import MultiOptionField
 
 
-from melange.api import import_api_file, Thread, APIS
-from melange.dialogs import AboutDialog
-from melange.common import (STATE_NONE, STATE_MOVING, MOUSE_BUTTON_MIDDLE,
+from cream.melange.api import import_api_file, Thread, APIS
+from cream.melange.dialogs import AboutDialog
+from cream.melange.common import (STATE_NONE, STATE_MOVING, MOUSE_BUTTON_MIDDLE,
                             MOUSE_BUTTON_RIGHT, MOVE_TIMESTEP)
 
 

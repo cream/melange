@@ -19,7 +19,7 @@ import os
 
 from gi.repository import Gtk as gtk, GdkPixbuf as gdkpixbuf
 
-from melange.categories import categories
+from cream.melange.categories import categories
 
 ICON_SIZE_SMALL = 24
 ICON_SIZE_MEDIUM = 35
