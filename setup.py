@@ -41,7 +41,7 @@ setup(
     author = 'The Cream Project (http://cream-project.org)',
     url = 'http://github.com/cream/melange',
     package_dir = {'cream.melange': 'src/melange'},
-    packages = ['melange'],
+    packages = ['cream.melange'],
     data_files = data_files,
     cmdclass={'install_scripts': post_install},
     scripts = ['src/melange.py']
