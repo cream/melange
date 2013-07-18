@@ -37,7 +37,7 @@ data_files = collect_data_files()
 
 setup(
     name = 'melange',
-    version = '0.5.1',
+    version = '0.5.2',
     author = 'The Cream Project (http://cream-project.org)',
     url = 'http://github.com/cream/melange',
     package_dir = {'cream.melange': 'src/melange'},
